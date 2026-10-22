@@ -22,6 +22,8 @@ Licenses above are evidence notes, not a comprehensive legal review. Each future
 
 ## Platform and development references
 
+- [Leatrix Plus author's gallery](https://www.curseforge.com/wow/addons/leatrix-plus/gallery): `snap6.jpg` inspected as a visual reference for sidebar navigation, gold text, dark background and a simple Home page. This is a historical screenshot; no claim that it depicts today's Forever build. No Leatrix image, code or asset is distributed.
+
 - [Blizzard Forever product page](https://worldofwarcraft.blizzard.com/en-us/forever).
 - [Blizzard UI source mirror, Forever branch](https://github.com/Gethe/wow-ui-source/tree/forever), inspected at `ca8368f2f2380cbe696854f7f2646387c278a61b`: generated MerchantFrame, CVar and Item API definitions, tooltip and loot UI. This is a third-party mirror of Blizzard material, not a permissively licensed dependency. A matching interface does not prove every source file matches the local executable build.
 - [Tweaks Forever author repository](https://github.com/cjber/tweaks-forever): contemporary Forever feature and compatibility reference.

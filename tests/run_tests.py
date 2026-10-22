@@ -25,7 +25,8 @@ local methods = {}
 local noops = {"SetSize", "SetPoint", "SetFrameStrata", "SetClampedToScreen", "EnableMouse",
  "SetMovable", "SetBackdrop", "SetJustifyH", "RegisterForDrag", "StartMoving", "StopMovingOrSizing",
  "SetAutoFocus", "SetFontObject", "SetMaxLetters", "SetMultiLine", "SetScrollChild",
- "UpdateScrollChildRect", "SetFocus", "ClearFocus", "HighlightText", "ClearAllPoints", "SetTextColor", "SetVerticalScroll"}
+ "UpdateScrollChildRect", "SetFocus", "ClearFocus", "HighlightText", "ClearAllPoints", "SetTextColor", "SetVerticalScroll",
+ "SetJustifyV", "SetBackdropColor", "SetBackdropBorderColor", "SetColorTexture", "SetAllPoints", "SetHighlightTexture"}
 for _, name in ipairs(noops) do methods[name] = function() end end
 function methods:SetHeight(h) self.height = h end
 function methods:SetWidth(w) self.width = w end
@@ -57,6 +58,8 @@ function CreateFrame(_, name)
  if name then _G[name] = frame end; frames[#frames+1] = frame; return frame
 end
 function methods:CreateFontString() return CreateFrame("FontString") end
+function methods:CreateTexture() return CreateFrame("Texture") end
+function methods:GetStringHeight() return 450 end
 UIParent = CreateFrame("Frame")
 ChatFrame1 = CreateFrame("Frame", "ChatFrame1"); ChatFrame1.fading = true
 ChatFrame1EditBox = CreateFrame("EditBox", "ChatFrame1EditBox"); ChatFrame1EditBox.arrows = true

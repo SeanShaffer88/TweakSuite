@@ -13,6 +13,7 @@ Extract the release ZIP into the intended client's `Interface/AddOns` folder. Th
 - Restart the game after installing. Enable **ForeverSuite** on the AddOns screen, then type `/fs`.
 - Every feature starts off. Browse categories or search across all settings, tick a feature, and read its status.
 - **Details** explains what the setting changes, its default, what switching it off does, combat behavior and overlapping addons. CVar options also identify the underlying client setting. Search works across categories.
+- The interface takes visual inspiration from Leatrix Plus: a dark brown window, gold headings, a flat category sidebar, a Home page and compact grouped checkboxes. Short explanations stay beside controls; hover or click **?** for the complete setting details. The implementation and layout code are original.
 - The same package targets both clients. Each client maintains its own SavedVariables. This preview does not migrate settings between them.
 
 Optional PowerShell installer, from the source repository:

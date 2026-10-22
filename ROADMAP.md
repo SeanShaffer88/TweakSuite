@@ -8,6 +8,8 @@ The target is both Forever beta and the launch client. This does not promise Ret
 
 The interface must remain organized and transparent as coverage grows. Use category navigation, global search, visible status, and per-setting Details. Every setting must describe its effect in plain language, default state, disable/restore behavior, triggers and exceptions, conflicts and client availability. Advanced controls need units, valid ranges, examples and reset behavior. Do not hide consequential effects behind vague names such as "smart" or "enhanced". Keep new features discoverable without forcing users to enable whole bundles.
 
+Use Leatrix Plus as the visual inspiration: a restrained dark brown/gold palette, flat left navigation, a simple Home page and compact grouped checkboxes. Preserve global search and transparent help as the suite becomes larger. Reimplement the visual design independently; do not copy its proprietary UI code or assets.
+
 ## Stages and exit criteria
 
 1. **Shared foundation and first tweaks — implemented preview.** Search, per-feature state, conflict reporting, schema validation, session pause, fault isolation, owned CVar restoration, 36 initial toggles, package and dual-client installer. Exit: local tests plus in-game smoke test on both clients when playable. Current status: local tests passed; in-game checks pending.
