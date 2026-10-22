@@ -1,0 +1,1870 @@
+[
+  {
+    "id": "FS-001",
+    "feature_key": "repair",
+    "title": "Repair with personal gold",
+    "category": "Automation",
+    "stage": 1,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Repairs at merchants using your gold, up to the cap (default 10g). /fs cap 25 changes it. Hold Shift to skip."
+  },
+  {
+    "id": "FS-002",
+    "feature_key": "sellJunk",
+    "title": "Sell junk at merchants",
+    "category": "Automation",
+    "stage": 1,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Uses the game's Sell All Junk operation, including items YOU marked as junk. Hold Shift to skip. No custom selling rules yet."
+  },
+  {
+    "id": "FS-003",
+    "feature_key": "fastLoot",
+    "title": "Faster automatic looting",
+    "category": "Automation",
+    "stage": 1,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Loots slots when the client opens loot in auto-loot mode. Holds off in combat or while Shift is held. Keeps confirmations intact."
+  },
+  {
+    "id": "FS-004",
+    "feature_key": "acceptQuests",
+    "title": "Accept offered quests",
+    "category": "Automation",
+    "stage": 1,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Accepts a quest when its details open. Hold Shift to read normally. Quest exceptions and filters are planned for a later stage."
+  },
+  {
+    "id": "FS-005",
+    "feature_key": "turnInQuests",
+    "title": "Turn in quests without reward choices",
+    "category": "Automation",
+    "stage": 1,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Completes quests with zero reward choices and no money requirement. Multiple or single choice rewards remain manual. Hold Shift to skip."
+  },
+  {
+    "id": "FS-006",
+    "feature_key": "maxStack",
+    "title": "Maximum stack size",
+    "category": "Tooltips",
+    "stage": 1,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Adds maximum stack size to stackable item tooltips outside combat."
+  },
+  {
+    "id": "FS-007",
+    "feature_key": "itemLevel",
+    "title": "Item level in tooltips",
+    "category": "Tooltips",
+    "stage": 1,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Adds the actual item level for equipment outside combat. Bag and character overlays are a later stage."
+  },
+  {
+    "id": "FS-008",
+    "feature_key": "itemID",
+    "title": "Item ID in tooltips",
+    "category": "Tooltips",
+    "stage": 1,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Adds the item ID outside combat. Re-hover after changing tooltip options."
+  },
+  {
+    "id": "FS-009",
+    "feature_key": "autoLoot",
+    "title": "Auto-loot by default",
+    "category": "Interface",
+    "stage": 1,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Enables the client's auto-loot setting. Your prior value is restored when switched off, unless another tool changed it."
+  },
+  {
+    "id": "FS-010",
+    "feature_key": "keyDown",
+    "title": "Cast on key press",
+    "category": "Interface",
+    "stage": 1,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Activates action buttons on key press instead of release. Your prior value is restored when switched off, unless another tool changed it."
+  },
+  {
+    "id": "FS-011",
+    "feature_key": "noGlow",
+    "title": "Disable full-screen glow",
+    "category": "Interface",
+    "stage": 1,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Disables the full-screen glow effect when this CVar exists. Your prior value is restored when switched off, unless another tool changed it."
+  },
+  {
+    "id": "FS-012",
+    "feature_key": "nameplates",
+    "title": "Always show enemy nameplates",
+    "category": "Nameplates",
+    "stage": 1,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Keeps enabled enemy nameplates visible outside combat. Your prior value is restored when switched off, unless another tool changed it."
+  },
+  {
+    "id": "FS-013",
+    "feature_key": "noLowHealthFlash",
+    "title": "Disable low-health screen flash",
+    "category": "Interface",
+    "stage": 1,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Disables the red screen flash at low health. Your prior value is restored when switched off, unless another tool changed it."
+  },
+  {
+    "id": "FS-014",
+    "feature_key": "questText",
+    "title": "Instant quest text",
+    "category": "Interface",
+    "stage": 1,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Shows quest text immediately when supported by the client. Your prior value is restored when switched off, unless another tool changed it."
+  },
+  {
+    "id": "FS-015",
+    "feature_key": "stackPlates",
+    "title": "Stack nameplates vertically",
+    "category": "Nameplates",
+    "stage": 1,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Uses the client's stacking layout for nameplates. Your prior value is restored when switched off, unless another tool changed it."
+  },
+  {
+    "id": "FS-016",
+    "feature_key": "classPlates",
+    "title": "Class colors on enemy nameplates",
+    "category": "Nameplates",
+    "stage": 1,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Uses class colors for supported player nameplates. Your prior value is restored when switched off, unless another tool changed it."
+  },
+  {
+    "id": "FS-017",
+    "feature_key": "hideFriendlyPets",
+    "title": "Hide friendly pet nameplates",
+    "category": "Nameplates",
+    "stage": 1,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Hides pet plates without hiding friendly players. Your prior value is restored when switched off, unless another tool changed it."
+  },
+  {
+    "id": "FS-018",
+    "feature_key": "hideFriendlyGuardians",
+    "title": "Hide friendly guardian nameplates",
+    "category": "Nameplates",
+    "stage": 1,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Reduces nameplate clutter from friendly guardians. Your prior value is restored when switched off, unless another tool changed it."
+  },
+  {
+    "id": "FS-019",
+    "feature_key": "hideFriendlyTotems",
+    "title": "Hide friendly totem nameplates",
+    "category": "Nameplates",
+    "stage": 1,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Hides friendly totem plates. Your prior value is restored when switched off, unless another tool changed it."
+  },
+  {
+    "id": "FS-020",
+    "feature_key": "hideEnemyPets",
+    "title": "Hide enemy pet nameplates",
+    "category": "Nameplates",
+    "stage": 1,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Hides enemy pet plates; enemy player plates keep their own setting. Your prior value is restored when switched off, unless another tool changed it."
+  },
+  {
+    "id": "FS-021",
+    "feature_key": "enemyTotems",
+    "title": "Show enemy totem nameplates",
+    "category": "Nameplates",
+    "stage": 1,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Enables nameplates for enemy totems. Your prior value is restored when switched off, unless another tool changed it."
+  },
+  {
+    "id": "FS-022",
+    "feature_key": "personalResource",
+    "title": "Always show personal resource bar",
+    "category": "Nameplates",
+    "stage": 1,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Keeps the enabled personal resource display visible outside combat. Your prior value is restored when switched off, unless another tool changed it."
+  },
+  {
+    "id": "FS-023",
+    "feature_key": "targetOfTarget",
+    "title": "Show target of target",
+    "category": "Interface",
+    "stage": 1,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Enables the client's target-of-target display. Your prior value is restored when switched off, unless another tool changed it."
+  },
+  {
+    "id": "FS-024",
+    "feature_key": "hideOwnName",
+    "title": "Hide your overhead name",
+    "category": "Overhead names",
+    "stage": 1,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Removes your character's own overhead name. Your prior value is restored when switched off, unless another tool changed it."
+  },
+  {
+    "id": "FS-025",
+    "feature_key": "hideTitles",
+    "title": "Hide player titles",
+    "category": "Overhead names",
+    "stage": 1,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Hides titles in overhead player names. Your prior value is restored when switched off, unless another tool changed it."
+  },
+  {
+    "id": "FS-026",
+    "feature_key": "hideGuildNames",
+    "title": "Hide overhead guild names",
+    "category": "Overhead names",
+    "stage": 1,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Hides guild names above player characters. Your prior value is restored when switched off, unless another tool changed it."
+  },
+  {
+    "id": "FS-027",
+    "feature_key": "hideGuildRanks",
+    "title": "Hide overhead guild ranks",
+    "category": "Overhead names",
+    "stage": 1,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Hides guild ranks above player characters. Your prior value is restored when switched off, unless another tool changed it."
+  },
+  {
+    "id": "FS-028",
+    "feature_key": "hideCritterNames",
+    "title": "Hide critter names",
+    "category": "Overhead names",
+    "stage": 1,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Hides overhead names on noncombat creatures. Your prior value is restored when switched off, unless another tool changed it."
+  },
+  {
+    "id": "FS-029",
+    "feature_key": "noCameraBobbing",
+    "title": "Disable camera bobbing",
+    "category": "Camera",
+    "stage": 1,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Disables the client camera's bobbing setting. Your prior value is restored when switched off, unless another tool changed it."
+  },
+  {
+    "id": "FS-030",
+    "feature_key": "noTerrainTilt",
+    "title": "Disable camera terrain tilt",
+    "category": "Camera",
+    "stage": 1,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Disables automatic terrain tilt when the CVar exists. Your prior value is restored when switched off, unless another tool changed it."
+  },
+  {
+    "id": "FS-031",
+    "feature_key": "noWaterCollision",
+    "title": "Disable camera water collision",
+    "category": "Camera",
+    "stage": 1,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Allows the camera to cross the water surface. Your prior value is restored when switched off, unless another tool changed it."
+  },
+  {
+    "id": "FS-032",
+    "feature_key": "chatWheel",
+    "title": "Enable chat mouse-wheel scrolling",
+    "category": "Chat",
+    "stage": 1,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Enables chat scrolling with the mouse wheel when supported. Your prior value is restored when switched off, unless another tool changed it."
+  },
+  {
+    "id": "FS-033",
+    "feature_key": "noLootHistory",
+    "title": "Do not auto-open loot history",
+    "category": "Interface",
+    "stage": 1,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Keeps loot history from opening automatically. Your prior value is restored when switched off, unless another tool changed it."
+  },
+  {
+    "id": "FS-034",
+    "feature_key": "noSpellAlerts",
+    "title": "Hide spell activation overlays",
+    "category": "Interface",
+    "stage": 1,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Hides the client's on-screen spell activation artwork. Your prior value is restored when switched off, unless another tool changed it."
+  },
+  {
+    "id": "FS-035",
+    "feature_key": "chatFade",
+    "title": "Keep chat text visible",
+    "category": "Chat",
+    "stage": 1,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Disables fading on existing chat windows. Restores their previous fading setting when switched off."
+  },
+  {
+    "id": "FS-036",
+    "feature_key": "chatArrows",
+    "title": "Arrow keys edit chat",
+    "category": "Chat",
+    "stage": 1,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Lets arrow keys move the text cursor without holding Alt. Restores each edit box when switched off."
+  },
+  {
+    "id": "FS-037",
+    "title": "Drag Blizzard windows",
+    "category": "Windows and dialogs",
+    "stage": 2,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-038",
+    "title": "Resize and scale windows",
+    "category": "Windows and dialogs",
+    "stage": 2,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-039",
+    "title": "Remember window positions",
+    "category": "Windows and dialogs",
+    "stage": 2,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-040",
+    "title": "Per-layout window profiles",
+    "category": "Windows and dialogs",
+    "stage": 2,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-041",
+    "title": "Reset a single window",
+    "category": "Windows and dialogs",
+    "stage": 2,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-042",
+    "title": "Snap windows to screen bounds",
+    "category": "Windows and dialogs",
+    "stage": 2,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-043",
+    "title": "Window anchor relationships",
+    "category": "Windows and dialogs",
+    "stage": 2,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-044",
+    "title": "Keep compatible panels open together",
+    "category": "Windows and dialogs",
+    "stage": 2,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-045",
+    "title": "Panel exceptions for secure or fragile frames",
+    "category": "Windows and dialogs",
+    "stage": 2,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-046",
+    "title": "Keyboard accept/continue",
+    "category": "Windows and dialogs",
+    "stage": 2,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-047",
+    "title": "Keyboard numbered gossip selection",
+    "category": "Windows and dialogs",
+    "stage": 2,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-048",
+    "title": "Keyboard reward selection",
+    "category": "Windows and dialogs",
+    "stage": 2,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-049",
+    "title": "Custom dialog key bindings",
+    "category": "Windows and dialogs",
+    "stage": 2,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-050",
+    "title": "Dialog click priority",
+    "category": "Windows and dialogs",
+    "stage": 2,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-051",
+    "title": "Dialog popup exclusions",
+    "category": "Windows and dialogs",
+    "stage": 2,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-052",
+    "title": "Custom watched buttons",
+    "category": "Windows and dialogs",
+    "stage": 2,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-053",
+    "title": "Dialog key hints",
+    "category": "Windows and dialogs",
+    "stage": 2,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-054",
+    "title": "Selective beta survey suppression",
+    "category": "Windows and dialogs",
+    "stage": 2,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-055",
+    "title": "Restore manual beta reporting",
+    "category": "Windows and dialogs",
+    "stage": 2,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-056",
+    "title": "Hide beta reporter button independently",
+    "category": "Windows and dialogs",
+    "stage": 2,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-057",
+    "title": "Bag item-level overlays",
+    "category": "Inventory and tooltips",
+    "stage": 2,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-058",
+    "title": "Bank item-level overlays",
+    "category": "Inventory and tooltips",
+    "stage": 2,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-059",
+    "title": "Character item-level overlays",
+    "category": "Inventory and tooltips",
+    "stage": 2,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-060",
+    "title": "Inspect item-level overlays",
+    "category": "Inventory and tooltips",
+    "stage": 2,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-061",
+    "title": "Loot item-level overlays",
+    "category": "Inventory and tooltips",
+    "stage": 2,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-062",
+    "title": "Equipment flyout item levels",
+    "category": "Inventory and tooltips",
+    "stage": 2,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-063",
+    "title": "Average equipped item level",
+    "category": "Inventory and tooltips",
+    "stage": 2,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-064",
+    "title": "Missing enchant indicators",
+    "category": "Inventory and tooltips",
+    "stage": 2,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-065",
+    "title": "Missing gem indicators",
+    "category": "Inventory and tooltips",
+    "stage": 2,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-066",
+    "title": "Socket inspection helpers",
+    "category": "Inventory and tooltips",
+    "stage": 2,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-067",
+    "title": "Upgrade arrows",
+    "category": "Inventory and tooltips",
+    "stage": 2,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-068",
+    "title": "Bind-type labels",
+    "category": "Inventory and tooltips",
+    "stage": 2,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-069",
+    "title": "Durability overlays",
+    "category": "Inventory and tooltips",
+    "stage": 2,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-070",
+    "title": "Equipment label positioning",
+    "category": "Inventory and tooltips",
+    "stage": 2,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-071",
+    "title": "Tooltip class colors",
+    "category": "Inventory and tooltips",
+    "stage": 2,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-072",
+    "title": "Tooltip health bar",
+    "category": "Inventory and tooltips",
+    "stage": 2,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-073",
+    "title": "Tooltip borders and colors",
+    "category": "Inventory and tooltips",
+    "stage": 2,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-074",
+    "title": "Tooltip anchor modes",
+    "category": "Inventory and tooltips",
+    "stage": 2,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-075",
+    "title": "Tooltip combat visibility rules",
+    "category": "Inventory and tooltips",
+    "stage": 2,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-076",
+    "title": "Spell IDs in tooltips",
+    "category": "Inventory and tooltips",
+    "stage": 2,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-077",
+    "title": "NPC IDs in tooltips",
+    "category": "Inventory and tooltips",
+    "stage": 2,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-078",
+    "title": "Quest IDs in tooltips",
+    "category": "Inventory and tooltips",
+    "stage": 2,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-079",
+    "title": "Currency IDs in tooltips",
+    "category": "Inventory and tooltips",
+    "stage": 2,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-080",
+    "title": "Item counts by storage location",
+    "category": "Inventory and tooltips",
+    "stage": 2,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-081",
+    "title": "Reputation token details",
+    "category": "Inventory and tooltips",
+    "stage": 2,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-082",
+    "title": "Quest-starting item details",
+    "category": "Inventory and tooltips",
+    "stage": 2,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-083",
+    "title": "Guild repair funds policy",
+    "category": "Merchant and automation",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-084",
+    "title": "Repair feedback and totals",
+    "category": "Merchant and automation",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-085",
+    "title": "Never-sell item list",
+    "category": "Merchant and automation",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-086",
+    "title": "Sell whitelist",
+    "category": "Merchant and automation",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-087",
+    "title": "Sell by quality and item level",
+    "category": "Merchant and automation",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-088",
+    "title": "Sell by binding and expansion",
+    "category": "Merchant and automation",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-089",
+    "title": "Custom junk marking",
+    "category": "Merchant and automation",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-090",
+    "title": "Buyback-aware sale batches",
+    "category": "Merchant and automation",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-091",
+    "title": "Sale preview and cancellation",
+    "category": "Merchant and automation",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-092",
+    "title": "Quest acceptance exceptions",
+    "category": "Merchant and automation",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-093",
+    "title": "Quest completion exceptions",
+    "category": "Merchant and automation",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-094",
+    "title": "Daily/weekly quest filters",
+    "category": "Merchant and automation",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-095",
+    "title": "Trivial quest filters",
+    "category": "Merchant and automation",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-096",
+    "title": "Already-completed quest filters",
+    "category": "Merchant and automation",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-097",
+    "title": "Single-option gossip rules",
+    "category": "Merchant and automation",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-098",
+    "title": "NPC-specific gossip preferences",
+    "category": "Merchant and automation",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-099",
+    "title": "Paid gossip exclusions",
+    "category": "Merchant and automation",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-100",
+    "title": "Flight map shortcuts",
+    "category": "Merchant and automation",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-101",
+    "title": "Friend and guild invite acceptance",
+    "category": "Merchant and automation",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-102",
+    "title": "Block stranger invites",
+    "category": "Merchant and automation",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-103",
+    "title": "Duel decline rules",
+    "category": "Merchant and automation",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-104",
+    "title": "Summon acceptance rules",
+    "category": "Merchant and automation",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-105",
+    "title": "Resurrection acceptance rules",
+    "category": "Merchant and automation",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-106",
+    "title": "Battleground release rules",
+    "category": "Merchant and automation",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-107",
+    "title": "Whisper invite rules",
+    "category": "Merchant and automation",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-108",
+    "title": "Opt-in loot trade confirmation",
+    "category": "Merchant and automation",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-109",
+    "title": "Opt-in crafting confirmation",
+    "category": "Merchant and automation",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-110",
+    "title": "Opt-in destruction text helper",
+    "category": "Merchant and automation",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-111",
+    "title": "Chat font sizes",
+    "category": "Chat and social",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-112",
+    "title": "Chat edit box placement",
+    "category": "Chat and social",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-113",
+    "title": "Chat button visibility",
+    "category": "Chat and social",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-114",
+    "title": "Sticky chat controls",
+    "category": "Chat and social",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-115",
+    "title": "Chat history length",
+    "category": "Chat and social",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-116",
+    "title": "Copy chat text",
+    "category": "Chat and social",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-117",
+    "title": "Whisper notification sounds",
+    "category": "Chat and social",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-118",
+    "title": "Persistent chat history",
+    "category": "Chat and social",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-119",
+    "title": "Chat channel management",
+    "category": "Chat and social",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-120",
+    "title": "Whisper conversation window",
+    "category": "Chat and social",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-121",
+    "title": "Class-colored chat names",
+    "category": "Chat and social",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-122",
+    "title": "Chat message filtering",
+    "category": "Chat and social",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-123",
+    "title": "Context-menu website links",
+    "category": "Chat and social",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-124",
+    "title": "Chat frame unclamping",
+    "category": "Chat and social",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-125",
+    "title": "World-map coordinates",
+    "category": "Maps and travel",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-126",
+    "title": "Cursor map coordinates",
+    "category": "Maps and travel",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-127",
+    "title": "Zone level ranges",
+    "category": "Maps and travel",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-128",
+    "title": "Dungeon entrance markers",
+    "category": "Maps and travel",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-129",
+    "title": "Dungeon floor maps and legends",
+    "category": "Maps and travel",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-130",
+    "title": "Unexplored-area reveal and tint",
+    "category": "Maps and travel",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-131",
+    "title": "Waypoint commands",
+    "category": "Maps and travel",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-132",
+    "title": "Teleport favorites",
+    "category": "Maps and travel",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-133",
+    "title": "Teleport menu",
+    "category": "Maps and travel",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-134",
+    "title": "Travel integration with external route planners",
+    "category": "Maps and travel",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-135",
+    "title": "Flight time display",
+    "category": "Maps and travel",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-136",
+    "title": "Quest-level labels",
+    "category": "Maps and travel",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-137",
+    "title": "Quest tracker distance sorting",
+    "category": "Maps and travel",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-138",
+    "title": "Quest item keybinding",
+    "category": "Maps and travel",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-139",
+    "title": "Quest target keybinding",
+    "category": "Maps and travel",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-140",
+    "title": "Questie tooltip integration",
+    "category": "Maps and travel",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-141",
+    "title": "Quest-start item markers",
+    "category": "Maps and travel",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-142",
+    "title": "Camp benefit tooltips",
+    "category": "Maps and travel",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-143",
+    "title": "Camp benefit notifications",
+    "category": "Maps and travel",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-144",
+    "title": "Rare alerts",
+    "category": "Maps and travel",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-145",
+    "title": "XP-per-hour and level estimates",
+    "category": "Maps and travel",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-146",
+    "title": "Equipment groups",
+    "category": "Character and activities",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-147",
+    "title": "Equipment group bag markers",
+    "category": "Character and activities",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-148",
+    "title": "Fishing equipment restoration",
+    "category": "Character and activities",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-149",
+    "title": "Double-click fishing",
+    "category": "Character and activities",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-150",
+    "title": "Fishing lure selection",
+    "category": "Character and activities",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-151",
+    "title": "Missing lure reminder",
+    "category": "Character and activities",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-152",
+    "title": "Unlearned spellbook entries",
+    "category": "Character and activities",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-153",
+    "title": "Class trainer bulk purchase",
+    "category": "Character and activities",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-154",
+    "title": "Spell rank upgrades",
+    "category": "Character and activities",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-155",
+    "title": "Food and drink macro",
+    "category": "Character and activities",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-156",
+    "title": "Pet food highlights",
+    "category": "Character and activities",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-157",
+    "title": "Mana regeneration timing",
+    "category": "Character and activities",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-158",
+    "title": "Reagent bag integration",
+    "category": "Character and activities",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-159",
+    "title": "Bag filters",
+    "category": "Character and activities",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-160",
+    "title": "Search by item properties",
+    "category": "Character and activities",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-161",
+    "title": "Account gold tracker",
+    "category": "Character and activities",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-162",
+    "title": "Minimap button collection",
+    "category": "Character and activities",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-163",
+    "title": "Minimap shape and sizing",
+    "category": "Character and activities",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-164",
+    "title": "Micro menu visibility",
+    "category": "Character and activities",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-165",
+    "title": "Action bar mouseover visibility",
+    "category": "Character and activities",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-166",
+    "title": "Action button range coloring",
+    "category": "Character and activities",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-167",
+    "title": "Action bar text customization",
+    "category": "Character and activities",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-168",
+    "title": "Cursor ring",
+    "category": "Character and activities",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-169",
+    "title": "Cursor trail",
+    "category": "Character and activities",
+    "stage": 3,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-170",
+    "title": "Spell damage-per-second tooltips",
+    "category": "Specialized systems",
+    "stage": 4,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-171",
+    "title": "Spell damage-per-minute tooltips",
+    "category": "Specialized systems",
+    "stage": 4,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-172",
+    "title": "Damage-per-mana tooltips",
+    "category": "Specialized systems",
+    "stage": 4,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-173",
+    "title": "Mana cost percentage",
+    "category": "Specialized systems",
+    "stage": 4,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-174",
+    "title": "Damage-over-time contribution setting",
+    "category": "Specialized systems",
+    "stage": 4,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-175",
+    "title": "Spell calculation formatting and preview",
+    "category": "Specialized systems",
+    "stage": 4,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-176",
+    "title": "Spell calculation localization",
+    "category": "Specialized systems",
+    "stage": 4,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-177",
+    "title": "Ground hazard audio warnings",
+    "category": "Specialized systems",
+    "stage": 4,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-178",
+    "title": "Friendly-fire warnings",
+    "category": "Specialized systems",
+    "stage": 4,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-179",
+    "title": "Failure warnings",
+    "category": "Specialized systems",
+    "stage": 4,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-180",
+    "title": "Hazard data maintenance",
+    "category": "Specialized systems",
+    "stage": 4,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-181",
+    "title": "Alert sound categories and volume",
+    "category": "Specialized systems",
+    "stage": 4,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-182",
+    "title": "Alert exemptions",
+    "category": "Specialized systems",
+    "stage": 4,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-183",
+    "title": "Allowed aura-sound API integration",
+    "category": "Specialized systems",
+    "stage": 4,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-184",
+    "title": "Environmental danger warnings",
+    "category": "Specialized systems",
+    "stage": 4,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-185",
+    "title": "Custom loot window",
+    "category": "Specialized systems",
+    "stage": 4,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-186",
+    "title": "Loot notifications",
+    "category": "Specialized systems",
+    "stage": 4,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-187",
+    "title": "Backpack tracked-item bar",
+    "category": "Specialized systems",
+    "stage": 4,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-188",
+    "title": "Merchant multi-currency display",
+    "category": "Specialized systems",
+    "stage": 4,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-189",
+    "title": "Instance difficulty selector",
+    "category": "Specialized systems",
+    "stage": 4,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-190",
+    "title": "Expansion activity summary",
+    "category": "Specialized systems",
+    "stage": 4,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-191",
+    "title": "Drawer macros and flyouts",
+    "category": "Specialized systems",
+    "stage": 4,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-192",
+    "title": "Target cast tooltip information",
+    "category": "Specialized systems",
+    "stage": 4,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-193",
+    "title": "Target ability reference",
+    "category": "Specialized systems",
+    "stage": 4,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-194",
+    "title": "Talking head replacement",
+    "category": "Specialized systems",
+    "stage": 4,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-195",
+    "title": "Boss banner controls",
+    "category": "Specialized systems",
+    "stage": 4,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-196",
+    "title": "Event toast controls",
+    "category": "Specialized systems",
+    "stage": 4,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-197",
+    "title": "Sound category muting",
+    "category": "Specialized systems",
+    "stage": 4,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-198",
+    "title": "Music and movie browser",
+    "category": "Specialized systems",
+    "stage": 4,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-199",
+    "title": "Player and target frames",
+    "category": "Specialized systems",
+    "stage": 4,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-200",
+    "title": "Party and raid frames",
+    "category": "Specialized systems",
+    "stage": 4,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-201",
+    "title": "Resource bars",
+    "category": "Specialized systems",
+    "stage": 4,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-202",
+    "title": "Absorb displays where permitted",
+    "category": "Specialized systems",
+    "stage": 4,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-203",
+    "title": "Cooldown panels",
+    "category": "Specialized systems",
+    "stage": 4,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-204",
+    "title": "Cooldown pulse notifications",
+    "category": "Specialized systems",
+    "stage": 4,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-205",
+    "title": "Swing display integration",
+    "category": "Specialized systems",
+    "stage": 4,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-206",
+    "title": "Threat-independent nameplate enhancements",
+    "category": "Specialized systems",
+    "stage": 4,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-207",
+    "title": "Native damage meter integration",
+    "category": "Specialized systems",
+    "stage": 4,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-208",
+    "title": "Ready-check reminders",
+    "category": "Specialized systems",
+    "stage": 4,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-209",
+    "title": "Group role and leader indicators",
+    "category": "Specialized systems",
+    "stage": 4,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-210",
+    "title": "Dungeon group tools when supported",
+    "category": "Specialized systems",
+    "stage": 4,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-211",
+    "title": "Gameplay system availability audit",
+    "category": "Specialized systems",
+    "stage": 4,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-212",
+    "title": "Searchable advanced CVar browser",
+    "category": "Settings and completion",
+    "stage": 5,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-213",
+    "title": "Per-CVar help and defaults",
+    "category": "Settings and completion",
+    "stage": 5,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-214",
+    "title": "CVar type/range validation",
+    "category": "Settings and completion",
+    "stage": 5,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-215",
+    "title": "CVar change history",
+    "category": "Settings and completion",
+    "stage": 5,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-216",
+    "title": "Global profiles",
+    "category": "Settings and completion",
+    "stage": 5,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-217",
+    "title": "Per-character profiles",
+    "category": "Settings and completion",
+    "stage": 5,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-218",
+    "title": "Import/export profiles",
+    "category": "Settings and completion",
+    "stage": 5,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-219",
+    "title": "Input validation on imported settings",
+    "category": "Settings and completion",
+    "stage": 5,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-220",
+    "title": "Beta-to-launch profile migration",
+    "category": "Settings and completion",
+    "stage": 5,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-221",
+    "title": "Per-feature ownership adapters",
+    "category": "Settings and completion",
+    "stage": 5,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-222",
+    "title": "Reference addon setting migration",
+    "category": "Settings and completion",
+    "stage": 5,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-223",
+    "title": "Localization",
+    "category": "Settings and completion",
+    "stage": 5,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-224",
+    "title": "Gamepad settings navigation",
+    "category": "Settings and completion",
+    "stage": 5,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-225",
+    "title": "UI scaling and accessibility",
+    "category": "Settings and completion",
+    "stage": 5,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-226",
+    "title": "Per-module performance measurements",
+    "category": "Settings and completion",
+    "stage": 5,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-227",
+    "title": "Full source-option coverage reconciliation",
+    "category": "Settings and completion",
+    "stage": 5,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-228",
+    "title": "License and asset provenance audit",
+    "category": "Settings and completion",
+    "stage": 5,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-229",
+    "title": "Launch-client regression suite",
+    "category": "Settings and completion",
+    "stage": 5,
+    "status": "planned",
+    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  }
+]

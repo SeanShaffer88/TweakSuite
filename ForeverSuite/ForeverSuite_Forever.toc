@@ -1,0 +1,12 @@
+## Interface: 16001
+## Title: ForeverSuite
+## Notes: Modular quality-of-life tools for WoW Forever. Stage 1 preview; /fs opens settings.
+## Author: Sean Shaffer
+## Version: 0.1.0-alpha.1
+## SavedVariables: ForeverSuiteDB
+## X-License: MIT
+Core.lua
+Modules\Automation.lua
+Modules\Tooltips.lua
+Modules\Interface.lua
+Settings.lua
