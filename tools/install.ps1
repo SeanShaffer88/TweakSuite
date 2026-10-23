@@ -10,18 +10,23 @@ $executable = Join-Path $client $(if ($flavor -eq '_classic_beta_') { 'WowB.exe'
 if (-not (Test-Path -LiteralPath $executable)) { throw 'Client executable not found.' }
 $version = (Get-Item -LiteralPath $executable).VersionInfo.FileVersion
 if ($version -notmatch '^1\.60\.1\.') { throw "Unverified client version: $version. Recheck the TOC and APIs before installing." }
-$source = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '../ForeverSuite')).Path
-$destination = [IO.Path]::GetFullPath((Join-Path $client 'Interface/AddOns/ForeverSuite'))
+$source = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '../TweakSuite')).Path
+$destination = [IO.Path]::GetFullPath((Join-Path $client 'Interface/AddOns/TweakSuite'))
 if (-not $destination.StartsWith($client + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) { throw 'Invalid destination.' }
 Write-Output "Client: $flavor $version"
 Write-Output "Addon destination: $destination"
+$previous = Join-Path $client 'Interface/AddOns/ForeverSuite'
+if (Test-Path -LiteralPath $previous) {
+    Write-Warning 'ForeverSuite (the previous name of this addon) is installed. Run /fs reset in game, log out, then delete that folder. While it loads, TweakSuite keeps every feature blocked.'
+}
 if (-not $Install) { Write-Output 'Check complete. Use -Install to copy this preview.'; return }
 if (Get-Process -Name Wow,WowB -ErrorAction SilentlyContinue) { throw 'Close WoW before installing.' }
-if (Test-Path -LiteralPath $destination) { throw 'ForeverSuite already exists. This installer never overwrites an existing version.' }
+if (Test-Path -LiteralPath $destination) { throw 'TweakSuite already exists. This installer never overwrites an existing version.' }
 New-Item -ItemType Directory -Path $destination | Out-Null
 Get-ChildItem -LiteralPath $source | Copy-Item -Destination $destination -Recurse
-foreach ($name in @('LICENSE','README.md','ROADMAP.md','FEATURE-BACKLOG.md','SOURCES.md','VALIDATION.md')) {
+foreach ($name in @('LICENSE','README.md','CHANGELOG.md','DESCRIPTION.md','AUDIT.md','CREDITS.md','ROADMAP.md','FEATURE-BACKLOG.md','SOURCES.md','VALIDATION.md')) {
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot "../$name") -Destination (Join-Path $destination $name)
 }
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot '../docs') -Destination $destination -Recurse
-Write-Output 'Installed ForeverSuite. All features start off. Restart WoW and type /fs.'
+Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot '../media') -Filter *.png | Copy-Item -Destination (Join-Path $destination 'Media')
+Write-Output 'Installed TweakSuite. All features start off. Restart WoW and type /ts.'

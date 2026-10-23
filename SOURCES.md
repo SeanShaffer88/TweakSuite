@@ -37,4 +37,4 @@ Online checks found stale indexed versions in some pages. The baseline table pre
 
 ## Stage 2 additions
 
-The window-movement service (`Modules/Windows.lua`) follows the same behavior class as BlizzMove but is an original implementation: it hooks existing frames, saves positions in ForeverSuite's own schema and refuses drags in combat. No BlizzMove code or assets are used. Tooltip scale, sell price, durability, bag-slot, chat and frame-visibility tweaks are likewise written from the client APIs, with upstream addons used only to identify which capabilities users expect.
+The window-movement service (`Modules/Windows.lua`) follows the same behavior class as BlizzMove but is an original implementation: it hooks existing frames, saves positions in TweakSuite's own schema and refuses drags in combat. No BlizzMove code or assets are used. Tooltip scale, sell price, durability, bag-slot, chat and frame-visibility tweaks are likewise written from the client APIs, with upstream addons used only to identify which capabilities users expect.

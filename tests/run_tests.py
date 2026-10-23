@@ -10,8 +10,8 @@ from pathlib import Path
 from lupa.lua51 import LuaRuntime
 
 ROOT = Path(__file__).resolve().parents[1]
-ADDON = ROOT / "ForeverSuite"
-FILES = [line.strip().replace("\\", "/") for line in (ADDON / "ForeverSuite.toc").read_text().splitlines()
+ADDON = ROOT / "TweakSuite"
+FILES = [line.strip().replace("\\", "/") for line in (ADDON / "TweakSuite.toc").read_text().splitlines()
          if line.strip() and not line.startswith("#")]
 
 MOCK = r"""
@@ -105,6 +105,7 @@ function methods:CreateTexture()
  local tex = CreateFrame("Texture")
  self.textures = self.textures or {}; table.insert(self.textures, tex); return tex
 end
+function methods:SetTexture(path) self.texture = path end
 function methods:GetStringHeight() return 450 end
 UIParent = CreateFrame("Frame")
 ChatFrame1 = CreateFrame("Frame", "ChatFrame1"); ChatFrame1.fading = true; ChatFrame1.clamped = true
@@ -557,7 +558,7 @@ function LeaveChannelByName(name) table.insert(leftChannels, name) end
 function SendChatMessage(text, chatType, language, target)
  table.insert(sentMessages, { text = text, kind = chatType, target = target })
 end
-function pressKey(key) ForeverSuiteKeyCatcher:Trigger("OnKeyDown", key) end
+function pressKey(key) TweakSuiteKeyCatcher:Trigger("OnKeyDown", key) end
 function tipFor(kind)
  if not tips[kind] then tips[kind] = CreateFrame("GameTooltip"); tips[kind].lines = {} end
  tips[kind].lines = {}; return tips[kind]
@@ -597,7 +598,7 @@ class SuiteTests(unittest.TestCase):
         self.g.F = self.lua.table()
         for filename in FILES:
             loader = self.lua.eval("function(source) return assert(loadstring(source)) end")
-            loader((ADDON / filename).read_text(encoding="utf-8"))("ForeverSuite", self.g.F)
+            loader((ADDON / filename).read_text(encoding="utf-8"))("TweakSuite", self.g.F)
         for name in re.findall(r'cvarFeature\("[^"\n]+", "[^"\n]+", "([^"\n]+)"', (ADDON / "Modules/Interface.lua").read_text()):
             self.g.cvars[name] = "0" if name not in ("ffxGlow", "cameraBobbing") else "1"
 
@@ -605,7 +606,7 @@ class SuiteTests(unittest.TestCase):
         self.lua.execute(code)
 
     def start(self):
-        self.runlua('fire("ADDON_LOADED", "ForeverSuite")')
+        self.runlua('fire("ADDON_LOADED", "TweakSuite")')
 
     def test_default_is_inert_and_ui_loads(self):
         self.start()
@@ -618,18 +619,18 @@ class SuiteTests(unittest.TestCase):
         self.assertEqual(len(self.g.F.errors), 0)
 
     def test_saved_data_validation(self):
-        self.runlua('ForeverSuiteDB={enabled={repair="yes", fake=true}, cvars=7, repairCap=-1}')
+        self.runlua('TweakSuiteDB={enabled={repair="yes", fake=true}, cvars=7, repairCap=-1}')
         self.start()
-        self.assertIsNone(self.g.ForeverSuiteDB.enabled.repair)
-        self.assertIsNone(self.g.ForeverSuiteDB.enabled.fake)
-        self.assertEqual(self.g.ForeverSuiteDB.repairCap, 100000)
+        self.assertIsNone(self.g.TweakSuiteDB.enabled.repair)
+        self.assertIsNone(self.g.TweakSuiteDB.enabled.fake)
+        self.assertEqual(self.g.TweakSuiteDB.repairCap, 100000)
 
     def test_future_schema_is_preserved(self):
-        self.runlua('ForeverSuiteDB={schema=99, marker="keep", enabled={repair=true}}')
+        self.runlua('TweakSuiteDB={schema=99, marker="keep", enabled={repair=true}}')
         self.start()
-        self.runlua('SlashCmdList.FOREVERSUITE("reset"); fire("MERCHANT_SHOW")')
-        self.assertEqual(self.g.ForeverSuiteDB.schema, 99)
-        self.assertEqual(self.g.ForeverSuiteDB.marker, "keep")
+        self.runlua('SlashCmdList.TWEAKSUITE("reset"); fire("MERCHANT_SHOW")')
+        self.assertEqual(self.g.TweakSuiteDB.schema, 99)
+        self.assertEqual(self.g.TweakSuiteDB.marker, "keep")
         self.assertEqual(self.g.calls.repair, 0)
 
     def test_wrong_client_is_inert(self):
@@ -650,9 +651,9 @@ class SuiteTests(unittest.TestCase):
 
     def test_repair_cap_command_validation(self):
         self.start()
-        self.runlua('SlashCmdList.FOREVERSUITE("cap 25.5")')
+        self.runlua('SlashCmdList.TWEAKSUITE("cap 25.5")')
         self.assertEqual(self.g.F.db.repairCap, 255000)
-        self.runlua('SlashCmdList.FOREVERSUITE("cap -2"); SlashCmdList.FOREVERSUITE("cap nope")')
+        self.runlua('SlashCmdList.TWEAKSUITE("cap -2"); SlashCmdList.TWEAKSUITE("cap nope")')
         self.assertEqual(self.g.F.db.repairCap, 255000)
 
     def test_loaded_addon_prevents_automation_and_late_load_stops_it(self):
@@ -689,11 +690,61 @@ class SuiteTests(unittest.TestCase):
         self.assertEqual(self.g.calls.reward, 1)
         self.assertEqual(self.g.calls.rewardChoice, 0)
 
+    def load_with_legacy_globals_removed(self, setup_lua):
+        """Fresh runtime with the old Classic-style globals absent, as on the Forever client."""
+        self.lua = LuaRuntime(unpack_returned_tuples=True)
+        self.lua.execute(MOCK)
+        self.lua.execute(setup_lua)
+        self.g = self.lua.globals()
+        self.g.F = self.lua.table()
+        for filename in FILES:
+            loader = self.lua.eval("function(source) return assert(loadstring(source)) end")
+            loader((ADDON / filename).read_text(encoding="utf-8"))("TweakSuite", self.g.F)
+
+    def test_compat_shims_never_touch_globals(self):
+        legacy = ["GetContainerNumSlots", "GetContainerItemLink", "GetContainerItemInfo", "UseContainerItem",
+                  "PickupContainerItem", "GetContainerItemID", "GetNumFreeBagSlots", "UnitAura",
+                  "GetNumGossipOptions", "GetGossipOptions", "GetNumQuestLogEntries", "GetQuestLogTitle",
+                  "GetQuestLevel", "GetQuestGreenRange", "GetQuestRequiredMoney", "GetTaxiNodeName"]
+        setup = "".join(f"{name} = nil\n" for name in legacy) + """
+C_Container = C_Container or {}
+C_Container.GetContainerNumSlots = function() return 16 end
+function GetQuestMoneyToGet() return 0 end
+"""
+        self.load_with_legacy_globals_removed(setup)
+        for name in legacy:
+            self.assertIsNone(self.g[name], name + " was written to the global table")
+        self.assertIsNotNone(self.g.F.compat.GetContainerNumSlots)
+        self.assertEqual(self.g.F.Compat("GetContainerNumSlots")(0), 16)
+
+    def test_turn_in_money_uses_npc_dialog_value(self):
+        self.load_with_legacy_globals_removed("GetQuestRequiredMoney = nil\nmoneyToGet = 500\n"
+                                              "function GetQuestMoneyToGet() return moneyToGet end\n")
+        self.start()
+        self.runlua('F:SetEnabled("turnInQuests",true); choices=0; fire("QUEST_COMPLETE")')
+        self.assertEqual(self.g.calls.reward, 0)
+        self.runlua('moneyToGet=0; fire("QUEST_COMPLETE")')
+        self.assertEqual(self.g.calls.reward, 1)
+
+    def test_previous_name_blocks_every_feature(self):
+        self.runlua('loaded["ForeverSuite"] = true')
+        self.start()
+        self.runlua('F:SetEnabled("repair", true); fire("MERCHANT_SHOW")')
+        self.assertEqual(self.g.calls.repair, 0)
+        self.assertTrue(str(self.g.F.features.repair.state).startswith("conflict: ForeverSuite"))
+        self.runlua('loaded["ForeverSuite"] = false; F:Refresh(); fire("MERCHANT_SHOW")')
+        self.assertEqual(self.g.calls.repair, 1)
+
+    def test_settings_window_shows_addon_icon(self):
+        self.start()
+        self.runlua('F:OpenSettings()')
+        self.assertEqual(self.g.F.window.icon.texture, "Interface\\AddOns\\TweakSuite\\Media\\Icon")
+
     def test_accept_and_pause(self):
         self.start()
-        self.runlua('F:SetEnabled("acceptQuests",true); fire("QUEST_DETAIL"); SlashCmdList.FOREVERSUITE("pause"); fire("QUEST_DETAIL")')
+        self.runlua('F:SetEnabled("acceptQuests",true); fire("QUEST_DETAIL"); SlashCmdList.TWEAKSUITE("pause"); fire("QUEST_DETAIL")')
         self.assertEqual(self.g.calls.accept, 1)
-        self.runlua('SlashCmdList.FOREVERSUITE("pause"); fire("QUEST_DETAIL")')
+        self.runlua('SlashCmdList.TWEAKSUITE("pause"); fire("QUEST_DETAIL")')
         self.assertEqual(self.g.calls.accept, 2)
 
     def test_cvar_restore_all_features(self):
@@ -712,7 +763,7 @@ class SuiteTests(unittest.TestCase):
         self.assertEqual(self.g.cvars.ffxGlow, "external")
 
     def test_persisted_cvar_ownership_restores_after_restart(self):
-        self.runlua('cvars.ffxGlow="0"; ForeverSuiteDB={enabled={},cvars={noGlow={before="1",applied="0"}}}')
+        self.runlua('cvars.ffxGlow="0"; TweakSuiteDB={enabled={},cvars={noGlow={before="1",applied="0"}}}')
         self.start()
         self.assertEqual(self.g.cvars.ffxGlow, "1")
 
@@ -787,7 +838,7 @@ class SuiteTests(unittest.TestCase):
 
     def test_search_and_copyable_diagnostics(self):
         self.start()
-        self.runlua('F.window.search:SetText("repair"); SlashCmdList.FOREVERSUITE("report")')
+        self.runlua('F.window.search:SetText("repair"); SlashCmdList.TWEAKSUITE("report")')
         self.assertTrue(self.g.F.rows.repair.shown)
         self.assertFalse(self.g.F.rows.maxStack.shown)
         self.assertIn("1.60.1.70532", self.g.F.reportWindow.edit.text)
@@ -812,15 +863,15 @@ class SuiteTests(unittest.TestCase):
         self.start()
         self.assertEqual(self.g.F.GetOption(self.g.F, "dialogAccept", "key"), "SPACE")
         self.assertTrue(self.g.F.GetOption(self.g.F, "dialogAccept", "hint"))
-        self.runlua('SlashCmdList.FOREVERSUITE("set dialogAccept key enter")')
+        self.runlua('SlashCmdList.TWEAKSUITE("set dialogAccept key enter")')
         self.assertEqual(self.g.F.GetOption(self.g.F, "dialogAccept", "key"), "ENTER")
-        self.runlua('SlashCmdList.FOREVERSUITE("set dialogAccept key NOPE")')
+        self.runlua('SlashCmdList.TWEAKSUITE("set dialogAccept key NOPE")')
         self.assertEqual(self.g.F.GetOption(self.g.F, "dialogAccept", "key"), "ENTER")
-        self.runlua('SlashCmdList.FOREVERSUITE("set dialogAccept hint off")')
+        self.runlua('SlashCmdList.TWEAKSUITE("set dialogAccept hint off")')
         self.assertFalse(self.g.F.GetOption(self.g.F, "dialogAccept", "hint"))
-        self.runlua('SlashCmdList.FOREVERSUITE("set charItemLevel size 99")')
+        self.runlua('SlashCmdList.TWEAKSUITE("set charItemLevel size 99")')
         self.assertEqual(self.g.F.GetOption(self.g.F, "charItemLevel", "size"), 11)
-        self.runlua('SlashCmdList.FOREVERSUITE("set charItemLevel size 12")')
+        self.runlua('SlashCmdList.TWEAKSUITE("set charItemLevel size 12")')
         self.assertEqual(self.g.F.GetOption(self.g.F, "charItemLevel", "size"), 12)
         self.runlua('F:ShowDetails("dialogAccept")')
         body = self.g.F.detailsWindow.body.text
@@ -836,31 +887,31 @@ class SuiteTests(unittest.TestCase):
         self.assertIn("Choices: Bottom right, Top left, Center", body)
 
     def test_option_persistence_and_invalid_saved_values(self):
-        self.runlua('ForeverSuiteDB={schema=1,enabled={},options={dialogAccept={key="ENTER",hint=false,bogus=1},ghost={x=1},charItemLevel={size=99},itemCount={includeBank="yes"}}}')
+        self.runlua('TweakSuiteDB={schema=1,enabled={},options={dialogAccept={key="ENTER",hint=false,bogus=1},ghost={x=1},charItemLevel={size=99},itemCount={includeBank="yes"}}}')
         self.start()
         self.assertEqual(self.g.F.GetOption(self.g.F, "dialogAccept", "key"), "ENTER")
         self.assertFalse(self.g.F.GetOption(self.g.F, "dialogAccept", "hint"))
-        self.assertIsNone(self.g.ForeverSuiteDB.options.dialogAccept.bogus)
-        self.assertIsNone(self.g.ForeverSuiteDB.options.ghost)
-        self.assertIsNone(self.g.ForeverSuiteDB.options.charItemLevel)
+        self.assertIsNone(self.g.TweakSuiteDB.options.dialogAccept.bogus)
+        self.assertIsNone(self.g.TweakSuiteDB.options.ghost)
+        self.assertIsNone(self.g.TweakSuiteDB.options.charItemLevel)
         self.assertFalse(self.g.F.GetOption(self.g.F, "itemCount", "includeBank"))
 
     def test_reset_single_feature_clears_options(self):
         self.start()
         self.runlua('F:SetOption("dialogAccept","key","ENTER"); F:SetEnabled("dialogAccept",true)')
-        self.runlua('SlashCmdList.FOREVERSUITE("reset dialogAccept")')
+        self.runlua('SlashCmdList.TWEAKSUITE("reset dialogAccept")')
         self.assertFalse(self.g.F.db.enabled.dialogAccept)
         self.assertEqual(self.g.F.GetOption(self.g.F, "dialogAccept", "key"), "SPACE")
-        self.assertIsNone(self.g.ForeverSuiteDB.options.dialogAccept)
+        self.assertIsNone(self.g.TweakSuiteDB.options.dialogAccept)
 
     def test_future_schema_rejects_option_writes(self):
-        self.runlua('ForeverSuiteDB={schema=99,options={dialogAccept={key="ENTER"}},marker="keep"}')
+        self.runlua('TweakSuiteDB={schema=99,options={dialogAccept={key="ENTER"}},marker="keep"}')
         self.start()
         self.assertEqual(self.g.F.GetOption(self.g.F, "dialogAccept", "key"), "SPACE")
         self.runlua('assert(not F:SetOption("dialogAccept","key","E"))')
-        self.assertEqual(self.g.ForeverSuiteDB.options.dialogAccept.key, "ENTER")
-        self.runlua('SlashCmdList.FOREVERSUITE("set dialogAccept key E")')
-        self.assertEqual(self.g.ForeverSuiteDB.options.dialogAccept.key, "ENTER")
+        self.assertEqual(self.g.TweakSuiteDB.options.dialogAccept.key, "ENTER")
+        self.runlua('SlashCmdList.TWEAKSUITE("set dialogAccept key E")')
+        self.assertEqual(self.g.TweakSuiteDB.options.dialogAccept.key, "ENTER")
 
     def test_options_panel_cycles_choices_and_steps_numbers(self):
         self.start()
@@ -882,15 +933,15 @@ class SuiteTests(unittest.TestCase):
     def test_dialog_key_clicks_visible_button_and_propagates(self):
         self.start()
         self.runlua('F:SetEnabled("dialogAccept", true)')
-        self.assertTrue(self.g.ForeverSuiteKeyCatcher.shown)
+        self.assertTrue(self.g.TweakSuiteKeyCatcher.shown)
         self.runlua('showButton("QuestFrameAcceptButton"); pressKey("SPACE")')
         self.assertEqual(self.g.QuestFrameAcceptButton.clicks, 1)
-        self.assertFalse(self.g.ForeverSuiteKeyCatcher.propagate)
+        self.assertFalse(self.g.TweakSuiteKeyCatcher.propagate)
         self.runlua('pressKey("SPACE")')
         self.assertEqual(self.g.QuestFrameAcceptButton.clicks, 2)
         self.runlua('showButton(nil); pressKey("SPACE")')
         self.assertEqual(self.g.QuestFrameAcceptButton.clicks, 2)
-        self.assertTrue(self.g.ForeverSuiteKeyCatcher.propagate)
+        self.assertTrue(self.g.TweakSuiteKeyCatcher.propagate)
 
     def test_dialog_key_respects_shift_combat_and_custom_key(self):
         self.start()
@@ -902,11 +953,11 @@ class SuiteTests(unittest.TestCase):
         self.runlua('pressKey("ENTER")')
         self.assertEqual(self.g.QuestFrameAcceptButton.clicks, 1)
         self.runlua('combat=true; fire("PLAYER_REGEN_DISABLED")')
-        self.assertFalse(self.g.ForeverSuiteKeyCatcher.shown)
+        self.assertFalse(self.g.TweakSuiteKeyCatcher.shown)
         self.runlua('pressKey("ENTER")')
         self.assertEqual(self.g.QuestFrameAcceptButton.clicks, 1)
         self.runlua('combat=false; fire("PLAYER_REGEN_ENABLED")')
-        self.assertTrue(self.g.ForeverSuiteKeyCatcher.shown)
+        self.assertTrue(self.g.TweakSuiteKeyCatcher.shown)
         self.runlua('pressKey("ENTER")')
         self.assertEqual(self.g.QuestFrameAcceptButton.clicks, 2)
 
@@ -920,7 +971,7 @@ class SuiteTests(unittest.TestCase):
     def test_reward_number_keys_select_without_turning_in(self):
         self.start()
         self.runlua('F:SetEnabled("rewardKeys", true); showRewards(3); choices=3')
-        self.assertTrue(self.g.ForeverSuiteKeyCatcher.shown)
+        self.assertTrue(self.g.TweakSuiteKeyCatcher.shown)
         self.runlua('pressKey("2")')
         self.assertEqual(self.g.QuestInfoItem2.clicks, 1)
         self.assertEqual(self.g.calls.reward, 0)
@@ -1007,14 +1058,14 @@ class SuiteTests(unittest.TestCase):
 
 
     def test_saved_options_apply_when_feature_enables(self):
-        self.runlua('ForeverSuiteDB={schema=1,enabled={charItemLevel=true},options={charItemLevel={size=14}}}')
+        self.runlua('TweakSuiteDB={schema=1,enabled={charItemLevel=true},options={charItemLevel={size=14}}}')
         self.start()
         self.assertEqual(self.g.CharacterHeadSlot.fontstrings[1].fontSize, 14)
         self.assertEqual(self.g.CharacterHeadSlot.fontstrings[1].text, "82")
 
     def test_report_lists_changed_options(self):
         self.start()
-        self.runlua('F:SetOption("dialogAccept","key","E"); SlashCmdList.FOREVERSUITE("report")')
+        self.runlua('F:SetOption("dialogAccept","key","E"); SlashCmdList.TWEAKSUITE("report")')
         self.assertIn("dialogAccept: off  [key=E]", self.g.F.reportWindow.edit.text)
 
 
@@ -1038,8 +1089,8 @@ class SuiteTests(unittest.TestCase):
         self.runlua('assert(not F:SetOption("itemCount","includeBank","true"))')
         self.runlua('assert(not F:SetOption("nope","key","SPACE"))')
         self.runlua('assert(F:GetOption("nope","key") == nil)')
-        self.assertIsNone(self.g.ForeverSuiteDB.options.charItemLevel)
-        self.assertIsNone(self.g.ForeverSuiteDB.options.itemCount)
+        self.assertIsNone(self.g.TweakSuiteDB.options.charItemLevel)
+        self.assertIsNone(self.g.TweakSuiteDB.options.itemCount)
         self.runlua('assert(F:SetOption("dialogAccept","key","SPACE"))')
 
 
@@ -1055,15 +1106,15 @@ class SuiteTests(unittest.TestCase):
 
     def test_option_command_feedback(self):
         self.start()
-        self.runlua('SlashCmdList.FOREVERSUITE("options dialogAccept")')
+        self.runlua('SlashCmdList.TWEAKSUITE("options dialogAccept")')
         self.assertEqual(len(self.g.prints), 2)
         self.assertIn("Dialog key", self.g.prints[1])
         self.assertIn("Show key hint", self.g.prints[2])
-        self.runlua('SlashCmdList.FOREVERSUITE("set charItemLevel size 99")')
+        self.runlua('SlashCmdList.TWEAKSUITE("set charItemLevel size 99")')
         self.assertIn("Option not changed", self.g.prints[len(self.g.prints)])
-        self.runlua('SlashCmdList.FOREVERSUITE("set dialogAccept key nope")')
+        self.runlua('SlashCmdList.TWEAKSUITE("set dialogAccept key nope")')
         self.assertIn("choices: Space, Enter, E", self.g.prints[len(self.g.prints)])
-        self.runlua('SlashCmdList.FOREVERSUITE("options fastLoot")')
+        self.runlua('SlashCmdList.TWEAKSUITE("options fastLoot")')
         self.assertIn("has no options", self.g.prints[len(self.g.prints)])
 
 
@@ -1132,11 +1183,11 @@ class SuiteTests(unittest.TestCase):
         self.runlua('F:SetEnabled("moveWindows", true)')
         self.runlua('MerchantFrame:Trigger("OnDragStart")')
         self.runlua('MerchantFrame:Trigger("OnDragStop")')
-        self.assertIsNone(self.g.ForeverSuiteDB.layouts)
+        self.assertIsNone(self.g.TweakSuiteDB.layouts)
         self.runlua('shift=true; MerchantFrame:Trigger("OnDragStart"); '
                     'MerchantFrame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 100, -100); '
                     'shift=false; MerchantFrame:Trigger("OnDragStop")')
-        stored = self.g.ForeverSuiteDB.layouts.MerchantFrame
+        stored = self.g.TweakSuiteDB.layouts.MerchantFrame
         self.assertEqual(stored.point, "TOPLEFT")
         self.assertEqual(stored.x, 100)
         self.assertEqual(stored.y, -100)
@@ -1152,12 +1203,12 @@ class SuiteTests(unittest.TestCase):
         self.runlua('F:SetEnabled("moveWindows", true); shift=true; combat=true')
         self.runlua('MerchantFrame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 50, -50); MerchantFrame:Trigger("OnDragStart")')
         self.runlua('combat=false; MerchantFrame:Trigger("OnDragStop")')
-        self.assertIsNone(self.g.ForeverSuiteDB.layouts)
+        self.assertIsNone(self.g.TweakSuiteDB.layouts)
         self.runlua('F:SetOption("moveWindows", "remember", false); '
                     'shift=true; MerchantFrame:Trigger("OnDragStart"); '
                     'MerchantFrame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 25, -25); '
                     'MerchantFrame:Trigger("OnDragStop")')
-        self.assertIsNone(self.g.ForeverSuiteDB.layouts)
+        self.assertIsNone(self.g.TweakSuiteDB.layouts)
 
     def test_average_item_level_on_character_panel(self):
         self.start()
@@ -1349,11 +1400,11 @@ class SuiteTests(unittest.TestCase):
                     'MerchantFrame:Trigger("OnDragStart");'
                     'MerchantFrame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 100, -100);'
                     'MerchantFrame:Trigger("OnDragStop")')
-        self.assertIsNotNone(self.g.ForeverSuiteDB.layouts)
-        self.runlua('SlashCmdList.FOREVERSUITE("windows")')
+        self.assertIsNotNone(self.g.TweakSuiteDB.layouts)
+        self.runlua('SlashCmdList.TWEAKSUITE("windows")')
         self.assertIn("1 saved window position", self.g.prints[len(self.g.prints)])
-        self.runlua('SlashCmdList.FOREVERSUITE("windows reset")')
-        self.assertIsNone(self.g.ForeverSuiteDB.layouts)
+        self.runlua('SlashCmdList.TWEAKSUITE("windows reset")')
+        self.assertIsNone(self.g.TweakSuiteDB.layouts)
         self.assertEqual(self.g.MerchantFrame.points[1], "CENTER")
 
 
@@ -1373,8 +1424,8 @@ class SuiteTests(unittest.TestCase):
         self.runlua('F:SetEnabled("noDeathEffect", true)')
         self.assertEqual(self.g.cvars.ffxDeath, "0")
         self.runlua('F:SetOption("charItemLevel", "size", 18); F:SetOption("dialogAccept", "key", "ENTER")')
-        self.runlua('SlashCmdList.FOREVERSUITE("resetoptions")')
-        self.assertEqual(len(self.g.ForeverSuiteDB.options), 0)
+        self.runlua('SlashCmdList.TWEAKSUITE("resetoptions")')
+        self.assertEqual(len(self.g.TweakSuiteDB.options), 0)
         self.assertEqual(self.g.F.GetOption(self.g.F, "charItemLevel", "size"), 11)
         self.assertEqual(self.g.F.GetOption(self.g.F, "dialogAccept", "key"), "SPACE")
         self.assertIn("reset to their defaults", self.g.prints[len(self.g.prints)])
@@ -1409,18 +1460,18 @@ class SuiteTests(unittest.TestCase):
                     'MerchantFrame:Trigger("OnDragStart");'
                     'MerchantFrame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 10, -10);'
                     'MerchantFrame:Trigger("OnDragStop")')
-        self.assertIsNotNone(self.g.ForeverSuiteDB.layouts)
+        self.assertIsNotNone(self.g.TweakSuiteDB.layouts)
 
 
     def test_saved_layout_sanitation(self):
-        self.runlua('ForeverSuiteDB={schema=1, layouts={Bad={point=5},'
+        self.runlua('TweakSuiteDB={schema=1, layouts={Bad={point=5},'
                     'Bogus={point="CENTER", x=0/0, y=0}, Far={point="CENTER", x=50000, y=0},'
                     'MerchantFrame={point="CENTER", relativePoint="CENTER", x=10, y=-10}}}')
         self.start()
-        self.assertIsNone(self.g.ForeverSuiteDB.layouts.Bad)
-        self.assertIsNone(self.g.ForeverSuiteDB.layouts.Bogus)
-        self.assertIsNone(self.g.ForeverSuiteDB.layouts.Far)
-        self.assertEqual(self.g.ForeverSuiteDB.layouts.MerchantFrame.x, 10)
+        self.assertIsNone(self.g.TweakSuiteDB.layouts.Bad)
+        self.assertIsNone(self.g.TweakSuiteDB.layouts.Bogus)
+        self.assertIsNone(self.g.TweakSuiteDB.layouts.Far)
+        self.assertEqual(self.g.TweakSuiteDB.layouts.MerchantFrame.x, 10)
         self.runlua('F:SetEnabled("moveWindows", true); MerchantFrame:Show()')
         self.assertEqual(self.g.MerchantFrame.points[1], "CENTER")
         self.assertEqual(self.g.MerchantFrame.points[3], 10)
@@ -1538,22 +1589,22 @@ class SuiteTests(unittest.TestCase):
     def test_gold_tracker_records_and_reports(self):
         self.start()
         self.runlua('F:SetEnabled("goldTracker", true)')
-        self.assertEqual(self.g.ForeverSuiteDB.gold["TestRealm - Tester"], 1000000)
+        self.assertEqual(self.g.TweakSuiteDB.gold["TestRealm - Tester"], 1000000)
         self.runlua('money=2500000; fire("PLAYER_MONEY")')
-        self.assertEqual(self.g.ForeverSuiteDB.gold["TestRealm - Tester"], 2500000)
-        self.runlua('SlashCmdList.FOREVERSUITE("gold")')
+        self.assertEqual(self.g.TweakSuiteDB.gold["TestRealm - Tester"], 2500000)
+        self.runlua('SlashCmdList.TWEAKSUITE("gold")')
         self.assertIn("TestRealm - Tester: 2500000c", self.g.prints[len(self.g.prints) - 1])
         self.assertIn("Total across 1 character(s)", self.g.prints[len(self.g.prints)])
         self.runlua('F:SetEnabled("goldTracker", false); money=1; fire("PLAYER_MONEY")')
-        self.assertEqual(self.g.ForeverSuiteDB.gold["TestRealm - Tester"], 2500000)
+        self.assertEqual(self.g.TweakSuiteDB.gold["TestRealm - Tester"], 2500000)
 
     def test_gold_saved_data_sanitation(self):
-        self.runlua('ForeverSuiteDB={schema=1, gold={["A - B"]=5, [7]=1, ["Bad"]=0/0, ["Huge"]=1e15}}')
+        self.runlua('TweakSuiteDB={schema=1, gold={["A - B"]=5, [7]=1, ["Bad"]=0/0, ["Huge"]=1e15}}')
         self.start()
-        self.assertEqual(self.g.ForeverSuiteDB.gold["A - B"], 5)
-        self.assertIsNone(self.g.ForeverSuiteDB.gold["Bad"])
-        self.assertIsNone(self.g.ForeverSuiteDB.gold["Huge"])
-        self.assertIsNone(self.g.ForeverSuiteDB.gold[7])
+        self.assertEqual(self.g.TweakSuiteDB.gold["A - B"], 5)
+        self.assertIsNone(self.g.TweakSuiteDB.gold["Bad"])
+        self.assertIsNone(self.g.TweakSuiteDB.gold["Huge"])
+        self.assertIsNone(self.g.TweakSuiteDB.gold[7])
 
     def test_reset_single_window_layout(self):
         self.start()
@@ -1564,33 +1615,33 @@ class SuiteTests(unittest.TestCase):
                     'QuestFrame:Trigger("OnDragStart");'
                     'QuestFrame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 50, -50);'
                     'QuestFrame:Trigger("OnDragStop")')
-        self.assertIsNotNone(self.g.ForeverSuiteDB.layouts.MerchantFrame)
-        self.assertIsNotNone(self.g.ForeverSuiteDB.layouts.QuestFrame)
-        self.runlua('SlashCmdList.FOREVERSUITE("windows reset MerchantFrame")')
-        self.assertIsNone(self.g.ForeverSuiteDB.layouts.MerchantFrame)
-        self.assertIsNotNone(self.g.ForeverSuiteDB.layouts.QuestFrame)
+        self.assertIsNotNone(self.g.TweakSuiteDB.layouts.MerchantFrame)
+        self.assertIsNotNone(self.g.TweakSuiteDB.layouts.QuestFrame)
+        self.runlua('SlashCmdList.TWEAKSUITE("windows reset MerchantFrame")')
+        self.assertIsNone(self.g.TweakSuiteDB.layouts.MerchantFrame)
+        self.assertIsNotNone(self.g.TweakSuiteDB.layouts.QuestFrame)
         self.assertEqual(self.g.MerchantFrame.points[1], "CENTER")
         self.assertEqual(self.g.QuestFrame.points[4], 50)
-        self.runlua('SlashCmdList.FOREVERSUITE("windows reset NoSuchFrame")')
+        self.runlua('SlashCmdList.TWEAKSUITE("windows reset NoSuchFrame")')
         self.assertIn("Unknown window", self.g.prints[len(self.g.prints)])
-        self.runlua('SlashCmdList.FOREVERSUITE("windows list")')
+        self.runlua('SlashCmdList.TWEAKSUITE("windows list")')
         self.assertIn("MerchantFrame", self.g.prints[len(self.g.prints)])
 
 
     def test_help_command_and_last_category_persistence(self):
-        self.runlua('ForeverSuiteDB={schema=1, lastCategory="Tooltips"}')
+        self.runlua('TweakSuiteDB={schema=1, lastCategory="Tooltips"}')
         self.start()
         self.runlua('F:OpenSettings()')
         self.assertEqual(self.lua.eval('F.selectedCategory'), "Tooltips")
         self.runlua('F.categoryButtons.Camera:Trigger("OnClick")')
-        self.assertEqual(self.g.ForeverSuiteDB.lastCategory, "Camera")
+        self.assertEqual(self.g.TweakSuiteDB.lastCategory, "Camera")
         before = len(self.g.prints)
-        self.runlua('SlashCmdList.FOREVERSUITE("help")')
+        self.runlua('SlashCmdList.TWEAKSUITE("help")')
         self.assertGreater(len(self.g.prints), before)
         self.assertIn("Commands:", self.g.prints[before + 1])
         texts = " ".join([self.g.prints[i] for i in range(before + 1, len(self.g.prints) + 1)])
-        self.assertIn("/fs gold", texts)
-        self.assertIn("/fs windows", texts)
+        self.assertIn("/ts gold", texts)
+        self.assertIn("/ts windows", texts)
 
 
     def test_merchant_rules_preview_filters_and_batch(self):
@@ -1623,21 +1674,21 @@ class SuiteTests(unittest.TestCase):
                     ';itemMeta["item:4002"]={name="Sell Me", quality=0, itemLevel=1, sellPrice=5}'
                     ';containerLinks[1]={[1]="item:4001",[2]="item:4002"};containerSlots[1]=2')
         self.runlua('F:SetEnabled("merchantRules", true); F:SetOption("merchantRules", "preview", false)')
-        self.runlua('SlashCmdList.FOREVERSUITE("neversell add 4001")')
+        self.runlua('SlashCmdList.TWEAKSUITE("neversell add 4001")')
         self.assertIn("Added 4001", self.g.prints[len(self.g.prints)])
         self.runlua('fire("MERCHANT_SHOW")')
         self.assertEqual(self.g.calls.sold, 1)
         self.assertEqual(self.g.sold[1].link, "item:4002")
         self.runlua('containerLinks[1]={[1]="item:4001"}; fire("MERCHANT_SHOW")')
         self.assertEqual(self.g.calls.sold, 1)
-        self.runlua('SlashCmdList.FOREVERSUITE("neversell remove 4001"); containerLinks[1]={[1]="item:4001"}; fire("MERCHANT_SHOW")')
+        self.runlua('SlashCmdList.TWEAKSUITE("neversell remove 4001"); containerLinks[1]={[1]="item:4001"}; fire("MERCHANT_SHOW")')
         self.assertEqual(self.g.calls.sold, 2)
         self.runlua('containerLinks[1]={[1]="item:4001",[2]="item:4002"}; F:SetOption("merchantRules", "batchSize", 1); fire("MERCHANT_SHOW")')
         self.assertEqual(self.g.calls.sold, 3)
 
     def test_quest_exceptions_and_completed_filter(self):
         self.start()
-        self.runlua('F:SetEnabled("acceptQuests", true); SlashCmdList.FOREVERSUITE("except accept A Test Quest");'
+        self.runlua('F:SetEnabled("acceptQuests", true); SlashCmdList.TWEAKSUITE("except accept A Test Quest");'
                     'fire("QUEST_DETAIL")')
         self.assertEqual(self.g.calls.accept, 0)
         self.runlua('questTitle="Another Quest"; fire("QUEST_DETAIL")')
@@ -1646,8 +1697,8 @@ class SuiteTests(unittest.TestCase):
         self.assertEqual(self.g.calls.accept, 1)
         self.runlua('completedQuests[1001]=nil; fire("QUEST_DETAIL")')
         self.assertEqual(self.g.calls.accept, 2)
-        self.runlua('questTitle="A Test Quest"; SlashCmdList.FOREVERSUITE("except accept A Test Quest")')
-        self.runlua('F:SetEnabled("turnInQuests", true); SlashCmdList.FOREVERSUITE("except turnin Another Quest");'
+        self.runlua('questTitle="A Test Quest"; SlashCmdList.TWEAKSUITE("except accept A Test Quest")')
+        self.runlua('F:SetEnabled("turnInQuests", true); SlashCmdList.TWEAKSUITE("except turnin Another Quest");'
                     'fire("QUEST_COMPLETE")')
         self.assertEqual(self.g.calls.reward, 1)
         self.runlua('questTitle="Another Quest"; fire("QUEST_COMPLETE")')
@@ -1667,16 +1718,16 @@ class SuiteTests(unittest.TestCase):
 
     def test_junk_marking_command_and_saved_sanitation(self):
         self.start()
-        self.runlua('SlashCmdList.FOREVERSUITE("junk 5001")')
-        self.assertTrue(self.g.ForeverSuiteDB.junk[5001])
-        self.runlua('SlashCmdList.FOREVERSUITE("unjunk 5001")')
-        self.assertIsNone(self.g.ForeverSuiteDB.junk)
-        self.runlua('ForeverSuiteDB.junk={[5001]=true, ["bad"]=true, [0]=true}; ForeverSuiteDB.neverSell={"x", 7, -1};'
+        self.runlua('SlashCmdList.TWEAKSUITE("junk 5001")')
+        self.assertTrue(self.g.TweakSuiteDB.junk[5001])
+        self.runlua('SlashCmdList.TWEAKSUITE("unjunk 5001")')
+        self.assertIsNone(self.g.TweakSuiteDB.junk)
+        self.runlua('TweakSuiteDB.junk={[5001]=true, ["bad"]=true, [0]=true}; TweakSuiteDB.neverSell={"x", 7, -1};'
                     'F.db=nil; F:Initialize()')
-        self.assertTrue(self.g.ForeverSuiteDB.junk[5001])
-        self.assertIsNone(self.g.ForeverSuiteDB.junk["bad"])
-        self.assertEqual(len(self.g.ForeverSuiteDB.neverSell), 1)
-        self.assertEqual(self.g.ForeverSuiteDB.neverSell[1], 7)
+        self.assertTrue(self.g.TweakSuiteDB.junk[5001])
+        self.assertIsNone(self.g.TweakSuiteDB.junk["bad"])
+        self.assertEqual(len(self.g.TweakSuiteDB.neverSell), 1)
+        self.assertEqual(self.g.TweakSuiteDB.neverSell[1], 7)
 
 
     def test_bind_type_and_tooltip_border(self):
@@ -1725,15 +1776,15 @@ class SuiteTests(unittest.TestCase):
     def test_copy_chat_and_watched_buttons(self):
         self.start()
         self.runlua('F:SetEnabled("copyChat", true); fire("CHAT_MSG_SAY", "hello there", "Tester")')
-        self.runlua('SlashCmdList.FOREVERSUITE("copy")')
+        self.runlua('SlashCmdList.TWEAKSUITE("copy")')
         self.assertIn("hello there", self.g.F.reportWindow.edit.text)
-        self.runlua('SlashCmdList.FOREVERSUITE("watch QuestFrameAcceptButton")')
+        self.runlua('SlashCmdList.TWEAKSUITE("watch QuestFrameAcceptButton")')
         self.assertIn("Also watching button", self.g.prints[len(self.g.prints)])
         self.runlua('F:SetEnabled("dialogAccept", true); showButton("QuestFrameAcceptButton"); fire("QUEST_DETAIL")')
         self.runlua('pressKey("SPACE")')
         self.assertEqual(self.g.QuestFrameAcceptButton.clicks, 1)
-        self.runlua('SlashCmdList.FOREVERSUITE("watch clear")')
-        self.assertIsNone(self.g.ForeverSuiteDB.watch)
+        self.runlua('SlashCmdList.TWEAKSUITE("watch clear")')
+        self.assertIsNone(self.g.TweakSuiteDB.watch)
 
     def test_chat_edit_position_and_sticky_buttons(self):
         self.start()
@@ -1750,16 +1801,16 @@ class SuiteTests(unittest.TestCase):
         self.start()
         self.runlua('itemMeta["item:6001"]={name="Silver Ore", quality=1, itemLevel=10, sellPrice=5};'
                     'containerLinks[1]={[1]="item:6001"}; containerSlots[1]=2')
-        self.runlua('SlashCmdList.FOREVERSUITE("bag silver")')
+        self.runlua('SlashCmdList.TWEAKSUITE("bag silver")')
         self.assertIn("Enable Bag item search", self.g.prints[len(self.g.prints)])
-        self.runlua('F:SetEnabled("bagSearch", true); SlashCmdList.FOREVERSUITE("bag silver")')
+        self.runlua('F:SetEnabled("bagSearch", true); SlashCmdList.TWEAKSUITE("bag silver")')
         self.assertIn("Silver Ore", self.g.prints[len(self.g.prints)])
-        self.runlua('SlashCmdList.FOREVERSUITE("bag zzz")')
+        self.runlua('SlashCmdList.TWEAKSUITE("bag zzz")')
         self.assertIn("No bag item matches", self.g.prints[len(self.g.prints)])
         self.runlua('F:SetEnabled("xpTracker", true)')
         self.runlua('UnitXPValue=100; now=100; fire("PLAYER_XP_UPDATE")')
         self.runlua('UnitXPValue=600; now=1060; fire("PLAYER_XP_UPDATE")')
-        self.runlua('SlashCmdList.FOREVERSUITE("xp")')
+        self.runlua('SlashCmdList.TWEAKSUITE("xp")')
         self.assertIn("XP per hour", self.g.prints[len(self.g.prints)])
 
 
@@ -1767,22 +1818,22 @@ class SuiteTests(unittest.TestCase):
         self.start()
         self.runlua('F:SetEnabled("profiles", true)')
         self.runlua('F:SetEnabled("repair", true); F:SetOption("charItemLevel", "size", 18);'
-                    'SlashCmdList.FOREVERSUITE("profile new Raiding")')
+                    'SlashCmdList.TWEAKSUITE("profile new Raiding")')
         self.assertIn("Created and saved profile Raiding", self.g.prints[len(self.g.prints)])
         self.runlua('F:SetEnabled("repair", false); F:SetOption("charItemLevel", "size", 12)')
-        self.runlua('SlashCmdList.FOREVERSUITE("profile use Raiding")')
+        self.runlua('SlashCmdList.TWEAKSUITE("profile use Raiding")')
         self.assertTrue(self.g.F.features.repair.state == "active")
         self.assertEqual(self.g.F.GetOption(self.g.F, "charItemLevel", "size"), 18)
-        self.runlua('SlashCmdList.FOREVERSUITE("profile list")')
+        self.runlua('SlashCmdList.TWEAKSUITE("profile list")')
         self.assertIn("Raiding", self.g.prints[len(self.g.prints) - 1] + self.g.prints[len(self.g.prints)])
-        self.runlua('SlashCmdList.FOREVERSUITE("profile delete Default")')
+        self.runlua('SlashCmdList.TWEAKSUITE("profile delete Default")')
         self.assertIn("Deleted profile Default", self.g.prints[len(self.g.prints)])
 
     def test_profile_export_import_validation(self):
         self.start()
         self.runlua('F:SetEnabled("profiles", true); F:SetEnabled("repair", true);'
                     'F:SetOption("charItemLevel", "size", 18); F:SetOption("dialogAccept", "key", "ENTER");'
-                    'SlashCmdList.FOREVERSUITE("profile save")')
+                    'SlashCmdList.TWEAKSUITE("profile save")')
         self.runlua('F.exported = F:ExportProfile()')
         exported = self.lua.eval('F.exported')
         self.assertTrue(exported.startswith("FS1|"))
@@ -1799,12 +1850,12 @@ class SuiteTests(unittest.TestCase):
 
     def test_profile_scope_and_saved_sanitation(self):
         self.start()
-        self.runlua('F:SetEnabled("profiles", true); SlashCmdList.FOREVERSUITE("profile scope character")')
-        self.assertEqual(self.g.ForeverSuiteDB.profiles.scope, "character")
+        self.runlua('F:SetEnabled("profiles", true); SlashCmdList.TWEAKSUITE("profile scope character")')
+        self.assertEqual(self.g.TweakSuiteDB.profiles.scope, "character")
         self.assertEqual(self.g.F.GetOption(self.g.F, "profiles", "scope"), "character")
-        self.runlua('ForeverSuiteDB.profiles={data={Good={enabled={repair=true}}, [""]={}},'
-                    'order={"Good","", "Missing"}, active="Nope", scope="weird"}; ForeverSuiteDB.options=nil; F.db=nil; F:Initialize()')
-        profiles = self.g.ForeverSuiteDB.profiles
+        self.runlua('TweakSuiteDB.profiles={data={Good={enabled={repair=true}}, [""]={}},'
+                    'order={"Good","", "Missing"}, active="Nope", scope="weird"}; TweakSuiteDB.options=nil; F.db=nil; F:Initialize()')
+        profiles = self.g.TweakSuiteDB.profiles
         self.assertEqual(list(profiles.order.values()), ["Good"])
         self.assertEqual(profiles.active, "Good")
         self.assertEqual(profiles.scope, "global")
@@ -1812,26 +1863,26 @@ class SuiteTests(unittest.TestCase):
     def test_cvar_browser_info_validation_history(self):
         self.start()
         self.runlua('F:SetEnabled("cvarBrowser", true)')
-        self.runlua('SlashCmdList.FOREVERSUITE("cvar ffxGlow")')
+        self.runlua('SlashCmdList.TWEAKSUITE("cvar ffxGlow")')
         self.assertIn("ffxGlow = 1", self.g.prints[len(self.g.prints) - 2])
-        self.runlua('SlashCmdList.FOREVERSUITE("cvar ffxGlow off")')
+        self.runlua('SlashCmdList.TWEAKSUITE("cvar ffxGlow off")')
         self.assertEqual(self.g.cvars.ffxGlow, "0")
-        self.runlua('SlashCmdList.FOREVERSUITE("cvar cameraDistanceMaxZoomFactor 9")')
+        self.runlua('SlashCmdList.TWEAKSUITE("cvar cameraDistanceMaxZoomFactor 9")')
         self.assertIn("Not changed", self.g.prints[len(self.g.prints)])
-        self.runlua('SlashCmdList.FOREVERSUITE("cvar cameraDistanceMaxZoomFactor 3.5")')
+        self.runlua('SlashCmdList.TWEAKSUITE("cvar cameraDistanceMaxZoomFactor 3.5")')
         self.assertEqual(self.g.cvars.cameraDistanceMaxZoomFactor, "3.5")
-        self.runlua('SlashCmdList.FOREVERSUITE("cvar history")')
+        self.runlua('SlashCmdList.TWEAKSUITE("cvar history")')
         self.assertIn("cameraDistanceMaxZoomFactor", self.g.prints[len(self.g.prints)])
         before = len(self.g.prints)
-        self.runlua('SlashCmdList.FOREVERSUITE("cvar list nameplate")')
+        self.runlua('SlashCmdList.TWEAKSUITE("cvar list nameplate")')
         window = " ".join(self.g.prints[i] for i in range(before + 1, len(self.g.prints) + 1))
         self.assertIn("CVar(s) match", window)
         self.assertIn("nameplateMaxDistance", window)
-        self.runlua('SlashCmdList.FOREVERSUITE("cvar madeUpCvar on")')
+        self.runlua('SlashCmdList.TWEAKSUITE("cvar madeUpCvar on")')
         self.assertIn("Unknown CVar", self.g.prints[len(self.g.prints)])
 
 
-    def test_ui_scale_applies_to_foreversuite_windows(self):
+    def test_ui_scale_applies_to_tweaksuite_windows(self):
         self.start()
         self.runlua('F:OpenSettings(); F:SetEnabled("uiScale", true)')
         self.assertEqual(self.g.F.window.scale, 1)
@@ -1853,12 +1904,12 @@ class SuiteTests(unittest.TestCase):
     def test_window_size_command_and_remember(self):
         self.start()
         self.runlua('F:SetEnabled("resizeWindows", true)')
-        self.runlua('SlashCmdList.FOREVERSUITE("size MerchantFrame 900 700")')
+        self.runlua('SlashCmdList.TWEAKSUITE("size MerchantFrame 900 700")')
         self.assertIn("resized to 900 x 700", self.g.prints[len(self.g.prints)])
-        self.assertEqual(self.g.ForeverSuiteDB.layouts.MerchantFrame.width, 900)
-        self.runlua('SlashCmdList.FOREVERSUITE("size MerchantFrame 10 10")')
+        self.assertEqual(self.g.TweakSuiteDB.layouts.MerchantFrame.width, 900)
+        self.runlua('SlashCmdList.TWEAKSUITE("size MerchantFrame 10 10")')
         self.assertIn("Not resized", self.g.prints[len(self.g.prints)])
-        self.runlua('SlashCmdList.FOREVERSUITE("size NoSuchFrame 400 400")')
+        self.runlua('SlashCmdList.TWEAKSUITE("size NoSuchFrame 400 400")')
         self.assertIn("unknown window", self.g.prints[len(self.g.prints)])
 
     def test_window_snap_clamps_to_screen_edge(self):
@@ -1875,34 +1926,34 @@ class SuiteTests(unittest.TestCase):
     def test_window_anchor_command(self):
         self.start()
         self.runlua('F:SetEnabled("windowAnchors", true)')
-        self.runlua('SlashCmdList.FOREVERSUITE("anchor QuestFrame MerchantFrame 20 -30")')
+        self.runlua('SlashCmdList.TWEAKSUITE("anchor QuestFrame MerchantFrame 20 -30")')
         self.assertIn("anchored to MerchantFrame", self.g.prints[len(self.g.prints)])
-        anchor = self.g.ForeverSuiteDB.anchors.QuestFrame
+        anchor = self.g.TweakSuiteDB.anchors.QuestFrame
         self.assertEqual(anchor.target, "MerchantFrame")
         self.runlua('QuestFrame:Trigger("OnShow")')
         self.assertEqual(self.g.QuestFrame.points[2].name, "MerchantFrame")
-        self.runlua('SlashCmdList.FOREVERSUITE("anchor QuestFrame NoSuchFrame")')
+        self.runlua('SlashCmdList.TWEAKSUITE("anchor QuestFrame NoSuchFrame")')
         self.assertIn("must be another tracked window", self.g.prints[len(self.g.prints)])
-        self.runlua('SlashCmdList.FOREVERSUITE("anchor QuestFrame clear")')
-        self.assertIsNone(self.g.ForeverSuiteDB.anchors)
+        self.runlua('SlashCmdList.TWEAKSUITE("anchor QuestFrame clear")')
+        self.assertIsNone(self.g.TweakSuiteDB.anchors)
 
     def test_window_layout_save_use_delete(self):
         self.start()
         self.runlua('F:SetEnabled("moveWindows", true);'
                     'MerchantFrame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 40, -60);'
                     'MerchantFrame:SetSize(800, 600)')
-        self.runlua('SlashCmdList.FOREVERSUITE("layout save Questing")')
+        self.runlua('SlashCmdList.TWEAKSUITE("layout save Questing")')
         self.assertIn("Saved window layout Questing", self.g.prints[len(self.g.prints)])
-        saved = self.g.ForeverSuiteDB.windowLayouts.Questing
+        saved = self.g.TweakSuiteDB.windowLayouts.Questing
         self.assertIsNotNone(saved)
         self.runlua('MerchantFrame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 500, -500)')
-        self.runlua('SlashCmdList.FOREVERSUITE("layout use Questing")')
+        self.runlua('SlashCmdList.TWEAKSUITE("layout use Questing")')
         self.assertEqual(self.g.MerchantFrame.points[3], 40)
         self.assertEqual(self.g.MerchantFrame.points[4], -60)
-        self.runlua('SlashCmdList.FOREVERSUITE("layout list")')
+        self.runlua('SlashCmdList.TWEAKSUITE("layout list")')
         self.assertIn("Questing", self.g.prints[len(self.g.prints)])
-        self.runlua('SlashCmdList.FOREVERSUITE("layout delete Questing")')
-        self.assertIsNone(self.g.ForeverSuiteDB.windowLayouts)
+        self.runlua('SlashCmdList.TWEAKSUITE("layout delete Questing")')
+        self.assertIsNone(self.g.TweakSuiteDB.windowLayouts)
 
     def test_window_keep_open_and_close_button_wins(self):
         self.start()
@@ -1923,36 +1974,36 @@ class SuiteTests(unittest.TestCase):
         self.assertFalse(self.g.F.WindowExcluded(self.g.F, "AuctionHouseFrame"))
 
     def test_window_anchor_and_layout_sanitation(self):
-        self.runlua('ForeverSuiteDB={schema=1, anchors={Bad={target="MerchantFrame", x="no"}, Good={target="MerchantFrame", x=5, y=-5},'
+        self.runlua('TweakSuiteDB={schema=1, anchors={Bad={target="MerchantFrame", x="no"}, Good={target="MerchantFrame", x=5, y=-5},'
                     'Self={target="Self", x=0, y=0}}, windowLayouts={Bad=5, Good={MerchantFrame={point="CENTER", x=1, y=2}},'
                     ' Wide={MerchantFrame={point="CENTER", x=1, y=2, width=99999}}}}')
         self.start()
-        self.assertIsNone(self.g.ForeverSuiteDB.anchors.Bad)
-        self.assertIsNone(self.g.ForeverSuiteDB.anchors.Self)
-        self.assertIsNotNone(self.g.ForeverSuiteDB.anchors.Good)
-        self.assertIsNone(self.g.ForeverSuiteDB.windowLayouts.Bad)
-        self.assertIsNotNone(self.g.ForeverSuiteDB.windowLayouts.Good)
-        self.assertIsNone(self.g.ForeverSuiteDB.windowLayouts.Wide)
+        self.assertIsNone(self.g.TweakSuiteDB.anchors.Bad)
+        self.assertIsNone(self.g.TweakSuiteDB.anchors.Self)
+        self.assertIsNotNone(self.g.TweakSuiteDB.anchors.Good)
+        self.assertIsNone(self.g.TweakSuiteDB.windowLayouts.Bad)
+        self.assertIsNotNone(self.g.TweakSuiteDB.windowLayouts.Good)
+        self.assertIsNone(self.g.TweakSuiteDB.windowLayouts.Wide)
 
 
     def test_dialog_turn_in_key_respects_reward_choices(self):
         self.start()
         self.runlua('F:SetEnabled("dialogKeys", true); F:SetOption("dialogKeys", "turnInKey", "BACKSPACE")')
         self.runlua('showButton("QuestFrameCompleteQuestButton"); choices=0')
-        self.runlua('ForeverSuiteKeyCatcher.scripts.OnKeyDown(ForeverSuiteKeyCatcher, "BACKSPACE")')
+        self.runlua('TweakSuiteKeyCatcher.scripts.OnKeyDown(TweakSuiteKeyCatcher, "BACKSPACE")')
         self.assertEqual(self.g.QuestFrameCompleteQuestButton.clicks, 1)
         self.runlua('choices=2; showButton("QuestFrameCompleteQuestButton")')
-        self.runlua('ForeverSuiteKeyCatcher.scripts.OnKeyDown(ForeverSuiteKeyCatcher, "BACKSPACE")')
+        self.runlua('TweakSuiteKeyCatcher.scripts.OnKeyDown(TweakSuiteKeyCatcher, "BACKSPACE")')
         self.assertEqual(self.g.QuestFrameCompleteQuestButton.clicks, 1)
 
     def test_dialog_decline_key_clicks_decline_only(self):
         self.start()
         self.runlua('F:SetEnabled("dialogKeys", true); F:SetOption("dialogKeys", "declineKey", "DELETE")')
         self.runlua('local decline = CreateFrame("Button", "QuestFrameDeclineButton"); decline.shown = true')
-        self.runlua('ForeverSuiteKeyCatcher.scripts.OnKeyDown(ForeverSuiteKeyCatcher, "DELETE")')
+        self.runlua('TweakSuiteKeyCatcher.scripts.OnKeyDown(TweakSuiteKeyCatcher, "DELETE")')
         self.assertEqual(self.g.QuestFrameDeclineButton.clicks, 1)
         self.runlua('showButton("QuestFrameAcceptButton")')
-        self.runlua('ForeverSuiteKeyCatcher.scripts.OnKeyDown(ForeverSuiteKeyCatcher, "DELETE")')
+        self.runlua('TweakSuiteKeyCatcher.scripts.OnKeyDown(TweakSuiteKeyCatcher, "DELETE")')
         self.assertEqual(self.g.QuestFrameAcceptButton.clicks, None)
 
     def test_beta_survey_popup_is_closed(self):
@@ -1970,9 +2021,9 @@ class SuiteTests(unittest.TestCase):
         self.assertFalse(self.g.BetaReportButton.shown)
         self.runlua('F:SetEnabled("betaReporter", false)')
         self.assertTrue(self.g.BetaReportButton.shown)
-        self.runlua('SlashCmdList.FOREVERSUITE("bugreport")')
+        self.runlua('SlashCmdList.TWEAKSUITE("bugreport")')
         self.assertIn("Opened the client bug reporter", self.g.prints[len(self.g.prints)])
-        self.runlua('SlashCmdList.FOREVERSUITE("popups")')
+        self.runlua('SlashCmdList.TWEAKSUITE("popups")')
         self.assertIn("BetaReportButton", self.g.prints[len(self.g.prints)])
 
 
@@ -2012,7 +2063,7 @@ class SuiteTests(unittest.TestCase):
         self.runlua('F:SetEnabled("socketInfo", true); hover(); tip.link = "item:1001:0:0"; tip.lines = {}; hover()')
         lines = " | ".join(self.g.tip.lines.values())
         self.assertIn("Sockets: 0 of 1 filled", lines)
-        self.runlua('SlashCmdList.FOREVERSUITE("sockets")')
+        self.runlua('SlashCmdList.TWEAKSUITE("sockets")')
         self.assertIn("Slot 1", self.g.prints[len(self.g.prints)])
 
     def test_unit_tooltip_health_and_class_colour(self):
@@ -2035,7 +2086,7 @@ class SuiteTests(unittest.TestCase):
         self.assertEqual(point[3], "TOPRIGHT")
         self.assertEqual(point[4], -12)
         self.runlua('F:SetOption("tooltipAnchor", "position", "default")')
-        self.assertEqual(self.g.ForeverSuiteDB.options.tooltipAnchor.position, "default")
+        self.assertEqual(self.g.TweakSuiteDB.options.tooltipAnchor.position, "default")
 
 
     def test_friendly_invite_and_duel_rules(self):
@@ -2099,11 +2150,11 @@ class SuiteTests(unittest.TestCase):
         self.start()
         self.runlua('F:SetEnabled("dialogAccept", true); F:SetEnabled("questExceptions", true);'
                     'showButton("QuestFrameAcceptButton"); questTitle = "A Test Quest"')
-        self.runlua('SlashCmdList.FOREVERSUITE("quest except A Test Quest")')
+        self.runlua('SlashCmdList.TWEAKSUITE("quest except A Test Quest")')
         self.assertIn("Added quest exception", self.g.prints[len(self.g.prints)])
         self.runlua('pressKey("SPACE")')
         self.assertEqual(self.g.QuestFrameAcceptButton.clicks, None)
-        self.runlua('SlashCmdList.FOREVERSUITE("quest allow A Test Quest"); pressKey("SPACE")')
+        self.runlua('SlashCmdList.TWEAKSUITE("quest allow A Test Quest"); pressKey("SPACE")')
         self.assertEqual(self.g.QuestFrameAcceptButton.clicks, 1)
 
     def test_trivial_quest_notice(self):
@@ -2120,13 +2171,13 @@ class SuiteTests(unittest.TestCase):
         self.start()
         self.runlua('F:SetEnabled("gossipPreferences", true); gossipOptions = { { text = "Free option", kind = "gossip" },'
                     ' { text = "Buy", kind = "gossip" } }; GossipFrame:Show()')
-        self.runlua('SlashCmdList.FOREVERSUITE("gossip prefer 1")')
+        self.runlua('SlashCmdList.TWEAKSUITE("gossip prefer 1")')
         self.assertIn("now chooses gossip option 1", self.g.prints[len(self.g.prints)])
         self.runlua('fire("GOSSIP_SHOW")')
         self.assertEqual(self.g.calls.gossipIndex, 1)
-        self.runlua('SlashCmdList.FOREVERSUITE("gossip list")')
+        self.runlua('SlashCmdList.TWEAKSUITE("gossip list")')
         self.assertIn("12345", self.g.prints[len(self.g.prints)])
-        self.runlua('SlashCmdList.FOREVERSUITE("gossip clear"); fire("GOSSIP_SHOW")')
+        self.runlua('SlashCmdList.TWEAKSUITE("gossip clear"); fire("GOSSIP_SHOW")')
         self.assertEqual(self.g.calls.gossipIndex, 1)
 
     def test_sell_whitelist_overrides_quality_rule(self):
@@ -2134,60 +2185,60 @@ class SuiteTests(unittest.TestCase):
         self.runlua('itemReady = true; itemMeta["item:3001"] = { quality = 2, sellPrice = 500, equipLoc = "INVTYPE_HEAD" };'
                     'containerLinks[0] = { [1] = "item:3001" }; containerSlots[0] = 1;'
                     'F:SetEnabled("sellWhitelist", true); F:SetEnabled("merchantRules", true)')
-        self.runlua('SlashCmdList.FOREVERSUITE("whitelist add 3001")')
+        self.runlua('SlashCmdList.TWEAKSUITE("whitelist add 3001")')
         self.assertIn("Whitelisted item 3001", self.g.prints[len(self.g.prints)])
         self.runlua('candidateCount = #F:SaleCandidates()')
         self.assertEqual(self.g.candidateCount, 1)
         self.runlua('containerLinks[0] = {}')
-        self.runlua('SlashCmdList.FOREVERSUITE("whitelist list")')
+        self.runlua('SlashCmdList.TWEAKSUITE("whitelist list")')
         self.assertIn("3001", self.g.prints[len(self.g.prints)])
-        self.runlua('SlashCmdList.FOREVERSUITE("whitelist remove 3001")')
+        self.runlua('SlashCmdList.TWEAKSUITE("whitelist remove 3001")')
         self.assertIn("Removed the item from the whitelist", self.g.prints[len(self.g.prints)])
 
     def test_social_sanitation(self):
-        self.runlua('ForeverSuiteDB={schema=1, questExceptions={ids={1001, -5, 2.5, 4455}, titles={"A Quest", "", 7}},'
+        self.runlua('TweakSuiteDB={schema=1, questExceptions={ids={1001, -5, 2.5, 4455}, titles={"A Quest", "", 7}},'
                     'gossipPrefs={["12345"]=3, Bad=4, ["9999999999999"]=5, ["777"]=12},'
                     'sellWhitelist={3001, "x", 0, 3002}}')
         self.start()
-        store = self.g.ForeverSuiteDB.questExceptions
+        store = self.g.TweakSuiteDB.questExceptions
         self.assertEqual([store['ids'][i] for i in (1, 2)], [1001, 4455])
         self.assertEqual([store['titles'][i] for i in (1,)], ["A Quest"])
-        self.assertIsNone(self.g.ForeverSuiteDB.gossipPrefs.Bad)
-        self.assertIsNone(self.g.ForeverSuiteDB.gossipPrefs["777"])
-        self.assertEqual([self.g.ForeverSuiteDB.sellWhitelist[i] for i in (1, 2)], [3001, 3002])
+        self.assertIsNone(self.g.TweakSuiteDB.gossipPrefs.Bad)
+        self.assertIsNone(self.g.TweakSuiteDB.gossipPrefs["777"])
+        self.assertEqual([self.g.TweakSuiteDB.sellWhitelist[i] for i in (1, 2)], [3001, 3002])
 
 
     def test_chat_log_store_and_clear(self):
         self.start()
         self.runlua('F:SetEnabled("chatLogStore", true); F:SetOption("chatLogStore", "size", 20)')
         self.runlua('for i = 1, 25 do fire("CHAT_MSG_SAY", "line " .. i, "Tester") end')
-        log = self.g.ForeverSuiteDB.chatLog
+        log = self.g.TweakSuiteDB.chatLog
         self.assertEqual(len(log), 20)
         self.assertEqual(log[len(log)].text, "line 25")
         self.runlua('fire("CHAT_MSG_WHISPER", "secret", "Buddy")')
-        self.assertEqual(self.g.ForeverSuiteDB.lastWhisper, "Buddy")
-        self.runlua('SlashCmdList.FOREVERSUITE("chatlog")')
+        self.assertEqual(self.g.TweakSuiteDB.lastWhisper, "Buddy")
+        self.runlua('SlashCmdList.TWEAKSUITE("chatlog")')
         self.assertIn("Buddy: secret", self.g.F.reportWindow.edit.text)
-        self.runlua('SlashCmdList.FOREVERSUITE("chatlog clear")')
-        self.assertIsNone(self.g.ForeverSuiteDB.chatLog)
+        self.runlua('SlashCmdList.TWEAKSUITE("chatlog clear")')
+        self.assertIsNone(self.g.TweakSuiteDB.chatLog)
 
     def test_chat_log_whispers_only_option(self):
         self.start()
         self.runlua('F:SetEnabled("chatLogStore", true); F:SetOption("chatLogStore", "whispersOnly", true)')
         self.runlua('fire("CHAT_MSG_SAY", "public", "Tester"); fire("CHAT_MSG_WHISPER", "private", "Buddy")')
-        log = self.g.ForeverSuiteDB.chatLog
+        log = self.g.TweakSuiteDB.chatLog
         self.assertEqual(len(log), 1)
         self.assertEqual(log[1].text, "private")
 
     def test_saved_channels_join_and_remove(self):
         self.start()
-        self.runlua('F:SetEnabled("chatChannels", true); SlashCmdList.FOREVERSUITE("channels add world")')
-        self.assertEqual([self.g.ForeverSuiteDB.channels[i] for i in (1,)], ["world"])
+        self.runlua('F:SetEnabled("chatChannels", true); SlashCmdList.TWEAKSUITE("channels add world")')
+        self.assertEqual([self.g.TweakSuiteDB.channels[i] for i in (1,)], ["world"])
         self.runlua('fire("PLAYER_LOGIN")')
         self.assertIn("world", list(self.g.joinedChannels.values()))
-        self.runlua('SlashCmdList.FOREVERSUITE("channels remove world")')
+        self.runlua('SlashCmdList.TWEAKSUITE("channels remove world")')
         self.assertIn("world", list(self.g.leftChannels.values()))
-        self.assertIsNone(self.g.ForeverSuiteDB.channels)
+        self.assertIsNone(self.g.TweakSuiteDB.channels)
 
     def test_chat_class_colours_and_word_filter(self):
         self.start()
@@ -2197,11 +2248,11 @@ class SuiteTests(unittest.TestCase):
         self.assertFalse(hide)
         self.assertIn("|cff", name)
         self.assertIn("Buddy", name)
-        self.runlua('F:SetEnabled("chatFilters", true); SlashCmdList.FOREVERSUITE("filter add spam")')
+        self.runlua('F:SetEnabled("chatFilters", true); SlashCmdList.TWEAKSUITE("filter add spam")')
         self.runlua('hide, shownText, tintedName = ApplyChatFilter("CHAT_MSG_SAY", "buy SPAM now", "Buddy", "Common", nil, nil, nil, nil, nil, nil, nil, nil, "Player-970-1")')
         hide = self.g.hide
         self.assertTrue(hide)
-        self.runlua('SlashCmdList.FOREVERSUITE("filter remove spam")')
+        self.runlua('SlashCmdList.TWEAKSUITE("filter remove spam")')
         self.runlua('hide, shownText, tintedName = ApplyChatFilter("CHAT_MSG_SAY", "buy SPAM now", "Buddy", "Common", nil, nil, nil, nil, nil, nil, nil, nil, "Player-970-1")')
         hide = self.g.hide
         self.assertFalse(hide)
@@ -2210,42 +2261,42 @@ class SuiteTests(unittest.TestCase):
         self.start()
         self.runlua('F:SetEnabled("chatLogStore", true); F:SetEnabled("whisperWindow", true)')
         self.runlua('fire("CHAT_MSG_WHISPER", "are you there", "Buddy")')
-        self.runlua('SlashCmdList.FOREVERSUITE("whisper Buddy")')
-        self.assertTrue(self.g.ForeverSuiteWhisperWindow.shown)
-        self.assertIn("are you there", self.g.ForeverSuiteWhisperWindow.body.text)
-        self.runlua('ForeverSuiteWhisperWindow.edit:SetText("yes"); F:SendWhisperFromWindow()')
+        self.runlua('SlashCmdList.TWEAKSUITE("whisper Buddy")')
+        self.assertTrue(self.g.TweakSuiteWhisperWindow.shown)
+        self.assertIn("are you there", self.g.TweakSuiteWhisperWindow.body.text)
+        self.runlua('TweakSuiteWhisperWindow.edit:SetText("yes"); F:SendWhisperFromWindow()')
         sent = self.g.sentMessages
         self.assertEqual(sent[len(sent)].text, "yes")
         self.assertEqual(sent[len(sent)].target, "Buddy")
-        self.runlua('SlashCmdList.FOREVERSUITE("whisper close")')
-        self.assertFalse(self.g.ForeverSuiteWhisperWindow.shown)
+        self.runlua('SlashCmdList.TWEAKSUITE("whisper close")')
+        self.assertFalse(self.g.TweakSuiteWhisperWindow.shown)
 
     def test_chat_db_sanitation(self):
-        self.runlua('ForeverSuiteDB={schema=1, chatLog={ {text="ok", name="A", channel="Say"}, {text="", name="B"}, "junk",'
+        self.runlua('TweakSuiteDB={schema=1, chatLog={ {text="ok", name="A", channel="Say"}, {text="", name="B"}, "junk",'
                     ' {text=string.rep("x", 500)} }, channels={"world", "", 5, string.rep("y", 60)},'
                     ' chatFilters={"spam", "", 7}, lastWhisper=""}')
         self.start()
-        log = self.g.ForeverSuiteDB.chatLog
+        log = self.g.TweakSuiteDB.chatLog
         self.assertEqual(len(log), 1)
         self.assertEqual(log[1].text, "ok")
-        channels = self.g.ForeverSuiteDB.channels
+        channels = self.g.TweakSuiteDB.channels
         self.assertEqual(len(channels), 1)
         self.assertEqual(channels[1], "world")
-        self.assertEqual(len(self.g.ForeverSuiteDB.chatFilters), 1)
-        self.assertIsNone(self.g.ForeverSuiteDB.lastWhisper)
+        self.assertEqual(len(self.g.TweakSuiteDB.chatFilters), 1)
+        self.assertIsNone(self.g.TweakSuiteDB.lastWhisper)
 
 
     def test_map_cursor_coordinates_and_zone_range(self):
         self.start()
         self.runlua('F:SetEnabled("worldMapCoords", true); F:SetEnabled("zoneLevels", true)')
-        self.runlua('SlashCmdList.FOREVERSUITE("where")')
+        self.runlua('SlashCmdList.TWEAKSUITE("where")')
         self.assertIn("40, 50", self.g.prints[len(self.g.prints)])
         self.runlua('WorldMapFrame.cursor = { 1300, 100 }')
-        self.runlua('SlashCmdList.FOREVERSUITE("where")')
+        self.runlua('SlashCmdList.TWEAKSUITE("where")')
         self.assertIn("Move the mouse", self.g.prints[len(self.g.prints)])
-        self.runlua('SlashCmdList.FOREVERSUITE("zone")')
+        self.runlua('SlashCmdList.TWEAKSUITE("zone")')
         self.assertIn("Elwynn Forest: levels 1-10", self.g.prints[len(self.g.prints)])
-        self.runlua('zoneName = "Unknown Isle"; SlashCmdList.FOREVERSUITE("zone")')
+        self.runlua('zoneName = "Unknown Isle"; SlashCmdList.TWEAKSUITE("zone")')
         self.assertIn("no level range recorded", self.g.prints[len(self.g.prints)])
         self.runlua('zoneName = "Westfall"; fire("ZONE_CHANGED_NEW_AREA")')
         self.assertIn("Westfall", self.g.prints[len(self.g.prints)])
@@ -2253,58 +2304,58 @@ class SuiteTests(unittest.TestCase):
     def test_waypoint_and_dungeon_commands(self):
         self.start()
         self.runlua('F:SetEnabled("waypoints", true); F:SetEnabled("dungeonMarkers", true)')
-        self.runlua('SlashCmdList.FOREVERSUITE("way 40 60")')
+        self.runlua('SlashCmdList.TWEAKSUITE("way 40 60")')
         self.assertIn("Set a waypoint at 40, 60", self.g.prints[len(self.g.prints)])
         self.assertEqual(self.g.userWaypoint.position.x, 0.4)
         self.assertEqual(self.g.userWaypoint.position.y, 0.6)
-        self.runlua('SlashCmdList.FOREVERSUITE("way 200 10")')
+        self.runlua('SlashCmdList.TWEAKSUITE("way 200 10")')
         self.assertIn("Waypoint not set", self.g.prints[len(self.g.prints)])
-        self.runlua('SlashCmdList.FOREVERSUITE("way clear")')
+        self.runlua('SlashCmdList.TWEAKSUITE("way clear")')
         self.assertIsNone(self.g.userWaypoint)
-        self.runlua('SlashCmdList.FOREVERSUITE("dungeon The Deadmines")')
+        self.runlua('SlashCmdList.TWEAKSUITE("dungeon The Deadmines")')
         self.assertIn("Westfall", self.g.prints[len(self.g.prints)])
         self.assertIsNotNone(self.g.userWaypoint)
         before = len(self.g.prints)
-        self.runlua('SlashCmdList.FOREVERSUITE("dungeon")')
+        self.runlua('SlashCmdList.TWEAKSUITE("dungeon")')
         listing = " ".join(self.g.prints[i] for i in range(before + 1, len(self.g.prints) + 1))
         self.assertIn("Scarlet Monastery", listing)
 
     def test_teleport_favorites_and_menu(self):
         self.start()
         self.runlua('F:SetEnabled("teleportFavorites", true); F:SetEnabled("teleportMenu", true)')
-        self.runlua('SlashCmdList.FOREVERSUITE("tele add Hearth 8690")')
+        self.runlua('SlashCmdList.TWEAKSUITE("tele add Hearth 8690")')
         self.assertIn("Saved teleport favorite Hearth", self.g.prints[len(self.g.prints)])
-        self.runlua('SlashCmdList.FOREVERSUITE("tele hearth")')
+        self.runlua('SlashCmdList.TWEAKSUITE("tele hearth")')
         self.assertIn(8690, list(self.g.castSpells.values()))
-        self.runlua('SlashCmdList.FOREVERSUITE("tele menu")')
-        self.assertTrue(self.g.ForeverSuiteTeleportMenu.shown)
-        self.assertEqual(self.g.ForeverSuiteTeleportMenu.buttons[1].text.text, "Hearth")
-        self.runlua('combat = true; SlashCmdList.FOREVERSUITE("tele Hearth")')
+        self.runlua('SlashCmdList.TWEAKSUITE("tele menu")')
+        self.assertTrue(self.g.TweakSuiteTeleportMenu.shown)
+        self.assertEqual(self.g.TweakSuiteTeleportMenu.buttons[1].text.text, "Hearth")
+        self.runlua('combat = true; SlashCmdList.TWEAKSUITE("tele Hearth")')
         self.assertIn("cannot cast during combat", self.g.prints[len(self.g.prints)])
         self.runlua('combat = false; F:SetEnabled("teleportMenu", false)')
-        self.assertFalse(self.g.ForeverSuiteTeleportMenu.shown)
-        self.runlua('SlashCmdList.FOREVERSUITE("tele remove Hearth")')
-        self.assertIsNone(self.g.ForeverSuiteDB.teleports)
+        self.assertFalse(self.g.TweakSuiteTeleportMenu.shown)
+        self.runlua('SlashCmdList.TWEAKSUITE("tele remove Hearth")')
+        self.assertIsNone(self.g.TweakSuiteDB.teleports)
 
     def test_taxi_shortcuts_and_flight_timer(self):
         self.start()
         self.runlua('F:SetEnabled("flightShortcuts", true); F:SetEnabled("flightTimer", true);'
                     'taxiNodes = { "Goldshire", "Stormwind" }')
-        self.runlua('SlashCmdList.FOREVERSUITE("taxi list")')
+        self.runlua('SlashCmdList.TWEAKSUITE("taxi list")')
         self.assertIn("2. Stormwind", self.g.prints[len(self.g.prints) - 1])
-        self.runlua('SlashCmdList.FOREVERSUITE("taxi 2")')
+        self.runlua('SlashCmdList.TWEAKSUITE("taxi 2")')
         self.assertEqual(list(self.g.takenTaxi.values()), [2])
         self.runlua('unitOnTaxi = true; now = 100; fire("TAXIMAP_CLOSED"); now = 130')
-        self.runlua('SlashCmdList.FOREVERSUITE("flight")')
+        self.runlua('SlashCmdList.TWEAKSUITE("flight")')
         self.assertIn("30.0 seconds", self.g.prints[len(self.g.prints)])
-        self.runlua('fire("PLAYER_CONTROL_GAINED"); SlashCmdList.FOREVERSUITE("flight")')
+        self.runlua('fire("PLAYER_CONTROL_GAINED"); SlashCmdList.TWEAKSUITE("flight")')
         self.assertIn("Not on a taxi flight", self.g.prints[len(self.g.prints)])
 
     def test_teleport_db_sanitation(self):
-        self.runlua('ForeverSuiteDB={schema=1, teleports={ {name="Hearth", id=8690}, {name="", id=1},'
+        self.runlua('TweakSuiteDB={schema=1, teleports={ {name="Hearth", id=8690}, {name="", id=1},'
                     ' {name="Bad", id="x"}, {name="Huge", id=2.5} }}')
         self.start()
-        list_ = self.g.ForeverSuiteDB.teleports
+        list_ = self.g.TweakSuiteDB.teleports
         self.assertEqual(len(list_), 1)
         self.assertEqual(list_[1].name, "Hearth")
 
@@ -2314,12 +2365,12 @@ class SuiteTests(unittest.TestCase):
         self.runlua('questLogEntries = { { title = "Far Quest", level = 20, id = 11 }, { title = "Near Quest", level = 25, id = 12 },'
                     ' { title = "Header", header = true } }; questDistances = { [11] = 40000, [12] = 100 }')
         self.runlua('F:SetEnabled("questList", true); F:SetEnabled("questDistance", true)')
-        self.runlua('SlashCmdList.FOREVERSUITE("quests")')
+        self.runlua('SlashCmdList.TWEAKSUITE("quests")')
         first = self.g.prints[len(self.g.prints) - 1]
         self.assertIn("Near Quest", first)
         self.assertIn("[25]", first)
         self.assertIn("10 m", first)
-        self.runlua('SlashCmdList.FOREVERSUITE("quests")')
+        self.runlua('SlashCmdList.TWEAKSUITE("quests")')
         self.assertIn("Far Quest", self.g.prints[len(self.g.prints)])
         self.assertNotIn("Header", " ".join(self.g.prints.values()))
 
@@ -2327,13 +2378,13 @@ class SuiteTests(unittest.TestCase):
         self.start()
         self.runlua('F:SetEnabled("questItemUse", true); F:SetEnabled("questTarget", true);'
                     'containerLinks[0] = { [1] = "item:4001" }; containerSlots[0] = 1; sold = {}')
-        self.runlua('SlashCmdList.FOREVERSUITE("useq 4001")')
+        self.runlua('SlashCmdList.TWEAKSUITE("useq 4001")')
         self.assertIn("Used", self.g.prints[len(self.g.prints)])
-        self.runlua('SlashCmdList.FOREVERSUITE("useq Missing")')
+        self.runlua('SlashCmdList.TWEAKSUITE("useq Missing")')
         self.assertIn("no matching item found", self.g.prints[len(self.g.prints)])
-        self.runlua('SlashCmdList.FOREVERSUITE("qtarget Wolf")')
+        self.runlua('SlashCmdList.TWEAKSUITE("qtarget Wolf")')
         self.assertEqual(self.g.targetedName, "Wolf")
-        self.runlua('SlashCmdList.FOREVERSUITE("qtarget Nobody")')
+        self.runlua('SlashCmdList.TWEAKSUITE("qtarget Nobody")')
         self.assertIn("No creature with that name", self.g.prints[len(self.g.prints)])
 
     def test_rested_report_and_full_notice(self):
@@ -2341,7 +2392,7 @@ class SuiteTests(unittest.TestCase):
         self.runlua('function GetXPExhaustion() return restedValue end; restedValue = 200;'
                     'UnitXPValue = 0; UnitXPMaxValue = 1000;'
                     'F:SetEnabled("restedInfo", true); F:SetEnabled("restedFull", true)')
-        self.runlua('SlashCmdList.FOREVERSUITE("rested")')
+        self.runlua('SlashCmdList.TWEAKSUITE("rested")')
         self.assertIn("Rested XP: 200", self.g.prints[len(self.g.prints)])
         self.assertIn("20.0%", self.g.prints[len(self.g.prints)])
         self.runlua('restedValue = 1600; F:RefreshRestedForTest()')
@@ -2369,11 +2420,11 @@ class SuiteTests(unittest.TestCase):
         self.start()
         self.runlua('F:SetEnabled("typedConfirm", true); F:SetEnabled("chatLogStore", true)')
         self.runlua('fire("CHAT_MSG_SAY", "keep me", "Tester")')
-        self.runlua('SlashCmdList.FOREVERSUITE("chatlog clear")')
-        self.assertIn("Type /fs chatlog clear confirm", self.g.prints[len(self.g.prints)])
-        self.assertIsNotNone(self.g.ForeverSuiteDB.chatLog)
-        self.runlua('SlashCmdList.FOREVERSUITE("chatlog clear confirm")')
-        self.assertIsNone(self.g.ForeverSuiteDB.chatLog)
+        self.runlua('SlashCmdList.TWEAKSUITE("chatlog clear")')
+        self.assertIn("Type /ts chatlog clear confirm", self.g.prints[len(self.g.prints)])
+        self.assertIsNotNone(self.g.TweakSuiteDB.chatLog)
+        self.runlua('SlashCmdList.TWEAKSUITE("chatlog clear confirm")')
+        self.assertIsNone(self.g.TweakSuiteDB.chatLog)
 
 
     def test_gear_groups_and_bag_marks(self):
@@ -2382,17 +2433,17 @@ class SuiteTests(unittest.TestCase):
                     'containerLinks[0] = { [1] = "item:6001", [2] = "item:6002" }; containerSlots[0] = 2;'
                     'CreateFrame("Button", "ContainerFrame1Item1"); CreateFrame("Button", "ContainerFrame1Item2");'
                     'F:SetEnabled("gearGroups", true); F:SetEnabled("gearBagMarks", true)')
-        self.runlua('SlashCmdList.FOREVERSUITE("gear add Tank 6001")')
+        self.runlua('SlashCmdList.TWEAKSUITE("gear add Tank 6001")')
         self.assertIn("Added item 6001", self.g.prints[len(self.g.prints)])
-        self.runlua('SlashCmdList.FOREVERSUITE("gear add Tank 6002"); SlashCmdList.FOREVERSUITE("gear add Tank 9999")')
-        self.runlua('SlashCmdList.FOREVERSUITE("gear show Tank")')
+        self.runlua('SlashCmdList.TWEAKSUITE("gear add Tank 6002"); SlashCmdList.TWEAKSUITE("gear add Tank 9999")')
+        self.runlua('SlashCmdList.TWEAKSUITE("gear show Tank")')
         self.assertIn("Marked 2 bag slot(s)", self.g.prints[len(self.g.prints)])
         self.assertEqual(self.g.ContainerFrame1Item1.border[1], 1)
-        self.runlua('SlashCmdList.FOREVERSUITE("gear show clear")')
+        self.runlua('SlashCmdList.TWEAKSUITE("gear show clear")')
         self.assertIn("Cleared gear group marks", self.g.prints[len(self.g.prints)])
-        self.runlua('SlashCmdList.FOREVERSUITE("gear list")')
+        self.runlua('SlashCmdList.TWEAKSUITE("gear list")')
         self.assertIn("Tank", self.g.prints[len(self.g.prints)])
-        self.runlua('SlashCmdList.FOREVERSUITE("gear remove Tank 6001")')
+        self.runlua('SlashCmdList.TWEAKSUITE("gear remove Tank 6001")')
         self.assertIn("Removed the item from the gear group", self.g.prints[len(self.g.prints)])
 
     def test_bag_search_filters(self):
@@ -2401,9 +2452,9 @@ class SuiteTests(unittest.TestCase):
                     'containerLinks[0] = { [1] = "item:6101", [2] = "item:6102" }; containerSlots[0] = 2;'
                     'containerLinks[1] = {};'
                     'F:SetEnabled("bagSearch", true); F:SetEnabled("bagFilters", true); F:SetEnabled("gearGroups", true)')
-        self.runlua('SlashCmdList.FOREVERSUITE("gear add Fancy 6101")')
+        self.runlua('SlashCmdList.TWEAKSUITE("gear add Fancy 6101")')
         before = len(self.g.prints)
-        self.runlua('SlashCmdList.FOREVERSUITE("bag #gear")')
+        self.runlua('SlashCmdList.TWEAKSUITE("bag #gear")')
         listing = " ".join(self.g.prints[i] for i in range(before + 1, len(self.g.prints) + 1))
         self.assertIn("1 matching item(s)", listing)
         self.assertIn("slot 1", listing)
@@ -2416,11 +2467,11 @@ class SuiteTests(unittest.TestCase):
                     'inventoryLinks.player[16] = "item:7002"; containerLinks[0] = { [1] = "item:7100" }; containerSlots[0] = 1;'
                     'F:SetEnabled("fishingSet", true); F:SetEnabled("fishingLure", true); F:SetEnabled("fishingCast", true)')
         self.runlua('inventoryLinks.player[16] = "item:7001"; fire("PLAYER_EQUIPMENT_CHANGED", 16)')
-        self.runlua('SlashCmdList.FOREVERSUITE("fish restore")')
+        self.runlua('SlashCmdList.TWEAKSUITE("fish restore")')
         self.assertIn("Restored 1 weapon(s)", self.g.prints[len(self.g.prints)])
-        self.runlua('SlashCmdList.FOREVERSUITE("lure add Shiny 7100")')
+        self.runlua('SlashCmdList.TWEAKSUITE("lure add Shiny 7100")')
         self.assertIn("Saved lure Shiny", self.g.prints[len(self.g.prints)])
-        self.runlua('SlashCmdList.FOREVERSUITE("lure Shiny")')
+        self.runlua('SlashCmdList.TWEAKSUITE("lure Shiny")')
         self.assertIn("Applied lure Shiny", self.g.prints[len(self.g.prints)])
 
     def test_eat_drink_and_pet_food(self):
@@ -2429,13 +2480,13 @@ class SuiteTests(unittest.TestCase):
                     'itemMeta["item:7202"] = { name = "Spring Water", classID = 0, subType = "Food & Drink" };'
                     'containerLinks[0] = { [1] = "item:7201", [2] = "item:7202" }; containerSlots[0] = 2;'
                     'F:SetEnabled("foodDrink", true); F:SetEnabled("petFood", true)')
-        self.runlua('SlashCmdList.FOREVERSUITE("eat")')
+        self.runlua('SlashCmdList.TWEAKSUITE("eat")')
         self.assertIn("Bread", self.g.prints[len(self.g.prints)])
-        self.runlua('SlashCmdList.FOREVERSUITE("drink")')
+        self.runlua('SlashCmdList.TWEAKSUITE("drink")')
         self.assertIn("Spring Water", self.g.prints[len(self.g.prints)])
         self.runlua('containerLinks[0] = { [1] = "item:7201", [2] = "item:7202" }')
         before = len(self.g.prints)
-        self.runlua('SlashCmdList.FOREVERSUITE("petfood")')
+        self.runlua('SlashCmdList.TWEAKSUITE("petfood")')
         listing = " ".join(self.g.prints[i] for i in range(before + 1, len(self.g.prints) + 1))
         self.assertIn("Bread", listing)
 
@@ -2455,20 +2506,20 @@ class SuiteTests(unittest.TestCase):
         self.start()
         self.runlua('local button = CreateFrame("Button", "SomeAddonMinimapButton", Minimap); button.shown = true;'
                     'F:SetEnabled("minimapButtons", true)')
-        self.runlua('SlashCmdList.FOREVERSUITE("minimap collect")')
+        self.runlua('SlashCmdList.TWEAKSUITE("minimap collect")')
         self.assertIn("Hid 1 minimap button", self.g.prints[len(self.g.prints)])
         self.assertFalse(self.g.SomeAddonMinimapButton.shown)
-        self.runlua('SlashCmdList.FOREVERSUITE("minimap restore")')
+        self.runlua('SlashCmdList.TWEAKSUITE("minimap restore")')
         self.assertTrue(self.g.SomeAddonMinimapButton.shown)
 
     def test_character_db_sanitation(self):
-        self.runlua('ForeverSuiteDB={schema=1, gearGroups={Tank={6001, 0, "x"}, Bad=5},'
+        self.runlua('TweakSuiteDB={schema=1, gearGroups={Tank={6001, 0, "x"}, Bad=5},'
                     'lures={ {name="Shiny", id=7100}, {name="", id=1}, {name="Bad", id=0} }}')
         self.start()
-        groups = self.g.ForeverSuiteDB.gearGroups
+        groups = self.g.TweakSuiteDB.gearGroups
         self.assertEqual([groups['Tank'][i] for i in (1,)], [6001])
         self.assertIsNone(groups.Bad)
-        self.assertEqual(len(self.g.ForeverSuiteDB.lures), 1)
+        self.assertEqual(len(self.g.TweakSuiteDB.lures), 1)
 
 
     def test_trainer_listing_ranks_and_bulk_purchase(self):
@@ -2477,14 +2528,14 @@ class SuiteTests(unittest.TestCase):
                     ' { name = "Frostbolt", rank = "Rank 1", category = "available", cost = 500 },'
                     ' { name = "Blizzard", rank = "Rank 3", category = "used", cost = 2000 } };'
                     'F:SetEnabled("trainerHelper", true); F:SetEnabled("trainerBulk", true)')
-        self.runlua('SlashCmdList.FOREVERSUITE("trainer")')
+        self.runlua('SlashCmdList.TWEAKSUITE("trainer")')
         self.assertIn("Fireball Rank 2", self.g.prints[len(self.g.prints) - 2])
         before = len(self.g.prints)
-        self.runlua('SlashCmdList.FOREVERSUITE("trainer ranks")')
+        self.runlua('SlashCmdList.TWEAKSUITE("trainer ranks")')
         window = " ".join(self.g.prints[i] for i in range(before + 1, len(self.g.prints) + 1))
         self.assertIn("Fireball", window)
         self.assertNotIn("Frostbolt", window)
-        self.runlua('SlashCmdList.FOREVERSUITE("train")')
+        self.runlua('SlashCmdList.TWEAKSUITE("train")')
         self.assertIn("Learned 2 trainer service(s)", self.g.prints[len(self.g.prints)])
         self.assertEqual(list(self.g.boughtServices.values()), [1, 2])
 
@@ -2492,7 +2543,7 @@ class SuiteTests(unittest.TestCase):
         self.start()
         self.runlua('F:SetEnabled("manaRegen", true); manaValue = 1000; fire("PLAYER_ENTERING_WORLD");'
                     'manaValue = 700; fire("UNIT_POWER_FREQUENT", "player"); now = 2')
-        self.runlua('SlashCmdList.FOREVERSUITE("regen")')
+        self.runlua('SlashCmdList.TWEAKSUITE("regen")')
         self.assertIn("Mana 700/1000", self.g.prints[len(self.g.prints) - 1])
         self.assertIn("five-second rule is running", self.g.prints[len(self.g.prints)])
 
@@ -2514,15 +2565,15 @@ class SuiteTests(unittest.TestCase):
     def test_cursor_ring_and_trail(self):
         self.start()
         self.runlua('F:SetEnabled("cursorRing", true); F:SetOption("cursorRing", "size", 64)')
-        self.runlua('ForeverSuiteCursorRing:Trigger("OnUpdate", 0.1)')
-        ring = self.g.ForeverSuiteCursorRing
+        self.runlua('TweakSuiteCursorRing:Trigger("OnUpdate", 0.1)')
+        ring = self.g.TweakSuiteCursorRing
         self.assertTrue(ring.shown)
         self.assertEqual(ring.width, 64)
-        self.runlua('F:SetEnabled("cursorTrail", true); ForeverSuiteCursorTrail:Trigger("OnUpdate", 0.1)')
-        self.assertTrue(self.g.ForeverSuiteCursorTrail.shown)
-        self.assertIsNotNone(self.g.ForeverSuiteCursorTrail.textures)
+        self.runlua('F:SetEnabled("cursorTrail", true); TweakSuiteCursorTrail:Trigger("OnUpdate", 0.1)')
+        self.assertTrue(self.g.TweakSuiteCursorTrail.shown)
+        self.assertIsNotNone(self.g.TweakSuiteCursorTrail.textures)
         self.runlua('F:SetEnabled("cursorTrail", false)')
-        self.assertFalse(self.g.ForeverSuiteCursorTrail.shown)
+        self.assertFalse(self.g.TweakSuiteCursorTrail.shown)
 
 
     def test_reputation_and_quest_item_tooltips(self):
@@ -2593,13 +2644,13 @@ class SuiteTests(unittest.TestCase):
         self.start()
         self.runlua("F:SetEnabled('spellCalcPreview', true); F:SetEnabled('spellDps', true);"
                     "F:SetEnabled('spellLabels', true)")
-        self.runlua("SlashCmdList.FOREVERSUITE('spellcalc 100 200 2')")
+        self.runlua("SlashCmdList.TWEAKSUITE('spellcalc 100 200 2')")
         self.assertIn("Spell calculation preview (average 150.0)", self.g.prints[len(self.g.prints) - 1])
         self.assertIn("Damage per second: 75.0", self.g.prints[len(self.g.prints)])
         before = len(self.g.prints)
-        self.runlua("SlashCmdList.FOREVERSUITE('spellcalc 300 100 2')")
+        self.runlua("SlashCmdList.TWEAKSUITE('spellcalc 300 100 2')")
         self.assertIn("max not below min", self.g.prints[before + 1])
-        self.runlua("F:SetOption('spellLabels', 'locale', 'enUS'); SlashCmdList.FOREVERSUITE('spelllabels')")
+        self.runlua("F:SetOption('spellLabels', 'locale', 'enUS'); SlashCmdList.TWEAKSUITE('spelllabels')")
         self.assertIn("enUS", self.g.prints[len(self.g.prints) - 1])
         self.assertIn("No labels are missing", self.g.prints[len(self.g.prints)])
 
@@ -2627,7 +2678,7 @@ class SuiteTests(unittest.TestCase):
         self.start()
         self.runlua("F:SetEnabled('hazardAlerts', true); F:SetEnabled('hazardData', true);"
                     "F:SetEnabled('alertExemptions', true); F:ImportHazards('7003,7004')")
-        self.runlua("SlashCmdList.FOREVERSUITE('hazard exempt 7003')")
+        self.runlua("SlashCmdList.TWEAKSUITE('hazard exempt 7003')")
         self.runlua("hazardAuras[7003] = {}; hazardAuras[7004] = {}; fire('UNIT_AURA', 'player')")
         self.assertIn("Warning: spell 7004 is affecting you.", self.g.prints[len(self.g.prints)])
         before = len(self.g.prints)
@@ -2650,14 +2701,14 @@ class SuiteTests(unittest.TestCase):
         self.assertEqual(len(self.g.prints), before)
 
     def test_warning_db_sanitation(self):
-        self.runlua("ForeverSuiteDB = { schema = 1, hazards = { { id = 7001, name = 'Fire', kind = 'cast' },"
+        self.runlua("TweakSuiteDB = { schema = 1, hazards = { { id = 7001, name = 'Fire', kind = 'cast' },"
                     " { id = 7001 }, { id = 0 }, { id = 'x' }, 5 },"
                     " hazardExempt = { 7002, 7002, -1, 'x', 7003 } }")
         self.start()
-        self.assertEqual(self.lua.eval("#ForeverSuiteDB.hazards"), 1)
-        self.assertEqual(self.lua.eval("ForeverSuiteDB.hazards[1].id"), 7001)
-        self.assertEqual(self.lua.eval("ForeverSuiteDB.hazards[1].kind"), "cast")
-        self.assertEqual(self.lua.eval("#ForeverSuiteDB.hazardExempt"), 2)
+        self.assertEqual(self.lua.eval("#TweakSuiteDB.hazards"), 1)
+        self.assertEqual(self.lua.eval("TweakSuiteDB.hazards[1].id"), 7001)
+        self.assertEqual(self.lua.eval("TweakSuiteDB.hazards[1].kind"), "cast")
+        self.assertEqual(self.lua.eval("#TweakSuiteDB.hazardExempt"), 2)
 
 
     def test_whisper_notification_sound_and_flash(self):
@@ -2678,23 +2729,23 @@ class SuiteTests(unittest.TestCase):
         self.start()
         self.runlua("groupMembers = 2; inGroup = true; leaderUnit = 'player'; roleFor.party1 = 'TANK';"
                     "assistantUnits.party1 = true; F:SetEnabled('roleIndicators', true); F:SetEnabled('groupTools', true)")
-        self.runlua("SlashCmdList.FOREVERSUITE('roles')")
+        self.runlua("SlashCmdList.TWEAKSUITE('roles')")
         self.assertIn("Tester - No role, leader", self.g.prints[len(self.g.prints) - 1])
         self.assertIn("party1 - Tank, assistant", self.g.prints[len(self.g.prints)])
-        self.runlua("SlashCmdList.FOREVERSUITE('group')")
+        self.runlua("SlashCmdList.TWEAKSUITE('group')")
         self.assertIn("Party - 2 member(s)", self.g.prints[len(self.g.prints) - 3])
         self.assertIn("Instance: The Deadmines", self.g.prints[len(self.g.prints) - 2])
 
     def test_difficulty_selection(self):
         self.start()
         self.runlua("F:SetEnabled('difficultySelector', true)")
-        self.runlua("SlashCmdList.FOREVERSUITE('difficulty')")
+        self.runlua("SlashCmdList.TWEAKSUITE('difficulty')")
         self.assertIn("Dungeon difficulty: Difficulty 1", self.g.prints[len(self.g.prints)])
-        self.runlua("SlashCmdList.FOREVERSUITE('difficulty raid 15')")
+        self.runlua("SlashCmdList.TWEAKSUITE('difficulty raid 15')")
         self.assertEqual(self.g.raidDifficulty, 15)
-        self.runlua("SlashCmdList.FOREVERSUITE('difficulty raid 99')")
+        self.runlua("SlashCmdList.TWEAKSUITE('difficulty raid 99')")
         self.assertIn("Not changed:", self.g.prints[len(self.g.prints)])
-        self.runlua("combat = true; SlashCmdList.FOREVERSUITE('difficulty dungeon 2'); combat = false")
+        self.runlua("combat = true; SlashCmdList.TWEAKSUITE('difficulty dungeon 2'); combat = false")
         self.assertIn("after combat", self.g.prints[len(self.g.prints)])
         self.assertEqual(self.g.dungeonDifficulty, 1)
 
@@ -2706,20 +2757,20 @@ class SuiteTests(unittest.TestCase):
         self.runlua("fire('READY_CHECK_CONFIRM', 'player', true)")
         self.runlua("fire('READY_CHECK_FINISHED')")
         self.assertIn("waiting on party1", self.g.prints[len(self.g.prints)])
-        self.runlua("SlashCmdList.FOREVERSUITE('ready no')")
+        self.runlua("SlashCmdList.TWEAKSUITE('ready no')")
         self.assertFalse(self.g.readyAnswer)
-        self.runlua("SlashCmdList.FOREVERSUITE('readycheck')")
+        self.runlua("SlashCmdList.TWEAKSUITE('readycheck')")
         self.assertEqual(self.g.readyChecks, 1)
 
     def test_activity_summary_and_audit(self):
         self.start()
         self.runlua("F:SetEnabled('activitySummary', true); F:SetEnabled('availabilityAudit', true);"
                     "completedQuestList = { 1, 2, 3 }; watchCount = 2; money = 1234567; restedXP = 500")
-        self.runlua("SlashCmdList.FOREVERSUITE('activity')")
+        self.runlua("SlashCmdList.TWEAKSUITE('activity')")
         self.assertIn("3 completed quest(s), 2 watched", self.g.prints[len(self.g.prints) - 1])
         self.assertIn("Gold: 123 g", self.g.prints[len(self.g.prints)])
         auditStart = len(self.g.prints)
-        self.runlua("SlashCmdList.FOREVERSUITE('audit')")
+        self.runlua("SlashCmdList.TWEAKSUITE('audit')")
         self.assertTrue(any("Availability audit:" in v for v in [self.g.prints[i + 1] for i in range(auditStart, len(self.g.prints) + 1)]))
 
 
@@ -2738,24 +2789,24 @@ class SuiteTests(unittest.TestCase):
     def test_tracked_item_bar(self):
         self.start()
         self.runlua("itemReady = true; F:SetEnabled('trackedBar', true); itemCountValue = 4")
-        self.runlua("SlashCmdList.FOREVERSUITE('track add 3001 Flask')")
+        self.runlua("SlashCmdList.TWEAKSUITE('track add 3001 Flask')")
         self.assertIn("Tracking item 3001", self.g.prints[len(self.g.prints)])
-        self.runlua("SlashCmdList.FOREVERSUITE('track list')")
+        self.runlua("SlashCmdList.TWEAKSUITE('track list')")
         self.assertIn("3001 - Flask: 4", self.g.prints[len(self.g.prints)])
-        self.assertTrue(self.g.ForeverSuiteTrackedBar.shown)
-        self.assertEqual(self.g.ForeverSuiteTrackedBar.textures[0] if False else 1, 1)
-        self.runlua("SlashCmdList.FOREVERSUITE('track remove 3001')")
-        self.assertFalse(self.g.ForeverSuiteTrackedBar.shown)
+        self.assertTrue(self.g.TweakSuiteTrackedBar.shown)
+        self.assertEqual(self.g.TweakSuiteTrackedBar.textures[0] if False else 1, 1)
+        self.runlua("SlashCmdList.TWEAKSUITE('track remove 3001')")
+        self.assertFalse(self.g.TweakSuiteTrackedBar.shown)
 
     def test_merchant_cost_details(self):
         self.start()
         self.runlua("merchantItems[1] = { name = 'Recipe', price = 1500,"
                     " costs = { { name = 'Honor', amount = 25, link = 'currency:392' } } };"
                     "F:SetEnabled('merchantCurrency', true)")
-        self.runlua("SlashCmdList.FOREVERSUITE('cost 1')")
+        self.runlua("SlashCmdList.TWEAKSUITE('cost 1')")
         self.assertIn("Recipe - 1500c", self.g.prints[len(self.g.prints) - 1])
         self.assertIn("Honor x25", self.g.prints[len(self.g.prints)])
-        self.runlua("SlashCmdList.FOREVERSUITE('cost 9')")
+        self.runlua("SlashCmdList.TWEAKSUITE('cost 9')")
         self.assertIn("Not available:", self.g.prints[len(self.g.prints)])
 
 
@@ -2763,34 +2814,34 @@ class SuiteTests(unittest.TestCase):
         self.start()
         self.runlua("now = 10; cooldownStart = 5; cooldownDuration = 12;"
                     "F:SetEnabled('cooldownPanel', true); F:SetEnabled('cooldownPulse', true)")
-        self.runlua("SlashCmdList.FOREVERSUITE('cds add 133 Fireball')")
-        self.runlua("SlashCmdList.FOREVERSUITE('cds list')")
+        self.runlua("SlashCmdList.TWEAKSUITE('cds add 133 Fireball')")
+        self.runlua("SlashCmdList.TWEAKSUITE('cds list')")
         self.assertIn("Fireball: 7.0 s", self.g.prints[len(self.g.prints)])
-        self.assertTrue(self.g.ForeverSuiteCooldownPanel.shown)
+        self.assertTrue(self.g.TweakSuiteCooldownPanel.shown)
         self.runlua("fire('SPELL_UPDATE_COOLDOWN')")
         before = len(self.g.prints)
         self.runlua("cooldownStart = 0; cooldownDuration = 0; fire('SPELL_UPDATE_COOLDOWN')")
         self.assertIn("Fireball is ready.", self.g.prints[len(self.g.prints)])
         self.assertGreater(len(self.g.prints), before)
         self.runlua("F:SetEnabled('cooldownPanel', false)")
-        self.assertFalse(self.g.ForeverSuiteCooldownPanel.shown)
+        self.assertFalse(self.g.TweakSuiteCooldownPanel.shown)
 
     def test_secret_cooldown_is_not_read(self):
         self.start()
         self.runlua("cooldownStart = 5; cooldownDuration = 12; now = 10;"
                     "F:SetEnabled('cooldownPanel', true); F:TrackCooldown(133, 'Fireball');"
                     "secretCooldowns[133] = true")
-        self.runlua("SlashCmdList.FOREVERSUITE('cds list')")
+        self.runlua("SlashCmdList.TWEAKSUITE('cds list')")
         self.assertIn("hidden in combat", self.g.prints[len(self.g.prints)])
 
     def test_swing_timer(self):
         self.start()
         self.runlua("now = 100; F:SetEnabled('swingBar', true); fire('PLAYER_SWING', 2.6, 0)")
-        self.assertTrue(self.g.ForeverSuiteSwingBar.shown)
+        self.assertTrue(self.g.TweakSuiteSwingBar.shown)
         self.runlua("now = 101; F:Refresh()")
-        self.assertTrue(self.g.ForeverSuiteSwingBar.shown)
+        self.assertTrue(self.g.TweakSuiteSwingBar.shown)
         self.runlua("now = 104; F:Refresh()")
-        self.assertFalse(self.g.ForeverSuiteSwingBar.shown)
+        self.assertFalse(self.g.TweakSuiteSwingBar.shown)
 
     def test_nameplate_cast_indicator(self):
         self.start()
@@ -2809,13 +2860,13 @@ class SuiteTests(unittest.TestCase):
         self.runlua("spellInfo[133] = { name = 'Fireball', castTime = 2000 };"
                     "spellCosts[133] = { { cost = 30 } }; spellDescriptions[133] = 'Hurls a fiery ball.';"
                     "F:SetEnabled('abilityRef', true)")
-        self.runlua("SlashCmdList.FOREVERSUITE('ability 133')")
+        self.runlua("SlashCmdList.TWEAKSUITE('ability 133')")
         printed = " ".join([self.g.prints[i] for i in range(1, len(self.g.prints) + 1)])
         self.assertIn("Fireball (133)", printed)
         self.assertIn("Cast time: 2.00 s", printed)
         self.assertIn("Hurls a fiery ball.", printed)
         before = len(self.g.prints)
-        self.runlua("SlashCmdList.FOREVERSUITE('ability 999')")
+        self.runlua("SlashCmdList.TWEAKSUITE('ability 999')")
         self.assertIn("Not found", self.g.prints[before + 1])
 
 
@@ -2830,31 +2881,31 @@ class SuiteTests(unittest.TestCase):
     def test_event_toast_control(self):
         self.start()
         self.runlua("F:SetEnabled('toastControl', true)")
-        self.runlua("SlashCmdList.FOREVERSUITE('toast')")
+        self.runlua("SlashCmdList.TWEAKSUITE('toast')")
         self.assertEqual(self.g.removedToasts, 1)
         self.assertIn("Cleared the current toast: Level up", self.g.prints[len(self.g.prints)])
         self.runlua("F:SetOption('toastControl', 'autoRemove', true)")
-        self.runlua("ForeverSuiteToastWatch.elapsed = 5; ForeverSuiteToastWatch:Trigger('OnUpdate', 1)")
+        self.runlua("TweakSuiteToastWatch.elapsed = 5; TweakSuiteToastWatch:Trigger('OnUpdate', 1)")
         self.assertEqual(self.g.removedToasts, 2)
 
     def test_sound_channel_mute_and_restore(self):
         self.start()
         self.runlua("cvars['Sound_MusicVolume'] = 0.6; F:SetEnabled('soundMute', true)")
-        self.runlua("SlashCmdList.FOREVERSUITE('mute music')")
+        self.runlua("SlashCmdList.TWEAKSUITE('mute music')")
         self.assertEqual(self.lua.eval("cvars['Sound_MusicVolume']"), "0")
-        self.assertEqual(self.lua.eval("ForeverSuiteDB.mutedChannels.music"), 0.6)
-        self.runlua("SlashCmdList.FOREVERSUITE('mute music off')")
+        self.assertEqual(self.lua.eval("TweakSuiteDB.mutedChannels.music"), 0.6)
+        self.runlua("SlashCmdList.TWEAKSUITE('mute music off')")
         self.assertEqual(self.lua.eval("cvars['Sound_MusicVolume']"), "0.6")
-        self.assertIsNone(self.g.ForeverSuiteDB.mutedChannels)
+        self.assertIsNone(self.g.TweakSuiteDB.mutedChannels)
 
     def test_minimap_shape_round_and_square(self):
         self.start()
         self.runlua("F:SetEnabled('minimapShape', true)")
-        self.runlua("SlashCmdList.FOREVERSUITE('mapshape square')")
+        self.runlua("SlashCmdList.TWEAKSUITE('mapshape square')")
         self.assertEqual(self.g.Minimap.mask, "Interface\\Buttons\\WHITE8X8")
-        self.runlua("SlashCmdList.FOREVERSUITE('mapshape round')")
+        self.runlua("SlashCmdList.TWEAKSUITE('mapshape round')")
         self.assertEqual(self.g.Minimap.mask, "Interface\\Minimap\\UI-Minimap-Background")
-        self.runlua("SlashCmdList.FOREVERSUITE('mapshape square'); F:SetEnabled('minimapShape', false)")
+        self.runlua("SlashCmdList.TWEAKSUITE('mapshape square'); F:SetEnabled('minimapShape', false)")
         self.assertEqual(self.g.Minimap.mask, "Interface\\Minimap\\UI-Minimap-Background")
 
 
@@ -2888,30 +2939,30 @@ class SuiteTests(unittest.TestCase):
     def test_damage_meter_sessions_and_reset_guard(self):
         self.start()
         self.runlua("F:SetEnabled('damageMeter', true)")
-        self.runlua("SlashCmdList.FOREVERSUITE('meter')")
+        self.runlua("SlashCmdList.TWEAKSUITE('meter')")
         self.assertIn("Session 1: 10 s", self.g.prints[len(self.g.prints) - 1])
-        self.runlua("SlashCmdList.FOREVERSUITE('meter reset')")
+        self.runlua("SlashCmdList.TWEAKSUITE('meter reset')")
         self.assertFalse(self.g.damageReset)
-        self.runlua("F:SetOption('damageMeter', 'allowReset', true); SlashCmdList.FOREVERSUITE('meter reset')")
+        self.runlua("F:SetOption('damageMeter', 'allowReset', true); SlashCmdList.TWEAKSUITE('meter reset')")
         self.assertTrue(self.g.damageReset)
 
     def test_compact_loot_list(self):
         self.start()
         self.runlua("F:SetEnabled('lootWindow', true); fire('LOOT_OPENED')")
-        self.assertTrue(self.lua.eval("ForeverSuiteLootList:IsShown()"))
-        self.assertEqual(self.lua.eval("ForeverSuiteLootList.rows[1].text:GetText()"), "Linen Cloth x4")
-        self.runlua("ForeverSuiteLootList.rows[1]:Click()")
+        self.assertTrue(self.lua.eval("TweakSuiteLootList:IsShown()"))
+        self.assertEqual(self.lua.eval("TweakSuiteLootList.rows[1].text:GetText()"), "Linen Cloth x4")
+        self.runlua("TweakSuiteLootList.rows[1]:Click()")
         self.assertEqual(self.g.calls.lastSlot, 1)
         self.runlua("fire('LOOT_CLOSED')")
-        self.assertFalse(self.lua.eval("ForeverSuiteLootList:IsShown()"))
+        self.assertFalse(self.lua.eval("TweakSuiteLootList:IsShown()"))
 
     def test_macro_drawer(self):
         self.start()
         self.runlua("F:SetEnabled('drawerMacros', true)")
-        self.runlua("SlashCmdList.FOREVERSUITE('drawer add Pull')")
-        self.assertEqual(self.g.ForeverSuiteDB.drawer[1], "Pull")
-        self.runlua("SlashCmdList.FOREVERSUITE('drawer add Missing')")
-        self.assertEqual(len(self.g.ForeverSuiteDB.drawer), 1)
+        self.runlua("SlashCmdList.TWEAKSUITE('drawer add Pull')")
+        self.assertEqual(self.g.TweakSuiteDB.drawer[1], "Pull")
+        self.runlua("SlashCmdList.TWEAKSUITE('drawer add Missing')")
+        self.assertEqual(len(self.g.TweakSuiteDB.drawer), 1)
         self.assertIn("no macro with that name exists", self.g.prints[len(self.g.prints)])
         self.runlua("F:RunDrawerMacro('Pull')")
         self.assertEqual(self.g.macroRuns[1], 1)
@@ -2919,31 +2970,31 @@ class SuiteTests(unittest.TestCase):
     def test_music_browser(self):
         self.start()
         self.runlua("F:SetEnabled('mediaBrowser', true)")
-        self.runlua("SlashCmdList.FOREVERSUITE('music add Battle 1234')")
-        self.assertEqual(self.g.ForeverSuiteDB.media[1].name, "Battle")
-        self.runlua("SlashCmdList.FOREVERSUITE('music Battle')")
+        self.runlua("SlashCmdList.TWEAKSUITE('music add Battle 1234')")
+        self.assertEqual(self.g.TweakSuiteDB.media[1].name, "Battle")
+        self.runlua("SlashCmdList.TWEAKSUITE('music Battle')")
         self.assertEqual(self.g.playedSounds[len(self.g.playedSounds)], 1234)
-        self.runlua("SlashCmdList.FOREVERSUITE('music remove Battle')")
-        self.assertIsNone(self.g.ForeverSuiteDB.media)
+        self.runlua("SlashCmdList.TWEAKSUITE('music remove Battle')")
+        self.assertIsNone(self.g.TweakSuiteDB.media)
 
     def test_settings_navigation(self):
         self.start()
         self.runlua("F:OpenSettings(); F.selectedCategory = 'Interface'; F:RefreshSettings();"
                     "F:SetEnabled('gamepadNav', true)")
-        self.runlua("SlashCmdList.FOREVERSUITE('nav next')")
+        self.runlua("SlashCmdList.TWEAKSUITE('nav next')")
         self.assertIsNotNone(self.lua.eval("F.navFocus"))
-        self.runlua("SlashCmdList.FOREVERSUITE('nav toggle')")
-        self.assertTrue(self.g.ForeverSuiteDB.enabled[self.g.F.navFocus])
+        self.runlua("SlashCmdList.TWEAKSUITE('nav toggle')")
+        self.assertTrue(self.g.TweakSuiteDB.enabled[self.g.F.navFocus])
 
     def test_setting_migration(self):
         self.start()
-        self.runlua("ForeverSuiteDB.instantQuestText = true; F:SetEnabled('settingMigration', true)")
-        self.runlua("SlashCmdList.FOREVERSUITE('migrate legacy')")
+        self.runlua("TweakSuiteDB.instantQuestText = true; F:SetEnabled('settingMigration', true)")
+        self.runlua("SlashCmdList.TWEAKSUITE('migrate legacy')")
         self.assertIn("Report only.", self.g.prints[len(self.g.prints)])
-        self.assertFalse(self.g.ForeverSuiteDB.enabled.questText)
-        self.runlua("F:SetOption('settingMigration', 'dryRun', false); SlashCmdList.FOREVERSUITE('migrate legacy')")
-        self.assertTrue(self.g.ForeverSuiteDB.enabled.questText)
-        self.assertIsNone(self.g.ForeverSuiteDB.instantQuestText)
+        self.assertFalse(self.g.TweakSuiteDB.enabled.questText)
+        self.runlua("F:SetOption('settingMigration', 'dryRun', false); SlashCmdList.TWEAKSUITE('migrate legacy')")
+        self.assertTrue(self.g.TweakSuiteDB.enabled.questText)
+        self.assertIsNone(self.g.TweakSuiteDB.instantQuestText)
 
     def test_localization_fallback_and_translation(self):
         self.start()
@@ -2953,7 +3004,7 @@ class SuiteTests(unittest.TestCase):
                     "F:SetOption('localization', 'locale', 'deDE')")
         self.assertEqual(self.lua.eval("F:L('enabled', 'questText')"), "Aktiviert questText.")
         self.assertEqual(self.lua.eval("F:L('nothingToMigrate')"), "Nothing to migrate.")
-        self.runlua("SlashCmdList.FOREVERSUITE('locale')")
+        self.runlua("SlashCmdList.TWEAKSUITE('locale')")
         self.assertIn("1 of", self.g.prints[len(self.g.prints) - 1])
 
 

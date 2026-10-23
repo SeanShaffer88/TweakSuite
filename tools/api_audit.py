@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: MIT
+# TweakSuite - Copyright (C) 2026 Malikor
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Cross-check bare Lua global calls against the Forever client's API dump.
 
 The dump is published by the Forever Addon Kit
@@ -31,7 +32,7 @@ LUA_BUILTINS = {
 
 def repo_definitions():
     names = set()
-    for path in (ROOT / "ForeverSuite").rglob("*.lua"):
+    for path in (ROOT / "TweakSuite").rglob("*.lua"):
         text = path.read_text()
         names.update(FUNC.findall(text))
         for line in LOCAL.findall(text):
@@ -58,7 +59,7 @@ def main():
     defined = repo_definitions()
     problems = []
     checked = 0
-    for path in sorted((ROOT / "ForeverSuite").rglob("*.lua")):
+    for path in sorted((ROOT / "TweakSuite").rglob("*.lua")):
         for number, line in enumerate(path.read_text().splitlines(), 1):
             code = line.split("--", 1)[0]
             for name in CALL.findall(code):

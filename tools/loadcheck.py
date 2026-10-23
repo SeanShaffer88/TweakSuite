@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: MIT
+# TweakSuite - Copyright (C) 2026 Malikor
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Parse every addon Lua file with the Lua 5.1 loader the client uses.
 
 This catches syntax errors and typos that the behavioural tests only find when a
@@ -16,7 +17,7 @@ ROOT = Path(__file__).resolve().parent.parent
 def main():
     lua = LuaRuntime(unpack_returned_tuples=True)
     check = lua.eval("function(s, n) local f, e = loadstring(s, n); return f ~= nil, e end")
-    files = sorted((ROOT / "ForeverSuite").rglob("*.lua"))
+    files = sorted((ROOT / "TweakSuite").rglob("*.lua"))
     bad = 0
     for path in files:
         ok, error = check(path.read_text(), str(path))

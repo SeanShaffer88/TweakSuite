@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: MIT
+# TweakSuite - Copyright (C) 2026 Malikor
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Launch-client regression suite: the checks to run before packaging a release.
 
 1. Every Lua file parses and the whole addon loads in the mock client.
@@ -31,17 +32,17 @@ def toc_check():
     print("== TOC consistency")
     problems = []
     versions = set()
-    for toc in sorted((ROOT / "ForeverSuite").glob("*.toc")):
+    for toc in sorted((ROOT / "TweakSuite").glob("*.toc")):
         text = toc.read_text()
         version = re.search(r"^## Version:\s*(\S+)", text, re.M)
         if version:
             versions.add(version.group(1))
         for line in text.splitlines():
             if line and not line.startswith("#"):
-                path = ROOT / "ForeverSuite" / line.replace("\\", "/")
+                path = ROOT / "TweakSuite" / line.replace("\\", "/")
                 if not path.exists():
                     problems.append(f"{toc.name} lists a missing file: {line}")
-    core = (ROOT / "ForeverSuite" / "Core.lua").read_text()
+    core = (ROOT / "TweakSuite" / "Core.lua").read_text()
     core_version = re.search(r'F\.version\s*=\s*"([^"]+)"', core)
     if core_version:
         versions.add(core_version.group(1))
@@ -50,7 +51,7 @@ def toc_check():
     for problem in problems:
         print("   PROBLEM: " + problem)
     if not problems:
-        print(f"   {len(list((ROOT / 'ForeverSuite').glob('*.toc')))} TOC files consistent at version {sorted(versions)[0] if versions else 'unknown'}")
+        print(f"   {len(list((ROOT / 'TweakSuite').glob('*.toc')))} TOC files consistent at version {sorted(versions)[0] if versions else 'unknown'}")
     return not problems
 
 

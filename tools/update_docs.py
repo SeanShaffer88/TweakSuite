@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: MIT
+# TweakSuite - Copyright (C) 2026 Malikor
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Update backlog rows, feature counts and version strings in one pass.
 
 Usage: python tools/update_docs.py --version 0.2.0-alpha.8 --features 138 [--tests 122]
@@ -57,8 +58,8 @@ def main():
                   text, count=1)
     markdown.write_text(text)
 
-    for name in ("ForeverSuite/Core.lua", "ForeverSuite/ForeverSuite.toc",
-                 "ForeverSuite/ForeverSuite_Camelot.toc", "ForeverSuite/ForeverSuite_Forever.toc",
+    for name in ("TweakSuite/Core.lua", "TweakSuite/TweakSuite.toc",
+                 "TweakSuite/TweakSuite_Camelot.toc", "TweakSuite/TweakSuite_Forever.toc",
                  "tools/package.py"):
         path = ROOT / name
         content = path.read_text()

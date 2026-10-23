@@ -1,0 +1,37 @@
+## Interface: 16001
+## Title: TweakSuite
+## Notes: Modular quality-of-life tweaks for WoW Forever. Every feature starts off; /ts opens settings.
+## Author: Malikor
+## Version: 0.3.0-alpha.1
+## IconTexture: Interface\AddOns\TweakSuite\Media\Icon
+## SavedVariables: TweakSuiteDB
+## X-License: GPL-3.0-or-later
+## X-Category: Quality of Life
+Core.lua
+Modules\Compat.lua
+Modules\Automation.lua
+Modules\Social.lua
+Modules\Merchant.lua
+Modules\Tooltips.lua
+Modules\Inventory.lua
+Modules\Dialogs.lua
+Modules\Windows.lua
+Modules\Frames.lua
+Modules\Interface.lua
+Modules\Profiles.lua
+Modules\Chat.lua
+Modules\Maps.lua
+Modules\Activities.lua
+Modules\Character.lua
+Modules\HUD.lua
+Modules\SpellMath.lua
+Modules\Warnings.lua
+Modules\Group.lua
+Modules\Loot.lua
+Modules\Cooldowns.lua
+Modules\UnitFrames.lua
+Modules\Tools.lua
+Modules\Migration.lua
+Modules\ClientUI.lua
+Modules\Popups.lua
+Settings.lua
