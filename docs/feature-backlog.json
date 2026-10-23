@@ -338,7 +338,7 @@
     "category": "Windows and dialogs",
     "stage": 2,
     "status": "implemented-preview; in-game validation pending",
-    "detail": "Each tracked window gets a corner resize grip and remembers its size; /fs size <window> <w> <h> sets one exactly.",
+    "detail": "Resize a window with a corner grip or /fs size <window> <width> <height>; sizes are saved with the layout.",
     "feature_key": "resizeWindows"
   },
   {
@@ -356,7 +356,7 @@
     "category": "Windows and dialogs",
     "stage": 2,
     "status": "implemented-preview; in-game validation pending",
-    "detail": "Named layout sets store the position and size of every tracked window; /fs layout save|use|delete|list.",
+    "detail": "/fs layout save|use|delete <name> stores every moved window position and size as one named set.",
     "feature_key": "windowLayouts"
   },
   {
@@ -374,7 +374,7 @@
     "category": "Windows and dialogs",
     "stage": 2,
     "status": "implemented-preview; in-game validation pending",
-    "detail": "Clamps a dragged window back inside the screen with a configurable margin so it can never be lost off screen.",
+    "detail": "Keeps dragged windows inside the screen bounds with a configurable margin, including after a resolution change.",
     "feature_key": "snapWindows"
   },
   {
@@ -383,7 +383,7 @@
     "category": "Windows and dialogs",
     "stage": 2,
     "status": "implemented-preview; in-game validation pending",
-    "detail": "Pins one window to another with /fs anchor <window> <target> [x] [y]; the anchor is cleared with /fs anchor <window> clear.",
+    "detail": "/fs anchor <window> <target> [x] [y] pins one window to another and follows it when it opens.",
     "feature_key": "windowAnchors"
   },
   {
@@ -392,7 +392,7 @@
     "category": "Windows and dialogs",
     "stage": 2,
     "status": "implemented-preview; in-game validation pending",
-    "detail": "Reopens tracked panels that the client closed when another window opened; a window closed with its own close button is not reopened.",
+    "detail": "Reopens the panels the client closes when another opens, and leaves a panel alone once its own close button was used.",
     "feature_key": "windowKeepOpen"
   },
   {
@@ -401,7 +401,7 @@
     "category": "Windows and dialogs",
     "stage": 2,
     "status": "implemented-preview; in-game validation pending",
-    "detail": "Excludes the auction house, the world map and any protected frame from every window feature.",
+    "detail": "Excludes auction house, world map and protected frames from every ForeverSuite window feature.",
     "feature_key": "windowExceptions"
   },
   {
@@ -437,7 +437,7 @@
     "category": "Windows and dialogs",
     "stage": 2,
     "status": "implemented-preview; in-game validation pending",
-    "detail": "Binds extra keys to turn-in and decline separately from the accept key; turn-in waits for a quest without reward choices.",
+    "detail": "Binds turn-in and decline to their own keys and keeps the accept key separate, all disabled by default.",
     "feature_key": "dialogKeys"
   },
   {
@@ -482,7 +482,7 @@
     "category": "Windows and dialogs",
     "stage": 2,
     "status": "implemented-preview; in-game validation pending",
-    "detail": "Closes detected beta survey and feedback prompts by frame name as soon as they appear.",
+    "detail": "Hides beta survey and feedback popups by frame name, with a list in /fs popups.",
     "feature_key": "betaPopups"
   },
   {
@@ -491,7 +491,7 @@
     "category": "Windows and dialogs",
     "stage": 2,
     "status": "implemented-preview; in-game validation pending",
-    "detail": "/fs bugreport opens the client reporter at any time, so manual reporting still works after the button is hidden.",
+    "detail": "/fs bugreport opens manual reporting even while the reporter button is hidden.",
     "feature_key": "betaReporter"
   },
   {
@@ -500,7 +500,7 @@
     "category": "Windows and dialogs",
     "stage": 2,
     "status": "implemented-preview; in-game validation pending",
-    "detail": "The hide-button option can be turned off on its own, leaving reporting on the normal interface.",
+    "detail": "Hides the beta reporter button independently of the survey suppression option.",
     "feature_key": "betaReporter"
   },
   {
@@ -554,7 +554,7 @@
     "category": "Inventory and tooltips",
     "stage": 2,
     "status": "implemented-preview; in-game validation pending",
-    "detail": "Adds item level and equipped comparison to shopping and comparison tooltips, not only the main tooltip.",
+    "detail": "Item levels in the equipment flyout and shopping tooltips.",
     "feature_key": "flyoutItemLevel"
   },
   {
@@ -572,7 +572,7 @@
     "category": "Inventory and tooltips",
     "stage": 2,
     "status": "implemented-preview; in-game validation pending",
-    "detail": "Marks an equipped item in an enchantable slot whose link carries no enchant.",
+    "detail": "Marks equipped items that have an empty enchant slot.",
     "feature_key": "missingEnchant"
   },
   {
@@ -581,7 +581,7 @@
     "category": "Inventory and tooltips",
     "stage": 2,
     "status": "implemented-preview; in-game validation pending",
-    "detail": "Marks equipped items with empty sockets using the client socket data.",
+    "detail": "Marks equipped items with empty gem sockets.",
     "feature_key": "missingGems"
   },
   {
@@ -590,7 +590,7 @@
     "category": "Inventory and tooltips",
     "stage": 2,
     "status": "implemented-preview; in-game validation pending",
-    "detail": "Adds a socket summary to item tooltips and lists equipped items with empty sockets via /fs sockets.",
+    "detail": "Summarises sockets and gems in a tooltip line, with /fs sockets for the full list.",
     "feature_key": "socketInfo"
   },
   {
@@ -635,7 +635,7 @@
     "category": "Inventory and tooltips",
     "stage": 2,
     "status": "implemented-preview; in-game validation pending",
-    "detail": "Colours unit tooltip borders with the unit class colour and restores the previous colour when the feature is turned off.",
+    "detail": "Colours unit tooltip names by class for players and by reaction for NPCs.",
     "feature_key": "tooltipClassColor"
   },
   {
@@ -644,7 +644,7 @@
     "category": "Inventory and tooltips",
     "stage": 2,
     "status": "implemented-preview; in-game validation pending",
-    "detail": "Adds current and maximum health plus percentage to unit tooltips.",
+    "detail": "Adds current and maximum health plus a percentage to unit tooltips.",
     "feature_key": "unitHealth"
   },
   {
@@ -662,7 +662,7 @@
     "category": "Inventory and tooltips",
     "stage": 2,
     "status": "implemented-preview; in-game validation pending",
-    "detail": "Places the main tooltip in a chosen screen corner instead of following the mouse.",
+    "detail": "Pins the game tooltip to a fixed corner or lets the client place it.",
     "feature_key": "tooltipAnchor"
   },
   {
@@ -724,16 +724,18 @@
     "title": "Reputation token details",
     "category": "Inventory and tooltips",
     "stage": 2,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Adds the faction and amount to items whose own tooltip text grants reputation.",
+    "feature_key": "repToken"
   },
   {
     "id": "FS-082",
     "title": "Quest-starting item details",
     "category": "Inventory and tooltips",
     "stage": 2,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Marks an item that starts a quest and shows the quest name when the tooltip text has it.",
+    "feature_key": "questItem"
   },
   {
     "id": "FS-083",
@@ -1454,9 +1456,9 @@
     "title": "Minimap shape and sizing",
     "category": "Character and activities",
     "stage": 3,
-    "status": "implemented-preview for size; shape planned; in-game validation pending",
-    "detail": "Minimap size as a percentage. Shape masks remain planned.",
-    "feature_key": "minimapScale"
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Minimap scale and the round or square mask, both independent. Size covers the frame and buttons, shape swaps only the mask texture.",
+    "feature_key": "minimapScale,minimapShape"
   },
   {
     "id": "FS-164",
@@ -1651,80 +1653,90 @@
     "title": "Custom loot window",
     "category": "Specialized systems",
     "stage": 4,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "A compact loot list with quality colours and click-to-loot lines; the client window can stay or be hidden.",
+    "feature_key": "lootWindow"
   },
   {
     "id": "FS-186",
     "title": "Loot notifications",
     "category": "Specialized systems",
     "stage": 4,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Prints what you receive, who looted it and the item level when the client reports it.",
+    "feature_key": "lootNotice"
   },
   {
     "id": "FS-187",
     "title": "Backpack tracked-item bar",
     "category": "Specialized systems",
     "stage": 4,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "A small bar with the counts of the items you track, updated with the bags.",
+    "feature_key": "trackedBar"
   },
   {
     "id": "FS-188",
     "title": "Merchant multi-currency display",
     "category": "Specialized systems",
     "stage": 4,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "/fs cost <index> prints every alternative currency cost of a merchant item.",
+    "feature_key": "merchantCurrency"
   },
   {
     "id": "FS-189",
     "title": "Instance difficulty selector",
     "category": "Specialized systems",
     "stage": 4,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "/fs difficulty [dungeon|raid] [n] reads and sets the instance difficulty through the client's own API.",
+    "feature_key": "difficultySelector"
   },
   {
     "id": "FS-190",
     "title": "Expansion activity summary",
     "category": "Specialized systems",
     "stage": 4,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "/fs activity summarises the group finder, quest log and lockout signals the client exposes.",
+    "feature_key": "activitySummary"
   },
   {
     "id": "FS-191",
     "title": "Drawer macros and flyouts",
     "category": "Specialized systems",
     "stage": 4,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Up to eight named macros in a movable drawer, run by clicking; /fs drawer manages the list.",
+    "feature_key": "drawerMacros"
   },
   {
     "id": "FS-192",
     "title": "Target cast tooltip information",
     "category": "Specialized systems",
     "stage": 4,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Unit tooltips state what the target is casting and how long is left, and hide the line when the client marks the cast secret.",
+    "feature_key": "targetCastInfo"
   },
   {
     "id": "FS-193",
     "title": "Target ability reference",
     "category": "Specialized systems",
     "stage": 4,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "/fs tcast prints the spell your target is casting with its ID, cost and description.",
+    "feature_key": "targetAbilityRef"
   },
   {
     "id": "FS-194",
     "title": "Talking head replacement",
     "category": "Specialized systems",
     "stage": 4,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Replaces the talking head popup with a chat line and hides the frame while it is active.",
+    "feature_key": "talkingHeads"
   },
   {
     "id": "FS-195",
@@ -1740,128 +1752,144 @@
     "title": "Event toast controls",
     "category": "Specialized systems",
     "stage": 4,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "/fs toast removes the current event toast; an option clears toasts as they arrive.",
+    "feature_key": "toastControl"
   },
   {
     "id": "FS-197",
     "title": "Sound category muting",
     "category": "Specialized systems",
     "stage": 4,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "/fs mute <master|music|ambience|dialog|sfx> stores the previous volume and restores exactly that value.",
+    "feature_key": "soundMute"
   },
   {
     "id": "FS-198",
     "title": "Music and movie browser",
     "category": "Specialized systems",
     "stage": 4,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "/fs music plays a sound ID, saves favourites and stops playback. The beta client exposes no movie playback API.",
+    "feature_key": "mediaBrowser"
   },
   {
     "id": "FS-199",
     "title": "Player and target frames",
     "category": "Specialized systems",
     "stage": 4,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Scales the player and target frames and hides their 3D portraits; health and combat behaviour stay with the client.",
+    "feature_key": "playerTargetFrames"
   },
   {
     "id": "FS-200",
     "title": "Party and raid frames",
     "category": "Specialized systems",
     "stage": 4,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Scales the compact party and raid frames and can set the client's compact layout CVar.",
+    "feature_key": "partyFrames"
   },
   {
     "id": "FS-201",
     "title": "Resource bars",
     "category": "Specialized systems",
     "stage": 4,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "A text readout of power type, value and percentage that says so when the client marks power secret.",
+    "feature_key": "resourceBars"
   },
   {
     "id": "FS-202",
     "title": "Absorb displays where permitted",
     "category": "Specialized systems",
     "stage": 4,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Total damage and healing absorb as a text line, hidden or marked when the client makes the values secret.",
+    "feature_key": "absorbDisplay"
   },
   {
     "id": "FS-203",
     "title": "Cooldown panels",
     "category": "Specialized systems",
     "stage": 4,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "A panel listing the spells you track with remaining time or ready state.",
+    "feature_key": "cooldownPanel"
   },
   {
     "id": "FS-204",
     "title": "Cooldown pulse notifications",
     "category": "Specialized systems",
     "stage": 4,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Prints and optionally plays a sound when a tracked spell becomes ready.",
+    "feature_key": "cooldownPulse"
   },
   {
     "id": "FS-205",
     "title": "Swing display integration",
     "category": "Specialized systems",
     "stage": 4,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Swing timer fed by PLAYER_SWING with main hand, off hand and ranged labels.",
+    "feature_key": "swingBar"
   },
   {
     "id": "FS-206",
     "title": "Threat-independent nameplate enhancements",
     "category": "Specialized systems",
     "stage": 4,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Draws the target's cast on its nameplate and clears it when the cast stops, fails or is interrupted.",
+    "feature_key": "plateCast"
   },
   {
     "id": "FS-207",
     "title": "Native damage meter integration",
     "category": "Specialized systems",
     "stage": 4,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "/fs meter lists the client's own combat sessions; ForeverSuite draws no meter of its own.",
+    "feature_key": "damageMeter"
   },
   {
     "id": "FS-208",
     "title": "Ready-check reminders",
     "category": "Specialized systems",
     "stage": 4,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Announces a ready check in chat and can answer it for you when every option is allowed.",
+    "feature_key": "readyCheckReminder"
   },
   {
     "id": "FS-209",
     "title": "Group role and leader indicators",
     "category": "Specialized systems",
     "stage": 4,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Group role and leader markers in group output, resolved through one label helper.",
+    "feature_key": "roleIndicators"
   },
   {
     "id": "FS-210",
     "title": "Dungeon group tools when supported",
     "category": "Specialized systems",
     "stage": 4,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "/fs group prints members, roles, leader and assistant flags plus the current instance.",
+    "feature_key": "groupTools"
   },
   {
     "id": "FS-211",
     "title": "Gameplay system availability audit",
     "category": "Specialized systems",
     "stage": 4,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "/fs audit lists which gameplay systems this client actually exposes.",
+    "feature_key": "availabilityAudit"
   },
   {
     "id": "FS-212",
@@ -1958,24 +1986,27 @@
     "title": "Reference addon setting migration",
     "category": "Settings and completion",
     "stage": 5,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "/fs migrate legacy moves flat settings from older builds; /fs migrate refs lists overlapping loaded addons without reading their saved variables.",
+    "feature_key": "settingMigration"
   },
   {
     "id": "FS-223",
     "title": "Localization",
     "category": "Settings and completion",
     "stage": 5,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "All user-facing strings resolve through one table with an English fallback; /fs locale reports coverage.",
+    "feature_key": "localization"
   },
   {
     "id": "FS-224",
     "title": "Gamepad settings navigation",
     "category": "Settings and completion",
     "stage": 5,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Arrow keys move the settings highlight and Enter toggles it, so a controller that sends keys can drive the window.",
+    "feature_key": "gamepadNav"
   },
   {
     "id": "FS-225",
@@ -2000,24 +2031,30 @@
     "title": "Full source-option coverage reconciliation",
     "category": "Settings and completion",
     "stage": 5,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "tools/coverage.py loads the addon, compares every registered feature with the backlog and fails when either side drifts.",
+    "feature_key": null,
+    "implementation": "tools/coverage.py loads the addon, compares every registered feature with the backlog and fails when either side drifts."
   },
   {
     "id": "FS-228",
     "title": "License and asset provenance audit",
     "category": "Settings and completion",
     "stage": 5,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "tools/provenance.py checks the SPDX header on every source file and rejects binary assets in the addon tree.",
+    "feature_key": null,
+    "implementation": "tools/provenance.py checks the SPDX header on every source file and rejects binary assets in the addon tree."
   },
   {
     "id": "FS-229",
     "title": "Launch-client regression suite",
     "category": "Settings and completion",
     "stage": 5,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "tools/release_check.py runs the load check, the behavioural suite, the backlog audit, the provenance audit and the TOC check in one command.",
+    "feature_key": null,
+    "implementation": "tools/release_check.py runs the load check, the behavioural suite, the backlog audit, the provenance audit and the TOC check in one command."
   },
   {
     "id": "FS-230",
@@ -2198,5 +2235,167 @@
     "status": "implemented-preview; in-game validation pending",
     "detail": "Keeps friendly player nameplates visible outside combat.",
     "feature_key": "friendlyNameplates"
+  },
+  {
+    "id": "FS-250",
+    "feature_key": "abilityRef",
+    "title": "Spell reference command",
+    "category": "Inventory and tooltips",
+    "stage": 3,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "/fs ability <id> prints name, cast time, cost and description for a spell ID."
+  },
+  {
+    "id": "FS-251",
+    "feature_key": "allTargetDebuffs",
+    "title": "All auras on the target",
+    "category": "Interface",
+    "stage": 3,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Shows every aura the client exposes on the target, not only debuffs."
+  },
+  {
+    "id": "FS-252",
+    "feature_key": "alwaysShowActionBars",
+    "title": "Always show action bars",
+    "category": "Interface",
+    "stage": 3,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Keeps the action bars visible instead of fading them in combat or on mouse-out."
+  },
+  {
+    "id": "FS-253",
+    "feature_key": "autoQuestProgress",
+    "title": "Automatic quest progress updates",
+    "category": "Interface",
+    "stage": 3,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Refreshes the quest log and tracker when progress events arrive."
+  },
+  {
+    "id": "FS-254",
+    "feature_key": "autoQuestWatch",
+    "title": "Track accepted quests automatically",
+    "category": "Interface",
+    "stage": 3,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Adds newly accepted quests to the objective tracker."
+  },
+  {
+    "id": "FS-255",
+    "feature_key": "autoSelfCast",
+    "title": "Automatic self-cast",
+    "category": "Interface",
+    "stage": 3,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Sets the client's auto self-cast CVar and restores the previous value."
+  },
+  {
+    "id": "FS-256",
+    "feature_key": "buffDurations",
+    "title": "Aura duration text",
+    "category": "Interface",
+    "stage": 3,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Prints the remaining duration of your auras in the tooltip and in a short chat report."
+  },
+  {
+    "id": "FS-257",
+    "feature_key": "chatBubbles",
+    "title": "Chat bubbles above players",
+    "category": "Chat and social",
+    "stage": 3,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Shows or hides the client's chat bubbles with a saved preference."
+  },
+  {
+    "id": "FS-258",
+    "feature_key": "cooldownCount",
+    "title": "Numeric cooldown countdowns",
+    "category": "Interface",
+    "stage": 3,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Switches the client's numeric cooldown text on and off."
+  },
+  {
+    "id": "FS-259",
+    "feature_key": "emphasizeSpells",
+    "title": "Emphasize your own spell effects",
+    "category": "Interface",
+    "stage": 3,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Raises the visibility of your own spell effects through the client CVars."
+  },
+  {
+    "id": "FS-260",
+    "feature_key": "fctHealing",
+    "title": "Hide healing numbers",
+    "category": "Interface",
+    "stage": 3,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Hides healing floating combat text independently of damage numbers."
+  },
+  {
+    "id": "FS-261",
+    "feature_key": "lockActionBars",
+    "title": "Lock action bars",
+    "category": "Interface",
+    "stage": 3,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Sets the client's action bar lock CVar and restores it when disabled."
+  },
+  {
+    "id": "FS-262",
+    "feature_key": "mapQuestDifficulty",
+    "title": "Quest difficulty on the world map",
+    "category": "Maps and travel",
+    "stage": 3,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Adds the quest level and difficulty band to quest tooltips on the map."
+  },
+  {
+    "id": "FS-263",
+    "feature_key": "partyBubbles",
+    "title": "Party chat bubbles",
+    "category": "Chat and social",
+    "stage": 3,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Shows party and raid chat bubbles independently of the general bubble setting."
+  },
+  {
+    "id": "FS-264",
+    "feature_key": "questTooltips",
+    "title": "Quest tracking tooltips",
+    "category": "Inventory and tooltips",
+    "stage": 3,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Adds quest title, level and state to unit and item tooltips where the client reports them."
+  },
+  {
+    "id": "FS-265",
+    "feature_key": "rollItemLevel",
+    "title": "Item levels on loot rolls",
+    "category": "Inventory and tooltips",
+    "stage": 3,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Adds the item level to need/greed roll frames without touching the roll buttons."
+  },
+  {
+    "id": "FS-266",
+    "feature_key": "safeAbilityToggle",
+    "title": "Prevent right-click auto-cast toggling",
+    "category": "Interface",
+    "stage": 3,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Blocks the right-click auto-cast toggle on action buttons while the feature is on."
+  },
+  {
+    "id": "FS-267",
+    "feature_key": "targetCastbar",
+    "title": "Target cast bar",
+    "category": "Interface",
+    "stage": 3,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "A movable cast bar for your target, fed by the client's unit cast events."
   }
 ]

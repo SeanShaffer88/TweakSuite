@@ -1,7 +1,7 @@
 -- SPDX-License-Identifier: MIT
 local addonName, F = ...
 F.name = addonName
-F.version = "0.2.0-alpha.12"
+F.version = "0.2.0-alpha.13"
 F.features, F.order, F.listeners, F.errors = {}, {}, {}, {}
 F.frame = CreateFrame("Frame")
 F.paused = false
@@ -49,6 +49,18 @@ end
 
 function F:Plain(value)
     return not (issecretvalue and issecretvalue(value))
+end
+
+-- Modules register their own slash commands here instead of growing the dispatcher.
+-- The handler receives the text after the command name and the command itself.
+function F:Command(name, handler, helpLine)
+    self.commands = self.commands or {}
+    self.commands[name:lower()] = handler
+    if helpLine then
+        self.commandHelp = self.commandHelp or {}
+        self.commandHelp[#self.commandHelp + 1] = helpLine
+    end
+    return handler
 end
 
 function F:Print(message)
@@ -173,6 +185,10 @@ function F:Refresh()
             feature.state = feature.fault and "error - disabled for this session" or "active"
         else
             feature.state = "active"
+            if feature.refresh then
+                local ok, err = pcall(feature.refresh)
+                if not ok then self:RecordError(id, err) end
+            end
         end
     end
     for id in pairs(self.pendingOptions) do
@@ -704,7 +720,12 @@ local function helpText()
     F:Print("  /fs trainer [missing|ranks], /fs train [cap], /fs regen, /fs bartext [hotkeys|macros|show], /fs range")
     F:Print("  /fs spellcalc <min> <max> <cast> [mana] [cooldown] [duration], /fs spelllabels")
     F:Print("  /fs hazard [list|add <id> [name]|remove <id>|import <ids>|export|check], /fs hazard exempt|allow <id>")
+    F:Print("  /fs roles, /fs group, /fs difficulty [dungeon|raid <n>], /fs readycheck, /fs ready yes|no, /fs activity, /fs audit")
+    F:Print("  /fs track [add <itemID> [label]|remove <itemID>|list], /fs cost <merchantIndex>")
+    F:Print("  /fs cds [add <spellID> [label]|remove <spellID>|list], /fs swing, /fs ability <spellID>, /fs tcast")
+    F:Print("  /fs toast, /fs mute <master|music|ambience|dialog|sfx> [on|off], /fs mapshape [round|square]")
     F:Print("  /fs where, /fs zone, /fs way <x> <y>|clear, /fs dungeon [name], /fs tele [list|add <name> <spellID>|remove <name>|menu|<name>], /fs taxi [list|<n>], /fs flight")
+    for _, line in ipairs(F.commandHelp or {}) do F:Print("  " .. line) end
     F:Print("  Feature IDs appear in settings and in /fs report.")
 end
 
@@ -712,6 +733,12 @@ SlashCmdList.FOREVERSUITE = function(message)
     F:Initialize()
     local command, rest = (message or ""):match("^%s*(%S*)%s*(.-)%s*$")
     command = command:lower()
+    local registered = command ~= "" and F.commands and F.commands[command]
+    if registered and command ~= "help" then
+        local ok, err = pcall(registered, rest, command)
+        if not ok then F:Print("Command failed: " .. tostring(err)) end
+        return
+    end
     if command == "help" then
         helpText()
     elseif command == "pause" then
@@ -907,6 +934,193 @@ SlashCmdList.FOREVERSUITE = function(message)
         end
         F.db.watch[#F.db.watch + 1] = rest
         F:Print("Also watching button " .. rest .. " for the dialog key.")
+    elseif command == "cds" then
+        if not (F:Active("cooldownPanel") or F:Active("cooldownPulse")) then
+            F:Print("Enable Cooldown panel or Cooldown ready alert first."); return
+        end
+        local action, argument = rest:match("^(%S*)%s*(.-)$")
+        action = (action or ""):lower()
+        if action == "" or action == "list" then
+            local rows = F:CooldownRows()
+            if #rows == 0 then F:Print("No spells tracked. Use /fs cds add <spellID> [label]."); return end
+            for _, row in ipairs(rows) do F:Print(F:CooldownLine(row)) end
+        elseif action == "add" then
+            local id, label = argument:match("^(%d+)%s*(.-)$")
+            local ok, reason = F:TrackCooldown(id, label)
+            F:Print(ok and ("Tracking cooldown " .. id .. ".") or ("Not tracked: " .. tostring(reason)))
+        elseif action == "remove" then
+            local ok, reason = F:UntrackCooldown(argument)
+            F:Print(ok and "Cooldown no longer tracked." or ("Not removed: " .. tostring(reason)))
+        else
+            F:Print("Use /fs cds list, add <spellID> [label] or remove <spellID>.")
+        end
+    elseif command == "toast" then
+        if not F:Active("toastControl") then F:Print("Enable Event toast controls first."); return end
+        if not (C_EventToastManager and C_EventToastManager.RemoveCurrentToast) then
+            F:Print("This client does not report event toasts."); return
+        end
+        local pending
+        if C_EventToastManager.GetNextToastToDisplay then
+            local ok, toast = pcall(C_EventToastManager.GetNextToastToDisplay)
+            if ok and type(toast) == "table" then pending = toast.title or toast.text or toast.name end
+        end
+        local ok = pcall(C_EventToastManager.RemoveCurrentToast)
+        F:Print(ok and ("Cleared the current toast" .. (pending and (": " .. tostring(pending)) or ".")) or "The client refused to clear the toast.")
+    elseif command == "mute" then
+        if not F:Active("soundMute") then F:Print("Enable Sound channel muting first."); return end
+        local channel, state = rest:match("^(%S*)%s*(%S*)$")
+        channel = (channel or ""):lower()
+        if channel == "" then
+            F:Print("Channels: " .. table.concat(F:SoundChannelNames(), ", ") .. ". Use /fs mute <channel> [on|off].")
+            return
+        end
+        local mute = (state or ""):lower() ~= "off"
+        if channel == "all" then
+            local changed = 0
+            for _, name in ipairs(F:SoundChannelNames()) do
+                local ok = F:MuteSoundChannel(name, mute)
+                if ok then changed = changed + 1 end
+            end
+            F:Print((mute and "Muted " or "Restored ") .. changed .. " sound channel(s).")
+        else
+            local ok, reason = F:MuteSoundChannel(channel, mute)
+            F:Print(ok and ((mute and "Muted " or "Restored ") .. channel .. ".")
+                or ("Not changed: " .. tostring(reason)))
+        end
+    elseif command == "mapshape" then
+        if not F:Active("minimapShape") then F:Print("Enable Minimap shape first."); return end
+        local shape = rest:lower()
+        if shape ~= "" and shape ~= "round" and shape ~= "square" then
+            F:Print("Use /fs mapshape round or /fs mapshape square."); return
+        end
+        if shape ~= "" then F:SetOption("minimapShape", "shape", shape) end
+        F:ApplyMinimapShape()
+        F:Print("Minimap shape: " .. F:MinimapShape() .. ".")
+    elseif command == "tcast" then
+        if not F:Active("targetAbilityRef") then F:Print("Enable Target ability reference first."); return end
+        local cast = F:TargetAbility()
+        if not cast then F:Print("Your target is not casting anything."); return end
+        F:Print(cast.name .. (cast.remaining and cast.remaining > 0
+            and string.format(" (%.1f s left)", cast.remaining) or ""))
+        if cast.spellID then
+            local info = F:AbilityInfo(cast.spellID)
+            F:Print("  Spell ID: " .. cast.spellID)
+            if info and info.cost then F:Print("  Cost: " .. info.cost) end
+            if info and info.description then F:Print("  " .. info.description) end
+        else
+            F:Print("  The client did not report a spell ID for this cast.")
+        end
+    elseif command == "swing" then
+        if not F:Active("swingBar") then F:Print("Enable Swing timer first."); return end
+        F:Print(F:UpdateSwing() and ("Swing in progress: " .. string.format("%.1f s", 0)) or "No swing in progress.")
+    elseif command == "ability" then
+        if not F:Active("abilityRef") then F:Print("Enable Spell reference first."); return end
+        local info = F:AbilityInfo(rest)
+        if not info then F:Print("Not found. Use /fs ability <spellID>."); return end
+        F:Print(info.name .. " (" .. info.id .. ")")
+        if info.castTime then F:Print("  Cast time: " .. string.format("%.2f s", info.castTime / 1000)) end
+        if info.cost then F:Print("  Cost: " .. info.cost) end
+        if info.description then F:Print("  " .. info.description) end
+    elseif command == "track" then
+        if not F:Active("trackedBar") then F:Print("Enable Tracked item bar first."); return end
+        local action, argument = rest:match("^(%S*)%s*(.-)$")
+        action = (action or ""):lower()
+        if action == "" or action == "list" then
+            local rows = F:TrackedItemCounts()
+            if #rows == 0 then F:Print("Nothing is tracked. Use /fs track add <itemID> [label]."); return end
+            for _, row in ipairs(rows) do
+                F:Print(row.id .. " - " .. (row.label or "no label") .. ": " .. row.count)
+            end
+        elseif action == "add" then
+            local id, label = argument:match("^(%d+)%s*(.-)$")
+            local ok, reason = F:TrackItem(id, label)
+            F:Print(ok and ("Tracking item " .. id .. ".") or ("Not tracked: " .. tostring(reason)))
+        elseif action == "remove" then
+            local ok, reason = F:UntrackItem(argument)
+            F:Print(ok and "Item no longer tracked." or ("Not removed: " .. tostring(reason)))
+        else
+            F:Print("Use /fs track list, add <itemID> [label] or remove <itemID>.")
+        end
+    elseif command == "cost" then
+        if not F:Active("merchantCurrency") then F:Print("Enable Merchant cost details first."); return end
+        local cost, reason = F:MerchantCost(rest)
+        if not cost then F:Print("Not available: " .. tostring(reason)); return end
+        local money = cost.money and GetMoneyString and GetMoneyString(cost.money) or (cost.money and (cost.money .. "c") or "no gold cost")
+        F:Print(cost.name .. " - " .. money)
+        if #cost.costs == 0 then
+            F:Print("  No alternative currency cost for this item.")
+        else
+            for _, entry in ipairs(cost.costs) do
+                F:Print("  " .. (entry.name or entry.link or "currency") .. " x" .. tostring(entry.amount or "?"))
+            end
+        end
+    elseif command == "roles" then
+        if not F:Active("roleIndicators") then F:Print("Enable Group roles and leader first."); return end
+        for _, row in ipairs(F:GroupRows()) do
+            local tags = { F:RoleLabel(row.role) }
+            if row.leader then tags[#tags + 1] = "leader" end
+            if row.assistant then tags[#tags + 1] = "assistant" end
+            F:Print((row.name or row.unit) .. " - " .. table.concat(tags, ", "))
+        end
+    elseif command == "group" then
+        if not F:Active("groupTools") then F:Print("Enable Group summary first."); return end
+        local info, rows = F:GroupSummary()
+        if type(info.members) ~= "number" or info.members == 0 then F:Print("You are not in a group."); return end
+        F:Print((info.inRaid and "Raid" or (info.group and "Party" or "Solo")) .. " - " .. info.members .. " member(s)")
+        if info.instance then
+            F:Print("Instance: " .. tostring(info.instance) .. " (" .. tostring(info.instanceType or "none") .. ", "
+                .. tostring(info.difficultyName or info.difficultyID or "?") .. ")")
+        end
+        for _, row in ipairs(rows) do
+            F:Print("  " .. (row.name or row.unit) .. " - " .. F:RoleLabel(row.role)
+                .. (row.leader and ", leader" or ""))
+        end
+    elseif command == "difficulty" then
+        if not F:Active("difficultySelector") then F:Print("Enable Instance difficulty selection first."); return end
+        local kind, value = rest:match("^(%S*)%s*(%S*)$")
+        kind = (kind or ""):lower()
+        if kind == "" then
+            local dungeonID, dungeonName = F:DifficultyLabel("dungeon")
+            local raidID, raidName = F:DifficultyLabel("raid")
+            F:Print("Dungeon difficulty: " .. tostring(dungeonName or dungeonID or "not reported")
+                .. "; raid difficulty: " .. tostring(raidName or raidID or "not reported"))
+            return
+        end
+        if kind ~= "dungeon" and kind ~= "raid" then F:Print("Use /fs difficulty, /fs difficulty dungeon <n> or /fs difficulty raid <n>."); return end
+        if value == "" then
+            local id, name = F:DifficultyLabel(kind)
+            F:Print(tostring(kind) .. " difficulty: " .. tostring(name or id or "not reported"))
+            return
+        end
+        local ok, reason = F:SetDifficulty(kind, value)
+        F:Print(ok and ("Changed " .. kind .. " difficulty to " .. tostring(value) .. ".") or ("Not changed: " .. tostring(reason)))
+    elseif command == "readycheck" then
+        if not F:Active("readyCheckReminder") then F:Print("Enable Ready check reminders first."); return end
+        if not (C_PartyInfo and C_PartyInfo.DoReadyCheck) then F:Print("This client cannot start a ready check."); return end
+        if not F:CanAutomate() then F:Print("Cannot start a ready check right now."); return end
+        local ok = pcall(C_PartyInfo.DoReadyCheck)
+        F:Print(ok and "Ready check started." or "The client refused to start a ready check.")
+    elseif command == "ready" then
+        if not F:Active("readyCheckReminder") then F:Print("Enable Ready check reminders first."); return end
+        local answer = rest:lower()
+        if answer ~= "yes" and answer ~= "no" then F:Print("Use /fs ready yes or /fs ready no."); return end
+        if not (C_PartyInfo and C_PartyInfo.ConfirmReadyCheck) then F:Print("This client cannot answer a ready check."); return end
+        local ok = pcall(C_PartyInfo.ConfirmReadyCheck, answer == "yes")
+        F:Print(ok and ("Answered the ready check with " .. answer .. ".") or "The client refused the answer.")
+    elseif command == "activity" then
+        if not F:Active("activitySummary") then F:Print("Enable Activity summary first."); return end
+        local summary = F:ActivitySummary()
+        F:Print("Level " .. tostring(summary.level or "?") .. " - " .. tostring(summary.completed) .. " completed quest(s), "
+            .. tostring(summary.watched) .. " watched.")
+        F:Print("Gold: " .. tostring(summary.gold) .. " g; rested experience: "
+            .. (summary.rested and (tostring(math.floor(summary.rested)) .. " xp") or "none") .. ".")
+    elseif command == "audit" then
+        if not F:Active("availabilityAudit") then F:Print("Enable Gameplay system availability audit first."); return end
+        local rows, available, missing = F:AuditSummary()
+        F:Print("Availability audit: " .. available .. " available, " .. missing .. " not offered by this client.")
+        for _, row in ipairs(rows) do
+            if not row.ok then F:Print("  missing: " .. tostring(row.label)) end
+        end
     elseif command == "hazard" then
         local action, argument = rest:match("^(%S*)%s*(.-)$")
         action = (action or ""):lower()

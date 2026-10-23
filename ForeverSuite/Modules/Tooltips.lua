@@ -45,7 +45,7 @@ local SLOT_FOR_EQUIP = {
 
 local ITEM_TOOLTIP_FEATURES = { "maxStack", "itemLevel", "itemID", "itemCount", "sellPrice", "upgradeHint", "bindType",
     "flyoutItemLevel", "missingEnchant", "missingGems", "socketInfo", "repToken", "questItem" }
-local UNIT_TOOLTIP_FEATURES = { "npcID", "tooltipClassColor", "unitHealth" }
+local UNIT_TOOLTIP_FEATURES = { "npcID", "tooltipClassColor", "unitHealth", "targetCastInfo" }
 
 -- Item link fields: item:id:enchant:gem1:gem2:gem3:gem4:suffix:unique:...
 local function linkFields(link)
@@ -191,6 +191,7 @@ local function tooltipExtras(tooltip, record, link)
     end
 end
 
+
 local function itemTooltip(tooltip, data)
     if not anyActive(ITEM_TOOLTIP_FEATURES) then return end
     if not tooltip or not tooltip.GetItem or type(data) ~= "table" or not F:Plain(data) then return end
@@ -279,6 +280,7 @@ local function itemTooltip(tooltip, data)
         end
     end
     tooltipExtras(tooltip, record, link)
+    tooltipExtras(tooltip, record, link)
     if F:Active("missingEnchant") and type(equip) == "string" and ENCHANTABLE[equip] then
         local onCharacter = isEquipped(link, equip)
         local fields = linkFields(link)
@@ -327,6 +329,36 @@ local function restoreClassBorder(tooltip)
     classBorderSaved[tooltip] = nil
 end
 
+
+-- Target cast information comes from the client's own cast APIs. Secrets are checked
+-- first so a hidden cast simply produces no line instead of an error.
+function F:TargetCastLine(unit)
+    if type(unit) ~= "string" then return nil end
+    if C_Secrets and C_Secrets.ShouldUnitSpellCastBeSecret then
+        local ok, secret = pcall(C_Secrets.ShouldUnitSpellCastBeSecret, unit)
+        if ok and secret == true then return nil end
+    end
+    local name, _, _, startTime, endTime, _, _, notInterruptible
+    if UnitCastingInfo then
+        local ok, a, b, c, d, e, f, g, h = pcall(UnitCastingInfo, unit)
+        if ok then name, _, _, startTime, endTime, _, _, notInterruptible = a, b, c, d, e, f, g, h end
+    end
+    if not name and UnitChannelInfo then
+        local ok, a, b, c, d, e = pcall(UnitChannelInfo, unit)
+        if ok then name, _, _, startTime, endTime = a, b, c, d, e end
+    end
+    if type(name) ~= "string" or name == "" then return nil end
+    local text = "Casting: " .. name
+    if F:GetOption("targetCastInfo", "showRemaining") ~= false
+        and type(startTime) == "number" and type(endTime) == "number" then
+        local now = GetTime and GetTime() or 0
+        local remaining = (endTime - now) / 1000
+        if remaining > 0 and remaining < 60 then text = text .. string.format(" (%.1f s left)", remaining) end
+    end
+    if notInterruptible == true then text = text .. ", cannot be interrupted" end
+    return text
+end
+
 local function unitTooltip(tooltip, data)
     if not anyActive(UNIT_TOOLTIP_FEATURES) or InCombatLockdown() then return end
     if not tooltip or not tooltip.GetUnit or type(data) ~= "table" or not F:Plain(data) then return end
@@ -350,6 +382,10 @@ local function unitTooltip(tooltip, data)
             local percent = math.floor(health / maximum * 100 + 0.5)
             add(tooltip, record, "unitHealth", "Health: " .. health .. " / " .. maximum .. " (" .. percent .. "%)")
         end
+    end
+    if F:Active("targetCastInfo") then
+        local castText = F:TargetCastLine(unit)
+        if castText then add(tooltip, record, "targetCastInfo", castText) end
     end
     if F:Active("tooltipClassColor") and UnitClass and tooltip.SetBackdropBorderColor then
         local _, classFile = UnitClass(unit)
@@ -570,6 +606,20 @@ F:Register("tooltipScale", {
             scaleSaved[frame] = nil
         end
     end,
+})
+
+F:Register("targetCastInfo", {
+    title = "Target cast information",
+    category = "Tooltips",
+    description = "Adds the spell a unit is casting, the time left and whether it can be interrupted to that unit's tooltip. The client's cast APIs are used and a cast the client hides produces no line.",
+    disableText = "Removes the cast line from unit tooltips.",
+    conflicts = { "TinyTooltip", "Leatrix_Plus", "Leatrix_Plus_Forever" },
+    options = {
+        { key = "showRemaining", type = "boolean", title = "Show the time left", default = true,
+          description = "Adds the remaining cast time in seconds when the client reports the cast timestamps." },
+    },
+    available = function() return UnitCastingInfo ~= nil end,
+    enable = installUnit,
 })
 
 F:Register("questID", {

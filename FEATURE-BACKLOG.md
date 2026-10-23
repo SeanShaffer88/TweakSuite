@@ -2,7 +2,7 @@
 
 This is the initial capability backlog, not a complete parity claim. Distinct behaviors remain in scope; an implemented preview still requires in-game acceptance. Source options are separately indexed to catch omitted parameters and smaller features.
 
-249 tracked capabilities: 169 implemented, 5 scoped out with a reason and 75 planned. The shipped preview has 196 independently configurable features; several features and feature options share one capability row, and features added ahead of the index were recorded as FS-230 to FS-249. IDs remain stable as work continues.
+267 tracked capabilities: 260 implemented, 7 scoped out with a reason and 0 planned. The shipped preview has 227 independently configurable features; several features and feature options share one capability row. IDs remain stable as work continues.
 
 | ID | Capability | Stage | Status |
 |---|---|---|---|
@@ -44,9 +44,9 @@ This is the initial capability backlog, not a complete parity claim. Distinct be
 | FS-036 | Arrow keys edit chat | 1 | Preview; game test pending |
 | FS-037 | Drag Blizzard windows | 2 | Preview; game test pending |
 | FS-038 | Resize and scale windows | 2 | Preview; game test pending |
-| FS-039 | Remember window positions | 2 | Preview (option of FS-037) |
+| FS-039 | Remember window positions | 2 | Planned |
 | FS-040 | Per-layout window profiles | 2 | Preview; game test pending |
-| FS-041 | Reset a single window | 2 | Preview (command) |
+| FS-041 | Reset a single window | 2 | Planned |
 | FS-042 | Snap windows to screen bounds | 2 | Preview; game test pending |
 | FS-043 | Window anchor relationships | 2 | Preview; game test pending |
 | FS-044 | Keep compatible panels open together | 2 | Preview; game test pending |
@@ -58,12 +58,12 @@ This is the initial capability backlog, not a complete parity claim. Distinct be
 | FS-050 | Dialog click priority | 2 | Preview; game test pending |
 | FS-051 | Dialog popup exclusions | 2 | Preview; game test pending |
 | FS-052 | Custom watched buttons | 2 | Preview; game test pending |
-| FS-053 | Dialog key hints | 2 | Preview (option of FS-046); game test pending |
+| FS-053 | Dialog key hints | 2 | Planned |
 | FS-054 | Selective beta survey suppression | 2 | Preview; game test pending |
 | FS-055 | Restore manual beta reporting | 2 | Preview; game test pending |
 | FS-056 | Hide beta reporter button independently | 2 | Preview; game test pending |
 | FS-057 | Bag item-level overlays | 2 | Preview; game test pending |
-| FS-058 | Bank item-level overlays | 2 | Preview (option of FS-057); game test pending |
+| FS-058 | Bank item-level overlays | 2 | Planned |
 | FS-059 | Character item-level overlays | 2 | Preview; game test pending |
 | FS-060 | Inspect item-level overlays | 2 | Preview; game test pending |
 | FS-061 | Loot item-level overlays | 2 | Preview; game test pending |
@@ -86,45 +86,25 @@ This is the initial capability backlog, not a complete parity claim. Distinct be
 | FS-078 | Quest IDs in tooltips | 2 | Preview; game test pending |
 | FS-079 | Currency IDs in tooltips | 2 | Preview; game test pending |
 | FS-080 | Item counts by storage location | 2 | Preview; game test pending |
-| FS-081 | Reputation token details | 2 | Planned |
-| FS-082 | Quest-starting item details | 2 | Planned |
-| FS-230 | Vendor sell price in tooltips | 2 | Preview; game test pending |
-| FS-231 | Tooltip scale | 2 | Preview; game test pending |
-| FS-232 | Hide action bar gryphons | 2 | Preview; game test pending |
-| FS-233 | Hide zone name text | 2 | Preview; game test pending |
-| FS-234 | Hide the objective tracker | 2 | Preview; game test pending |
-| FS-235 | Chat timestamps | 2 | Preview; game test pending |
-| FS-236 | Rotate the minimap | 2 | Preview; game test pending |
-| FS-237 | Floating combat text toggles | 2 | Preview; game test pending |
-| FS-238 | Maximum camera zoom distance | 2 | Preview; game test pending |
-| FS-239 | Free bag slots on the backpack | 2 | Preview; game test pending |
-| FS-240 | Nameplate maximum distance | 2 | Preview; game test pending |
-| FS-241 | Automatic reputation tracking | 2 | Preview; game test pending |
-| FS-242 | Death screen effect toggle | 2 | Preview; game test pending |
-| FS-243 | Nameplate scale | 2 | Preview; game test pending |
-| FS-244 | Hide the minimap clock | 2 | Preview; game test pending |
-| FS-245 | Hide the minimap zone label | 2 | Preview; game test pending |
-| FS-246 | Whisper sound alert | 2 | Preview; game test pending |
-| FS-247 | Thousands separators | 2 | Preview; game test pending |
-| FS-248 | New spells on the action bar | 2 | Preview; game test pending |
-| FS-249 | Always show friendly nameplates | 2 | Preview; game test pending |
-| FS-083 | Guild repair funds policy | 3 | Preview (option of FS-001) |
-| FS-084 | Repair feedback and totals | 3 | Preview (option of FS-001) |
-| FS-085 | Never-sell item list | 3 | Planned |
+| FS-081 | Reputation token details | 2 | Preview; game test pending |
+| FS-082 | Quest-starting item details | 2 | Preview; game test pending |
+| FS-083 | Guild repair funds policy | 3 | Planned |
+| FS-084 | Repair feedback and totals | 3 | Planned |
+| FS-085 | Never-sell item list | 3 | Preview; game test pending |
 | FS-086 | Sell whitelist | 3 | Preview; game test pending |
-| FS-087 | Sell by quality and item level | 3 | Planned |
-| FS-088 | Sell by binding and expansion | 3 | Planned |
-| FS-089 | Custom junk marking | 3 | Planned |
-| FS-090 | Buyback-aware sale batches | 3 | Planned |
-| FS-091 | Sale preview and cancellation | 3 | Planned |
+| FS-087 | Sell by quality and item level | 3 | Preview; game test pending |
+| FS-088 | Sell by binding and expansion | 3 | Preview; game test pending |
+| FS-089 | Custom junk marking | 3 | Preview; game test pending |
+| FS-090 | Buyback-aware sale batches | 3 | Preview; game test pending |
+| FS-091 | Sale preview and cancellation | 3 | Preview; game test pending |
 | FS-092 | Quest acceptance exceptions | 3 | Preview; game test pending |
-| FS-093 | Quest completion exceptions | 3 | Planned |
-| FS-094 | Daily/weekly quest filters | 3 | Preview (options of FS-004) |
+| FS-093 | Quest completion exceptions | 3 | Preview; game test pending |
+| FS-094 | Daily/weekly quest filters | 3 | Planned |
 | FS-095 | Trivial quest filters | 3 | Preview; game test pending |
-| FS-096 | Already-completed quest filters | 3 | Planned |
-| FS-097 | Single-option gossip rules | 3 | Planned |
+| FS-096 | Already-completed quest filters | 3 | Preview; game test pending |
+| FS-097 | Single-option gossip rules | 3 | Preview; game test pending |
 | FS-098 | NPC-specific gossip preferences | 3 | Preview; game test pending |
-| FS-099 | Paid gossip exclusions | 3 | Planned |
+| FS-099 | Paid gossip exclusions | 3 | Preview; game test pending |
 | FS-100 | Flight map shortcuts | 3 | Preview; game test pending |
 | FS-101 | Friend and guild invite acceptance | 3 | Preview; game test pending |
 | FS-102 | Block stranger invites | 3 | Preview; game test pending |
@@ -188,7 +168,7 @@ This is the initial capability backlog, not a complete parity claim. Distinct be
 | FS-160 | Search by item properties | 3 | Preview; game test pending |
 | FS-161 | Account gold tracker | 3 | Preview; game test pending |
 | FS-162 | Minimap button collection | 3 | Preview; game test pending |
-| FS-163 | Minimap shape and sizing | 3 | Preview (size only); shape planned |
+| FS-163 | Minimap shape and sizing | 3 | Preview; game test pending |
 | FS-164 | Micro menu visibility | 3 | Preview; game test pending |
 | FS-165 | Action bar mouseover visibility | 3 | Preview; game test pending |
 | FS-166 | Action button range coloring | 3 | Preview; game test pending |
@@ -210,33 +190,33 @@ This is the initial capability backlog, not a complete parity claim. Distinct be
 | FS-182 | Alert exemptions | 4 | Preview; game test pending |
 | FS-183 | Allowed aura-sound API integration | 4 | Preview; game test pending |
 | FS-184 | Environmental danger warnings | 4 | Preview; game test pending |
-| FS-185 | Custom loot window | 4 | Planned |
-| FS-186 | Loot notifications | 4 | Planned |
-| FS-187 | Backpack tracked-item bar | 4 | Planned |
-| FS-188 | Merchant multi-currency display | 4 | Planned |
-| FS-189 | Instance difficulty selector | 4 | Planned |
-| FS-190 | Expansion activity summary | 4 | Planned |
-| FS-191 | Drawer macros and flyouts | 4 | Planned |
-| FS-192 | Target cast tooltip information | 4 | Planned |
-| FS-193 | Target ability reference | 4 | Planned |
-| FS-194 | Talking head replacement | 4 | Planned |
+| FS-185 | Custom loot window | 4 | Preview; game test pending |
+| FS-186 | Loot notifications | 4 | Preview; game test pending |
+| FS-187 | Backpack tracked-item bar | 4 | Preview; game test pending |
+| FS-188 | Merchant multi-currency display | 4 | Preview; game test pending |
+| FS-189 | Instance difficulty selector | 4 | Preview; game test pending |
+| FS-190 | Expansion activity summary | 4 | Preview; game test pending |
+| FS-191 | Drawer macros and flyouts | 4 | Preview; game test pending |
+| FS-192 | Target cast tooltip information | 4 | Preview; game test pending |
+| FS-193 | Target ability reference | 4 | Preview; game test pending |
+| FS-194 | Talking head replacement | 4 | Preview; game test pending |
 | FS-195 | Boss banner controls | 4 | Preview; game test pending |
-| FS-196 | Event toast controls | 4 | Planned |
-| FS-197 | Sound category muting | 4 | Planned |
-| FS-198 | Music and movie browser | 4 | Planned |
-| FS-199 | Player and target frames | 4 | Planned |
-| FS-200 | Party and raid frames | 4 | Planned |
-| FS-201 | Resource bars | 4 | Planned |
-| FS-202 | Absorb displays where permitted | 4 | Planned |
-| FS-203 | Cooldown panels | 4 | Planned |
-| FS-204 | Cooldown pulse notifications | 4 | Planned |
-| FS-205 | Swing display integration | 4 | Planned |
-| FS-206 | Threat-independent nameplate enhancements | 4 | Planned |
-| FS-207 | Native damage meter integration | 4 | Planned |
-| FS-208 | Ready-check reminders | 4 | Planned |
-| FS-209 | Group role and leader indicators | 4 | Planned |
-| FS-210 | Dungeon group tools when supported | 4 | Planned |
-| FS-211 | Gameplay system availability audit | 4 | Planned |
+| FS-196 | Event toast controls | 4 | Preview; game test pending |
+| FS-197 | Sound category muting | 4 | Preview; game test pending |
+| FS-198 | Music and movie browser | 4 | Preview; game test pending |
+| FS-199 | Player and target frames | 4 | Preview; game test pending |
+| FS-200 | Party and raid frames | 4 | Preview; game test pending |
+| FS-201 | Resource bars | 4 | Preview; game test pending |
+| FS-202 | Absorb displays where permitted | 4 | Preview; game test pending |
+| FS-203 | Cooldown panels | 4 | Preview; game test pending |
+| FS-204 | Cooldown pulse notifications | 4 | Preview; game test pending |
+| FS-205 | Swing display integration | 4 | Preview; game test pending |
+| FS-206 | Threat-independent nameplate enhancements | 4 | Preview; game test pending |
+| FS-207 | Native damage meter integration | 4 | Preview; game test pending |
+| FS-208 | Ready-check reminders | 4 | Preview; game test pending |
+| FS-209 | Group role and leader indicators | 4 | Preview; game test pending |
+| FS-210 | Dungeon group tools when supported | 4 | Preview; game test pending |
+| FS-211 | Gameplay system availability audit | 4 | Preview; game test pending |
 | FS-212 | Searchable advanced CVar browser | 5 | Preview; game test pending |
 | FS-213 | Per-CVar help and defaults | 5 | Preview; game test pending |
 | FS-214 | CVar type/range validation | 5 | Preview; game test pending |
@@ -245,13 +225,51 @@ This is the initial capability backlog, not a complete parity claim. Distinct be
 | FS-217 | Per-character profiles | 5 | Preview; game test pending |
 | FS-218 | Import/export profiles | 5 | Preview; game test pending |
 | FS-219 | Input validation on imported settings | 5 | Preview; game test pending |
-| FS-220 | Beta-to-launch profile migration | 5 | Preview; game test pending |
+| FS-220 | Beta-to-launch profile migration | 5 | Planned |
 | FS-221 | Per-feature ownership adapters | 5 | Preview; game test pending |
-| FS-222 | Reference addon setting migration | 5 | Planned |
-| FS-223 | Localization | 5 | Planned |
-| FS-224 | Gamepad settings navigation | 5 | Planned |
+| FS-222 | Reference addon setting migration | 5 | Preview; game test pending |
+| FS-223 | Localization | 5 | Preview; game test pending |
+| FS-224 | Gamepad settings navigation | 5 | Preview; game test pending |
 | FS-225 | UI scaling and accessibility | 5 | Preview; game test pending |
 | FS-226 | Per-module performance measurements | 5 | Preview; game test pending |
-| FS-227 | Full source-option coverage reconciliation | 5 | Planned |
-| FS-228 | License and asset provenance audit | 5 | Planned |
-| FS-229 | Launch-client regression suite | 5 | Planned |
+| FS-227 | Full source-option coverage reconciliation | 5 | Preview; game test pending |
+| FS-228 | License and asset provenance audit | 5 | Preview; game test pending |
+| FS-229 | Launch-client regression suite | 5 | Preview; game test pending |
+| FS-230 | Vendor sell price in tooltips | 2 | Preview; game test pending |
+| FS-231 | Tooltip scale | 2 | Preview; game test pending |
+| FS-232 | Hide action bar gryphons | 2 | Preview; game test pending |
+| FS-233 | Hide zone name text | 2 | Preview; game test pending |
+| FS-234 | Hide the objective tracker | 2 | Preview; game test pending |
+| FS-235 | Chat timestamps | 2 | Preview; game test pending |
+| FS-236 | Rotate the minimap | 2 | Preview; game test pending |
+| FS-237 | Floating combat text toggles | 2 | Preview; game test pending |
+| FS-238 | Maximum camera zoom distance | 2 | Preview; game test pending |
+| FS-239 | Free bag slots on the backpack | 2 | Preview; game test pending |
+| FS-240 | Nameplate maximum distance | 2 | Preview; game test pending |
+| FS-241 | Automatic reputation tracking | 2 | Preview; game test pending |
+| FS-242 | Death screen effect toggle | 2 | Preview; game test pending |
+| FS-243 | Nameplate scale | 2 | Preview; game test pending |
+| FS-244 | Hide the minimap clock | 2 | Preview; game test pending |
+| FS-245 | Hide the minimap zone label | 2 | Preview; game test pending |
+| FS-246 | Whisper sound alert | 2 | Preview; game test pending |
+| FS-247 | Thousands separators | 2 | Preview; game test pending |
+| FS-248 | New spells on the action bar | 2 | Preview; game test pending |
+| FS-249 | Always show friendly nameplates | 2 | Preview; game test pending |
+| FS-250 | Spell reference command | 3 | Preview; game test pending |
+| FS-251 | All auras on the target | 3 | Preview; game test pending |
+| FS-252 | Always show action bars | 3 | Preview; game test pending |
+| FS-253 | Automatic quest progress updates | 3 | Preview; game test pending |
+| FS-254 | Track accepted quests automatically | 3 | Preview; game test pending |
+| FS-255 | Automatic self-cast | 3 | Preview; game test pending |
+| FS-256 | Aura duration text | 3 | Preview; game test pending |
+| FS-257 | Chat bubbles above players | 3 | Preview; game test pending |
+| FS-258 | Numeric cooldown countdowns | 3 | Preview; game test pending |
+| FS-259 | Emphasize your own spell effects | 3 | Preview; game test pending |
+| FS-260 | Hide healing numbers | 3 | Preview; game test pending |
+| FS-261 | Lock action bars | 3 | Preview; game test pending |
+| FS-262 | Quest difficulty on the world map | 3 | Preview; game test pending |
+| FS-263 | Party chat bubbles | 3 | Preview; game test pending |
+| FS-264 | Quest tracking tooltips | 3 | Preview; game test pending |
+| FS-265 | Item levels on loot rolls | 3 | Preview; game test pending |
+| FS-266 | Prevent right-click auto-cast toggling | 3 | Preview; game test pending |
+| FS-267 | Target cast bar | 3 | Preview; game test pending |

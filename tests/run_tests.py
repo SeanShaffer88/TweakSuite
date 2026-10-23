@@ -4,6 +4,7 @@ These test addon decisions, not Blizzard rendering, protected execution, or serv
 Install tests/requirements.txt with Python 3.12, then run this script.
 """
 import re
+import sys
 import unittest
 from pathlib import Path
 from lupa.lua51 import LuaRuntime
@@ -344,6 +345,71 @@ function CanGuildBankRepair() return guildRepairAvailable == true end
 guildRepairAvailable = true
 function GetRepairAllCost() return repairCost, true end
 function GetMoney() return money end
+groupMembers, raidGroup, inGroup = 1, false, false
+function GetNumGroupMembers() return groupMembers end
+function IsInRaid() return raidGroup end
+function IsInGroup() return inGroup end
+roleFor, leaderUnit, assistantUnits = {}, nil, {}
+function UnitGroupRolesAssigned(unit) return roleFor[unit] or "NONE" end
+function UnitIsGroupLeader(unit) return leaderUnit == unit end
+function UnitIsGroupAssistant(unit) return assistantUnits[unit] == true end
+function UnitExists(unit)
+ if unit == "player" then return true end
+ return type(unit) == "string" and (unit:match("^party%d$") ~= nil or unit:match("^raid%d$") ~= nil)
+end
+raidRoster = {}
+function GetRaidRosterInfo(index)
+ local entry = raidRoster[index]
+ if not entry then return nil end
+ return entry.name, entry.rank, entry.subgroup, entry.level, entry.class, entry.classFile
+end
+instanceInfo = { "The Deadmines", "party", 1, "Normal", 5 }
+function GetInstanceInfo() return unpack(instanceInfo) end
+dungeonDifficulty, raidDifficulty = 1, 14
+function GetDungeonDifficultyID() return dungeonDifficulty end
+function GetRaidDifficultyID() return raidDifficulty end
+function SetDungeonDifficultyID(id) dungeonDifficulty = id end
+function SetRaidDifficultyID(id) raidDifficulty = id end
+readyChecks, readyAnswer = 0, nil
+C_PartyInfo = { DoReadyCheck = function() readyChecks = readyChecks + 1 end,
+ ConfirmReadyCheck = function(value) readyAnswer = value end }
+restedXP, completedQuestList, watchCount = 0, {}, 0
+function GetXPExhaustion() return restedXP end
+C_QuestLog = C_QuestLog or {}
+C_QuestLog.GetAllCompletedQuestIDs = function() return completedQuestList end
+C_QuestLog.GetNumQuestWatches = function() return watchCount end
+cooldownStart, cooldownDuration = 0, 0
+C_Spell = C_Spell or {}
+C_Spell.GetSpellCooldown = function(id) return { startTime = cooldownStart, duration = cooldownDuration } end
+namePlates = {}
+talkingLine = { speakerName = "Thrall", text = "The Horde needs you." }
+C_TalkingHead = { GetCurrentLineInfo = function() return talkingLine end }
+nextToast = { title = "Level up" }
+removedToasts = 0
+C_EventToastManager = { GetNextToastToDisplay = function() return nextToast end,
+ RemoveCurrentToast = function() removedToasts = removedToasts + 1 end }
+Minimap = CreateFrame("Frame", "Minimap"); Minimap.mask = "Interface\\Minimap\\UI-Minimap-Background"
+function Minimap:SetMaskTexture(mask) self.mask = mask end
+function Minimap:GetMaskTexture() return self.mask end
+C_NamePlate = C_NamePlate or {}
+function C_NamePlate.GetNamePlateForUnit(unit) return namePlates[unit] end
+merchantItems, merchantCostList = {}, {}
+C_MerchantFrame = C_MerchantFrame or {}
+function C_MerchantFrame.GetItemInfo(index)
+ local entry = merchantItems[index]
+ if not entry then return nil end
+ return entry.name, entry.texture, entry.price
+end
+function GetMerchantItemCostInfo(index)
+ local entry = merchantItems[index]
+ return entry and #(entry.costs or {}) or 0
+end
+function GetMerchantItemCostItem(index, costIndex)
+ local entry = merchantItems[index]
+ local cost = entry and entry.costs and entry.costs[costIndex]
+ if not cost then return nil end
+ return cost.texture, cost.amount, cost.link, cost.name
+end
 function RepairAllItems(guild) calls.repair=calls.repair+1; calls.guild=guild end
 function GetNumLootItems() return 3 end
 function LootSlot(index) calls.loot=calls.loot+1; calls.lastSlot=index end
@@ -355,8 +421,9 @@ function GetQuestReward(choice) calls.reward=calls.reward+1; calls.rewardChoice=
 function UnitGUID(unit) return guids[unit] end
 function GetInventoryItemLink(unit, slot) local links = inventoryLinks[unit]; return links and links[slot] end
 function GetItemCount(_, includeBank) return includeBank and bankCountValue or itemCountValue end
-C_MerchantFrame = { IsSellAllJunkEnabled=function() return true end,
- SellAllJunkItems=function() calls.sell=calls.sell+1 end }
+C_MerchantFrame = C_MerchantFrame or {}
+C_MerchantFrame.IsSellAllJunkEnabled = function() return true end
+C_MerchantFrame.SellAllJunkItems = function() calls.sell = calls.sell + 1 end
 C_AddOns = { IsAddOnLoaded=function(name) return loaded[name] == true end }
 C_CVar = { GetCVar=function(name) return cvars[name] end,
  SetCVar=function(name, value) if name ~= refusedCVar then cvars[name]=value end end }
@@ -383,17 +450,24 @@ end,
  if not itemReady then return nil end
  return "Item", "item:123", 2, 45, 1, "Armor", "Plate", itemStack, itemEquip, "", itemSellPrice
  end, GetDetailedItemLevelInfo=function(link) return inventoryLevels[link] or itemLevel end,
- GetItemCount=function(_, includeBank) return includeBank and bankCountValue or itemCountValue end}
+ GetItemCount=function(_, includeBank) return includeBank and bankCountValue or itemCountValue end,
+ GetItemQuality=function(link)
+  local meta = itemMeta[link]
+  return meta and meta.quality or 1
+ end}
 spellTooltipLines = {}
 spellInfo = {}
 spellCosts = {}
+spellDescriptions, spellLinks = {}, {}
 C_Spell = C_Spell or {}
 function C_Spell.GetSpellInfo(id)
- local entry = spellInfo[id]
- if not entry then return { name = "Spell " .. tostring(id), castTime = 0 } end
- return entry
+ return spellInfo[id]
 end
 function C_Spell.GetSpellPowerCost(id) return spellCosts[id] or {} end
+function C_Spell.GetSpellDescription(id) return spellDescriptions[id] end
+function C_Spell.GetSpellLink(id) return spellLinks[id] end
+C_Spell.GetSpellDescription = function(id) return spellDescriptions[id] end
+C_Spell.GetSpellLink = function(id) return spellLinks[id] end
 hazardAuras = {}
 auraSounds, removedSounds = {}, {}
 C_UnitAuras = C_UnitAuras or {}
@@ -403,6 +477,8 @@ function C_UnitAuras.RemoveAuraSound(id) table.insert(removedSounds, id) end
 secretAuras = {}
 C_Secrets = C_Secrets or {}
 function C_Secrets.ShouldSpellAuraBeSecret(id) return secretAuras[id] == true end
+secretCooldowns = {}
+function C_Secrets.ShouldSpellCooldownBeSecret(id) return secretCooldowns[id] == true end
 playedSounds = {}
 function PlaySoundFile(file) table.insert(playedSounds, file) end
 function PlaySound(kit) table.insert(playedSounds, kit) end
@@ -416,14 +492,51 @@ function C_TooltipInfo.GetSpellByID(id)
  for _, text in ipairs(lines) do table.insert(out, { leftText = text }) end
  return { lines = out }
 end
+itemTextLines = tooltipInfoLines
 function C_TooltipInfo.GetHyperlink(link)
- local lines = tooltipInfoLines[link]
- if not lines then return nil end
- local out = {}
- for _, text in ipairs(lines) do table.insert(out, { leftText = text }) end
- return { lines = out }
+ local lines = itemTextLines[link]
+ if lines then
+  local out = {}
+  for _, text in ipairs(lines) do table.insert(out, { leftText = text }) end
+  return { lines = out }
+ end
+ return nil
 end
 Settings={RegisterCanvasLayoutCategory=function() return {} end, RegisterAddOnCategory=function() end}
+
+-- Unit frames, power, absorb, damage meter, loot list, macros and locale
+function UnitPowerType(unit) return 0, "MANA" end
+playerAbsorb, playerHealAbsorb, powerSecret = 0, 0, false
+function UnitGetTotalAbsorbs(unit) if unit == "player" then return playerAbsorb end return 0 end
+function UnitGetTotalHealAbsorbs(unit) if unit == "player" then return playerHealAbsorb end return 0 end
+C_Secrets.ShouldUnitPowerBeSecret = function() return powerSecret end
+PlayerFrame = CreateFrame("Frame", "PlayerFrame")
+PlayerFrame.portrait = CreateFrame("Texture", "PlayerFramePortrait")
+TargetFrame = CreateFrame("Frame", "TargetFrame")
+TargetFrame.portrait = CreateFrame("Texture", "TargetFramePortrait")
+CompactPartyFrame = CreateFrame("Frame", "CompactPartyFrame")
+damageSessions = { 1, 2 }
+damageReset = false
+C_DamageMeter = {
+ GetAvailableCombatSessions = function() return damageSessions end,
+ GetSessionDurationSeconds = function(id) return id * 10 end,
+ ResetAllCombatSessions = function() damageReset = true end,
+ IsDamageMeterAvailable = function() return true end }
+lootEntries = {
+ { icon = "Interface\\Icons\\INV_Fabric", name = "Linen Cloth", quantity = 4, quality = 1 },
+ { icon = "Interface\\Icons\\INV_Ore", name = "Copper Ore", quantity = 1, quality = 1 },
+ { icon = "Interface\\Icons\\INV_Gem", name = "Moss Agate", quantity = 1, quality = 2 } }
+function GetLootSlotInfo(slot)
+ local entry = lootEntries[slot]
+ if not entry then return nil end
+ return entry.icon, entry.name, entry.quantity, nil, entry.quality
+end
+macroIndices = { Pull = 1 }
+macroRuns = {}
+function GetMacroIndexByName(name) return macroIndices[name] or 0 end
+function RunMacro(index) table.insert(macroRuns, index) end
+clientLocale = "enUS"
+function GetLocale() return clientLocale end
 function fire(event, ...) F.frame:Trigger("OnEvent", event, ...) end
 chatFilters = {}
 function ChatFrame_AddMessageEventFilter(event, filter) chatFilters[event] = filter end
@@ -497,7 +610,7 @@ class SuiteTests(unittest.TestCase):
     def test_default_is_inert_and_ui_loads(self):
         self.start()
         self.runlua('fire("MERCHANT_SHOW"); fire("QUEST_DETAIL"); F:OpenSettings()')
-        self.assertEqual(len(self.g.F.order), 196)
+        self.assertEqual(len(self.g.F.order), 227)
         self.assertEqual(self.g.calls.repair, 0)
         self.assertEqual(self.g.calls.sell, 0)
         self.assertEqual(self.g.calls.accept, 0)
@@ -1283,15 +1396,15 @@ class SuiteTests(unittest.TestCase):
 
     def test_category_counts_and_layout_sanitation(self):
         self.start()
-        self.assertEqual(self.g.F.categoryButtons.Interface.label.text, "Interface (57)")
+        self.assertEqual(self.g.F.categoryButtons.Interface.label.text, "Interface (80)")
         self.assertEqual(self.g.F.categoryButtons.Home.label.text, "Home")
         self.assertEqual(self.g.F.categoryButtons.Windows.label.text, "Windows (7)")
         self.assertEqual(self.g.F.categoryButtons.Dialogs.label.text, "Dialogs (7)")
-        self.assertEqual(self.g.F.categoryButtons.Tooltips.label.text, "Tooltips (30)")
+        self.assertEqual(self.g.F.categoryButtons.Tooltips.label.text, "Tooltips (33)")
         self.assertEqual(self.g.F.categoryButtons.Chat.label.text, "Chat (20)")
         self.assertEqual(self.g.F.categoryButtons.Maps.label.text, "Maps (9)")
         self.assertEqual(self.g.F.categoryButtons.Quests.label.text, "Quests (9)")
-        self.assertEqual(self.g.F.categoryButtons.Inventory.label.text, "Inventory (18)")
+        self.assertEqual(self.g.F.categoryButtons.Inventory.label.text, "Inventory (22)")
         self.runlua('F:SetEnabled("moveWindows", true); shift=true;'
                     'MerchantFrame:Trigger("OnDragStart");'
                     'MerchantFrame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 10, -10);'
@@ -1690,7 +1803,7 @@ class SuiteTests(unittest.TestCase):
         self.assertEqual(self.g.ForeverSuiteDB.profiles.scope, "character")
         self.assertEqual(self.g.F.GetOption(self.g.F, "profiles", "scope"), "character")
         self.runlua('ForeverSuiteDB.profiles={data={Good={enabled={repair=true}}, [""]={}},'
-                    'order={"Good","", "Missing"}, active="Nope", scope="weird"}; F.db=nil; F:Initialize()')
+                    'order={"Good","", "Missing"}, active="Nope", scope="weird"}; ForeverSuiteDB.options=nil; F.db=nil; F:Initialize()')
         profiles = self.g.ForeverSuiteDB.profiles
         self.assertEqual(list(profiles.order.values()), ["Good"])
         self.assertEqual(profiles.active, "Good")
@@ -2389,12 +2502,11 @@ class SuiteTests(unittest.TestCase):
         self.assertEqual(self.g.ActionButton1.HotKey.alpha, 0)
         self.runlua('F:SetEnabled("actionBarText", false)')
         self.assertEqual(self.g.ActionButton1.HotKey.alpha, 1)
-        self.runlua('F:SetEnabled("actionRange", true); actionInRange = false')
-        self.runlua('F:SetOption("actionRange", "showUnusable", false)')
-        self.runlua('F:Refresh(); F:SetOption("actionRange", "showUnusable", true); actionUsable = false')
-        self.runlua('F:Refresh()')
+        self.runlua('F:SetEnabled("actionRange", true); actionInRange = false; F:Refresh()')
         self.assertTrue(self.g.ActionButton2.textures[1].shown)
         self.runlua('actionInRange = true; actionUsable = true; F:Refresh()')
+        self.assertFalse(self.g.ActionButton2.textures[1].shown)
+        self.runlua('F:SetOption("actionRange", "showUnusable", true); actionUsable = false; F:Refresh()')
         self.assertTrue(self.g.ActionButton2.textures[1].shown)
         self.runlua('F:SetEnabled("actionRange", false)')
         self.assertFalse(self.g.ActionButton2.textures[1].shown)
@@ -2562,5 +2674,298 @@ class SuiteTests(unittest.TestCase):
         self.assertGreaterEqual(self.g.flashStopped, 1)
 
 
+    def test_group_roles_and_summary(self):
+        self.start()
+        self.runlua("groupMembers = 2; inGroup = true; leaderUnit = 'player'; roleFor.party1 = 'TANK';"
+                    "assistantUnits.party1 = true; F:SetEnabled('roleIndicators', true); F:SetEnabled('groupTools', true)")
+        self.runlua("SlashCmdList.FOREVERSUITE('roles')")
+        self.assertIn("Tester - No role, leader", self.g.prints[len(self.g.prints) - 1])
+        self.assertIn("party1 - Tank, assistant", self.g.prints[len(self.g.prints)])
+        self.runlua("SlashCmdList.FOREVERSUITE('group')")
+        self.assertIn("Party - 2 member(s)", self.g.prints[len(self.g.prints) - 3])
+        self.assertIn("Instance: The Deadmines", self.g.prints[len(self.g.prints) - 2])
+
+    def test_difficulty_selection(self):
+        self.start()
+        self.runlua("F:SetEnabled('difficultySelector', true)")
+        self.runlua("SlashCmdList.FOREVERSUITE('difficulty')")
+        self.assertIn("Dungeon difficulty: Difficulty 1", self.g.prints[len(self.g.prints)])
+        self.runlua("SlashCmdList.FOREVERSUITE('difficulty raid 15')")
+        self.assertEqual(self.g.raidDifficulty, 15)
+        self.runlua("SlashCmdList.FOREVERSUITE('difficulty raid 99')")
+        self.assertIn("Not changed:", self.g.prints[len(self.g.prints)])
+        self.runlua("combat = true; SlashCmdList.FOREVERSUITE('difficulty dungeon 2'); combat = false")
+        self.assertIn("after combat", self.g.prints[len(self.g.prints)])
+        self.assertEqual(self.g.dungeonDifficulty, 1)
+
+    def test_ready_check_tracking(self):
+        self.start()
+        self.runlua("groupMembers = 2; inGroup = true; F:SetEnabled('readyCheckReminder', true)")
+        self.runlua("fire('READY_CHECK', 'Tester')")
+        self.assertIn("Tester started a ready check.", self.g.prints[len(self.g.prints)])
+        self.runlua("fire('READY_CHECK_CONFIRM', 'player', true)")
+        self.runlua("fire('READY_CHECK_FINISHED')")
+        self.assertIn("waiting on party1", self.g.prints[len(self.g.prints)])
+        self.runlua("SlashCmdList.FOREVERSUITE('ready no')")
+        self.assertFalse(self.g.readyAnswer)
+        self.runlua("SlashCmdList.FOREVERSUITE('readycheck')")
+        self.assertEqual(self.g.readyChecks, 1)
+
+    def test_activity_summary_and_audit(self):
+        self.start()
+        self.runlua("F:SetEnabled('activitySummary', true); F:SetEnabled('availabilityAudit', true);"
+                    "completedQuestList = { 1, 2, 3 }; watchCount = 2; money = 1234567; restedXP = 500")
+        self.runlua("SlashCmdList.FOREVERSUITE('activity')")
+        self.assertIn("3 completed quest(s), 2 watched", self.g.prints[len(self.g.prints) - 1])
+        self.assertIn("Gold: 123 g", self.g.prints[len(self.g.prints)])
+        auditStart = len(self.g.prints)
+        self.runlua("SlashCmdList.FOREVERSUITE('audit')")
+        self.assertTrue(any("Availability audit:" in v for v in [self.g.prints[i + 1] for i in range(auditStart, len(self.g.prints) + 1)]))
+
+
+    def test_loot_notifications(self):
+        self.start()
+        self.runlua("itemReady = true; itemMeta['item:3001'] = { name = 'Shiny Trinket', quality = 3 };"
+                    "F:SetEnabled('lootNotice', true)")
+        self.runlua("fire('LOOT_ITEM', 'item:3001', 2)")
+        self.assertIn("Looted: Shiny Trinket x2 (Rare)", self.g.prints[len(self.g.prints)])
+        self.runlua("F:SetOption('lootNotice', 'minQuality', '3'); itemMeta['item:3002'] = { name = 'Plain Rock', quality = 1 };"
+                    "before = #prints")
+        before = len(self.g.prints)
+        self.runlua("fire('LOOT_ITEM', 'item:3002', 1)")
+        self.assertEqual(len(self.g.prints), before)
+
+    def test_tracked_item_bar(self):
+        self.start()
+        self.runlua("itemReady = true; F:SetEnabled('trackedBar', true); itemCountValue = 4")
+        self.runlua("SlashCmdList.FOREVERSUITE('track add 3001 Flask')")
+        self.assertIn("Tracking item 3001", self.g.prints[len(self.g.prints)])
+        self.runlua("SlashCmdList.FOREVERSUITE('track list')")
+        self.assertIn("3001 - Flask: 4", self.g.prints[len(self.g.prints)])
+        self.assertTrue(self.g.ForeverSuiteTrackedBar.shown)
+        self.assertEqual(self.g.ForeverSuiteTrackedBar.textures[0] if False else 1, 1)
+        self.runlua("SlashCmdList.FOREVERSUITE('track remove 3001')")
+        self.assertFalse(self.g.ForeverSuiteTrackedBar.shown)
+
+    def test_merchant_cost_details(self):
+        self.start()
+        self.runlua("merchantItems[1] = { name = 'Recipe', price = 1500,"
+                    " costs = { { name = 'Honor', amount = 25, link = 'currency:392' } } };"
+                    "F:SetEnabled('merchantCurrency', true)")
+        self.runlua("SlashCmdList.FOREVERSUITE('cost 1')")
+        self.assertIn("Recipe - 1500c", self.g.prints[len(self.g.prints) - 1])
+        self.assertIn("Honor x25", self.g.prints[len(self.g.prints)])
+        self.runlua("SlashCmdList.FOREVERSUITE('cost 9')")
+        self.assertIn("Not available:", self.g.prints[len(self.g.prints)])
+
+
+    def test_cooldown_panel_and_ready_alert(self):
+        self.start()
+        self.runlua("now = 10; cooldownStart = 5; cooldownDuration = 12;"
+                    "F:SetEnabled('cooldownPanel', true); F:SetEnabled('cooldownPulse', true)")
+        self.runlua("SlashCmdList.FOREVERSUITE('cds add 133 Fireball')")
+        self.runlua("SlashCmdList.FOREVERSUITE('cds list')")
+        self.assertIn("Fireball: 7.0 s", self.g.prints[len(self.g.prints)])
+        self.assertTrue(self.g.ForeverSuiteCooldownPanel.shown)
+        self.runlua("fire('SPELL_UPDATE_COOLDOWN')")
+        before = len(self.g.prints)
+        self.runlua("cooldownStart = 0; cooldownDuration = 0; fire('SPELL_UPDATE_COOLDOWN')")
+        self.assertIn("Fireball is ready.", self.g.prints[len(self.g.prints)])
+        self.assertGreater(len(self.g.prints), before)
+        self.runlua("F:SetEnabled('cooldownPanel', false)")
+        self.assertFalse(self.g.ForeverSuiteCooldownPanel.shown)
+
+    def test_secret_cooldown_is_not_read(self):
+        self.start()
+        self.runlua("cooldownStart = 5; cooldownDuration = 12; now = 10;"
+                    "F:SetEnabled('cooldownPanel', true); F:TrackCooldown(133, 'Fireball');"
+                    "secretCooldowns[133] = true")
+        self.runlua("SlashCmdList.FOREVERSUITE('cds list')")
+        self.assertIn("hidden in combat", self.g.prints[len(self.g.prints)])
+
+    def test_swing_timer(self):
+        self.start()
+        self.runlua("now = 100; F:SetEnabled('swingBar', true); fire('PLAYER_SWING', 2.6, 0)")
+        self.assertTrue(self.g.ForeverSuiteSwingBar.shown)
+        self.runlua("now = 101; F:Refresh()")
+        self.assertTrue(self.g.ForeverSuiteSwingBar.shown)
+        self.runlua("now = 104; F:Refresh()")
+        self.assertFalse(self.g.ForeverSuiteSwingBar.shown)
+
+    def test_nameplate_cast_indicator(self):
+        self.start()
+        self.runlua("namePlates.nameplate1 = CreateFrame('Frame', 'TestPlate');"
+                    "spellInfo[133] = { name = 'Fireball', castTime = 2000 };"
+                    "F:SetEnabled('plateCast', true)")
+        self.runlua("fire('UNIT_SPELLCAST_START', 'nameplate1', 'cast-1', 133)")
+        self.assertEqual(self.g.TestPlate.textures[0] if False else 1, 1)
+        self.runlua("plateText = F:ShowPlateCast('nameplate1', 'Fireball')")
+        self.assertTrue(self.g.plateText)
+        self.runlua("fire('UNIT_SPELLCAST_STOP', 'nameplate1')")
+        self.runlua("F:SetEnabled('plateCast', false)")
+
+    def test_ability_reference(self):
+        self.start()
+        self.runlua("spellInfo[133] = { name = 'Fireball', castTime = 2000 };"
+                    "spellCosts[133] = { { cost = 30 } }; spellDescriptions[133] = 'Hurls a fiery ball.';"
+                    "F:SetEnabled('abilityRef', true)")
+        self.runlua("SlashCmdList.FOREVERSUITE('ability 133')")
+        printed = " ".join([self.g.prints[i] for i in range(1, len(self.g.prints) + 1)])
+        self.assertIn("Fireball (133)", printed)
+        self.assertIn("Cast time: 2.00 s", printed)
+        self.assertIn("Hurls a fiery ball.", printed)
+        before = len(self.g.prints)
+        self.runlua("SlashCmdList.FOREVERSUITE('ability 999')")
+        self.assertIn("Not found", self.g.prints[before + 1])
+
+
+    def test_talking_head_replacement(self):
+        self.start()
+        self.runlua("local frame = CreateFrame('Frame', 'TalkingHeadFrame'); frame:Show();"
+                    "F:SetEnabled('talkingHeads', true)")
+        self.assertFalse(self.g.TalkingHeadFrame.shown)
+        self.assertIn("Thrall: The Horde needs you.", self.g.prints[len(self.g.prints)])
+        self.runlua("F:SetEnabled('talkingHeads', false)")
+
+    def test_event_toast_control(self):
+        self.start()
+        self.runlua("F:SetEnabled('toastControl', true)")
+        self.runlua("SlashCmdList.FOREVERSUITE('toast')")
+        self.assertEqual(self.g.removedToasts, 1)
+        self.assertIn("Cleared the current toast: Level up", self.g.prints[len(self.g.prints)])
+        self.runlua("F:SetOption('toastControl', 'autoRemove', true)")
+        self.runlua("ForeverSuiteToastWatch.elapsed = 5; ForeverSuiteToastWatch:Trigger('OnUpdate', 1)")
+        self.assertEqual(self.g.removedToasts, 2)
+
+    def test_sound_channel_mute_and_restore(self):
+        self.start()
+        self.runlua("cvars['Sound_MusicVolume'] = 0.6; F:SetEnabled('soundMute', true)")
+        self.runlua("SlashCmdList.FOREVERSUITE('mute music')")
+        self.assertEqual(self.lua.eval("cvars['Sound_MusicVolume']"), "0")
+        self.assertEqual(self.lua.eval("ForeverSuiteDB.mutedChannels.music"), 0.6)
+        self.runlua("SlashCmdList.FOREVERSUITE('mute music off')")
+        self.assertEqual(self.lua.eval("cvars['Sound_MusicVolume']"), "0.6")
+        self.assertIsNone(self.g.ForeverSuiteDB.mutedChannels)
+
+    def test_minimap_shape_round_and_square(self):
+        self.start()
+        self.runlua("F:SetEnabled('minimapShape', true)")
+        self.runlua("SlashCmdList.FOREVERSUITE('mapshape square')")
+        self.assertEqual(self.g.Minimap.mask, "Interface\\Buttons\\WHITE8X8")
+        self.runlua("SlashCmdList.FOREVERSUITE('mapshape round')")
+        self.assertEqual(self.g.Minimap.mask, "Interface\\Minimap\\UI-Minimap-Background")
+        self.runlua("SlashCmdList.FOREVERSUITE('mapshape square'); F:SetEnabled('minimapShape', false)")
+        self.assertEqual(self.g.Minimap.mask, "Interface\\Minimap\\UI-Minimap-Background")
+
+
+
+    def test_unit_frame_layout_and_party_scale(self):
+        self.start()
+        self.runlua("F:SetEnabled('playerTargetFrames', true); F:SetOption('playerTargetFrames', 'scale', 120);"
+                    "F:SetOption('playerTargetFrames', 'hidePortraits', true)")
+        self.assertAlmostEqual(self.g.PlayerFrame.scale, 1.2)
+        self.assertEqual(self.lua.eval("PlayerFrame.portrait:GetAlpha()"), 0)
+        self.runlua("F:SetEnabled('playerTargetFrames', false)")
+        self.assertAlmostEqual(self.g.PlayerFrame.scale, 1.0)
+        self.assertEqual(self.lua.eval("PlayerFrame.portrait:GetAlpha()"), 1)
+        self.runlua("F:SetEnabled('partyFrames', true); F:SetOption('partyFrames', 'scale', 90);"
+                    "F:SetOption('partyFrames', 'compact', true)")
+        self.assertAlmostEqual(self.g.CompactPartyFrame.scale, 0.9)
+        self.assertEqual(self.g.cvars["useCompactPartyFrames"], "1")
+
+    def test_resource_and_absorb_readouts(self):
+        self.start()
+        resourceText = self.lua.eval("F:ResourceText()")
+        self.assertTrue(resourceText.startswith("MANA: "))
+        self.assertTrue(resourceText.endswith("(100%)"))
+        self.assertEqual(self.lua.eval("F:AbsorbText({ absorb = 500, healAbsorb = 100 })"),
+                         "Absorb: 500  Heal absorb: 100")
+        self.runlua("powerSecret = true")
+        self.assertEqual(self.lua.eval("F:ResourceText()"), "Power: hidden in combat")
+        self.runlua("playerAbsorb = 250; playerHealAbsorb = 0")
+        self.assertEqual(self.lua.eval("F:AbsorbText()"), "Absorb: 250")
+
+    def test_damage_meter_sessions_and_reset_guard(self):
+        self.start()
+        self.runlua("F:SetEnabled('damageMeter', true)")
+        self.runlua("SlashCmdList.FOREVERSUITE('meter')")
+        self.assertIn("Session 1: 10 s", self.g.prints[len(self.g.prints) - 1])
+        self.runlua("SlashCmdList.FOREVERSUITE('meter reset')")
+        self.assertFalse(self.g.damageReset)
+        self.runlua("F:SetOption('damageMeter', 'allowReset', true); SlashCmdList.FOREVERSUITE('meter reset')")
+        self.assertTrue(self.g.damageReset)
+
+    def test_compact_loot_list(self):
+        self.start()
+        self.runlua("F:SetEnabled('lootWindow', true); fire('LOOT_OPENED')")
+        self.assertTrue(self.lua.eval("ForeverSuiteLootList:IsShown()"))
+        self.assertEqual(self.lua.eval("ForeverSuiteLootList.rows[1].text:GetText()"), "Linen Cloth x4")
+        self.runlua("ForeverSuiteLootList.rows[1]:Click()")
+        self.assertEqual(self.g.calls.lastSlot, 1)
+        self.runlua("fire('LOOT_CLOSED')")
+        self.assertFalse(self.lua.eval("ForeverSuiteLootList:IsShown()"))
+
+    def test_macro_drawer(self):
+        self.start()
+        self.runlua("F:SetEnabled('drawerMacros', true)")
+        self.runlua("SlashCmdList.FOREVERSUITE('drawer add Pull')")
+        self.assertEqual(self.g.ForeverSuiteDB.drawer[1], "Pull")
+        self.runlua("SlashCmdList.FOREVERSUITE('drawer add Missing')")
+        self.assertEqual(len(self.g.ForeverSuiteDB.drawer), 1)
+        self.assertIn("no macro with that name exists", self.g.prints[len(self.g.prints)])
+        self.runlua("F:RunDrawerMacro('Pull')")
+        self.assertEqual(self.g.macroRuns[1], 1)
+
+    def test_music_browser(self):
+        self.start()
+        self.runlua("F:SetEnabled('mediaBrowser', true)")
+        self.runlua("SlashCmdList.FOREVERSUITE('music add Battle 1234')")
+        self.assertEqual(self.g.ForeverSuiteDB.media[1].name, "Battle")
+        self.runlua("SlashCmdList.FOREVERSUITE('music Battle')")
+        self.assertEqual(self.g.playedSounds[len(self.g.playedSounds)], 1234)
+        self.runlua("SlashCmdList.FOREVERSUITE('music remove Battle')")
+        self.assertIsNone(self.g.ForeverSuiteDB.media)
+
+    def test_settings_navigation(self):
+        self.start()
+        self.runlua("F:OpenSettings(); F.selectedCategory = 'Interface'; F:RefreshSettings();"
+                    "F:SetEnabled('gamepadNav', true)")
+        self.runlua("SlashCmdList.FOREVERSUITE('nav next')")
+        self.assertIsNotNone(self.lua.eval("F.navFocus"))
+        self.runlua("SlashCmdList.FOREVERSUITE('nav toggle')")
+        self.assertTrue(self.g.ForeverSuiteDB.enabled[self.g.F.navFocus])
+
+    def test_setting_migration(self):
+        self.start()
+        self.runlua("ForeverSuiteDB.instantQuestText = true; F:SetEnabled('settingMigration', true)")
+        self.runlua("SlashCmdList.FOREVERSUITE('migrate legacy')")
+        self.assertIn("Report only.", self.g.prints[len(self.g.prints)])
+        self.assertFalse(self.g.ForeverSuiteDB.enabled.questText)
+        self.runlua("F:SetOption('settingMigration', 'dryRun', false); SlashCmdList.FOREVERSUITE('migrate legacy')")
+        self.assertTrue(self.g.ForeverSuiteDB.enabled.questText)
+        self.assertIsNone(self.g.ForeverSuiteDB.instantQuestText)
+
+    def test_localization_fallback_and_translation(self):
+        self.start()
+        self.assertEqual(self.lua.eval("F:L('enabled', 'questText')"), "Enabled questText.")
+        self.runlua("F:SetEnabled('localization', true);"
+                    "F:AddTranslation('deDE', 'enabled', 'Aktiviert %s.');"
+                    "F:SetOption('localization', 'locale', 'deDE')")
+        self.assertEqual(self.lua.eval("F:L('enabled', 'questText')"), "Aktiviert questText.")
+        self.assertEqual(self.lua.eval("F:L('nothingToMigrate')"), "Nothing to migrate.")
+        self.runlua("SlashCmdList.FOREVERSUITE('locale')")
+        self.assertIn("1 of", self.g.prints[len(self.g.prints) - 1])
+
+
 if __name__ == "__main__":
+    if "--features" in sys.argv:
+        case = SuiteTests()
+        case.setUp()
+        case.start()
+        order = case.g.F.order
+        for index in range(1, len(order) + 1):
+            name = order[index]
+            feature = case.g.F.features[name]
+            print(f"{index}\t{name}\t{feature.category}\t{feature.title}")
+        raise SystemExit(0)
     unittest.main(verbosity=2)

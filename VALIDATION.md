@@ -1,13 +1,14 @@
 # Validation record — October 22, 2026
 
-Status: development preview, `0.2.0-alpha.12`, Stage 2 in progress. Not a completed replacement or a gameplay-validated release.
+Status: development preview, `0.2.0-alpha.13`, Stage 2 in progress. Not a completed replacement or a gameplay-validated release.
 
 ## Performed
 
 - Both installed client build metadata rows: 1.60.1.70532. Beta and launch are separate installation targets.
 - All shipped Lua source parsed and executed in Lua 5.1 via Lupa 2.8 on Windows x64 / CPython 3.12.
-- 161 behavioral test methods passed, including a subtest for each of the 26 CVar-backed features.
+- 186 behavioral test methods passed, including a subtest for each of the 26 CVar-backed features.
 - Covered: inert defaults; settings schema validation and preservation; unsupported-client guard; repair budget and personal funds; Shift/combat suppression; loaded and late-loaded addon conflicts; opt-in junk sale; auto-loot mode; reward choice/money preservation; pause/resume; CVar restoration and external edits; saved ownership after restart; unavailable/refused APIs; event error isolation; tooltip duplicate control/cache readiness/secret-value guard; chat restoration/new windows; search and diagnostic report UI construction.
+- Automated audits: `tools/loadcheck.py` parses every Lua file, `tools/coverage.py` compares the registered features with the backlog in both directions, `tools/provenance.py` checks the SPDX header and rejects binary assets, and `tools/release_check.py` runs all of them plus the TOC consistency check. `tools/api_audit.py --api <dump>` cross-checks bare global calls against the Forever API dump published with the Forever Addon Kit.
 - Stage 2 coverage: typed boolean/choice/number options with range and finite-number validation; unknown or out-of-range saved options dropped on load; option changes persisted in SavedVariables; single-feature reset; read-only future schema refusing option writes; options panel choice cycling, numeric stepping and boolean toggling; option values in Details and `/fs report`; slash-command feedback for invalid options, option listings and features without options; deferred option refresh across combat.
 - Dialog coverage: key consumption only when a visible Accept/Continue button is actionable; propagation when no button is available; never completing a quest with reward choices; custom key; Shift and combat suppression; keyboard catcher hidden on combat entry with no restricted `SetPropagateKeyboardInput` call in combat; keyboard catcher restored after combat; reward digits selecting icons without calling `GetQuestReward`; hint option and disable behavior.
 - Inventory coverage: character-panel and inspect overlay text, configurable size/position live update, secret item level skipped, overlays hidden on disable and rebuilt on enable, inspect GUID mismatch ignored; bag slot numbers, bank opt-in, per-bag updates, empty-slot clearing and combat-deferred changes.
