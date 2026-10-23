@@ -251,7 +251,7 @@ class SuiteTests(unittest.TestCase):
     def test_default_is_inert_and_ui_loads(self):
         self.start()
         self.runlua('fire("MERCHANT_SHOW"); fire("QUEST_DETAIL"); F:OpenSettings()')
-        self.assertEqual(len(self.g.F.order), 84)
+        self.assertEqual(len(self.g.F.order), 85)
         self.assertEqual(self.g.calls.repair, 0)
         self.assertEqual(self.g.calls.sell, 0)
         self.assertEqual(self.g.calls.accept, 0)
@@ -1013,6 +1013,45 @@ class SuiteTests(unittest.TestCase):
         self.assertEqual(self.g.F.GetOption(self.g.F, "charItemLevel", "size"), 11)
         self.assertEqual(self.g.F.GetOption(self.g.F, "dialogAccept", "key"), "SPACE")
         self.assertIn("reset to their defaults", self.g.prints[len(self.g.prints)])
+
+
+    def test_nameplate_scale_and_sell_price_stack_option(self):
+        self.start()
+        self.runlua('F:SetEnabled("nameplateScale", true)')
+        self.assertEqual(self.g.cvars.nameplateGlobalScale, "1")
+        self.runlua('F:SetOption("nameplateScale", "scale", 150)')
+        self.assertEqual(self.g.cvars.nameplateGlobalScale, "1.5")
+        self.runlua('F:SetEnabled("nameplateScale", false)')
+        self.assertEqual(self.g.cvars.nameplateGlobalScale, "0")
+        self.runlua('F:SetEnabled("sellPrice", true); F:SetOption("sellPrice", "stackTotal", true);'
+                    'hover(); tip.lines={}; tip:Trigger("OnTooltipCleared"); hover()')
+        self.assertEqual(self.g.tip.lines[1], "Stack sells for: 24680c")
+        self.runlua('itemStack=1; tip.lines={}; tip:Trigger("OnTooltipCleared"); hover()')
+        self.assertEqual(self.g.tip.lines[1], "Sells for: 1234c")
+
+    def test_category_counts_and_layout_sanitation(self):
+        self.start()
+        self.assertEqual(self.g.F.categoryButtons.Interface.label.text, "Interface (31)")
+        self.assertEqual(self.g.F.categoryButtons.Home.label.text, "Home")
+        self.runlua('F:SetEnabled("moveWindows", true); shift=true;'
+                    'MerchantFrame:Trigger("OnDragStart");'
+                    'MerchantFrame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 10, -10);'
+                    'MerchantFrame:Trigger("OnDragStop")')
+        self.assertIsNotNone(self.g.ForeverSuiteDB.layouts)
+
+
+    def test_saved_layout_sanitation(self):
+        self.runlua('ForeverSuiteDB={schema=1, layouts={Bad={point=5},'
+                    'Bogus={point="CENTER", x=0/0, y=0}, Far={point="CENTER", x=50000, y=0},'
+                    'MerchantFrame={point="CENTER", relativePoint="CENTER", x=10, y=-10}}}')
+        self.start()
+        self.assertIsNone(self.g.ForeverSuiteDB.layouts.Bad)
+        self.assertIsNone(self.g.ForeverSuiteDB.layouts.Bogus)
+        self.assertIsNone(self.g.ForeverSuiteDB.layouts.Far)
+        self.assertEqual(self.g.ForeverSuiteDB.layouts.MerchantFrame.x, 10)
+        self.runlua('F:SetEnabled("moveWindows", true); MerchantFrame:Show()')
+        self.assertEqual(self.g.MerchantFrame.points[1], "CENTER")
+        self.assertEqual(self.g.MerchantFrame.points[3], 10)
 
 
 if __name__ == "__main__":

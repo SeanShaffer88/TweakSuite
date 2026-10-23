@@ -2,7 +2,7 @@
 
 A comprehensive, modular quality-of-life addon for **World of Warcraft: Forever**, combining overlapping ideas into one settings surface while retaining distinct useful features. The goal is broad feature coverage across all 13 requested addons, delivered in stages. There is no target cap on the number of tweaks.
 
-**0.2.0-alpha.3 continues Stage 2 with 84 opt-in features: the 36 Stage 1 settings plus keyboard dialogs, item-level and durability overlays, loot and roll item levels, movable Blizzard windows, tooltip styling and a larger set of interface and chat tweaks. It is not yet a replacement for the complete source addon collection.** Stage 2 is incomplete: window resizing, panel lifetimes, equipment flyout overlays, the beta report controls and advanced tooltip styling remain planned. Original code; no other addons or their assets are bundled. Beta and preinstalled launch client executables were both observed at 1.60.1.70532 on October 22, 2026. Gameplay and visual verification are still pending.
+**0.2.0-alpha.3 continues Stage 2 with 85 opt-in features: the 36 Stage 1 settings plus keyboard dialogs, item-level and durability overlays, loot and roll item levels, movable Blizzard windows, tooltip styling and a larger set of interface and chat tweaks. It is not yet a replacement for the complete source addon collection.** Stage 2 is incomplete: window resizing, panel lifetimes, equipment flyout overlays, the beta report controls and advanced tooltip styling remain planned. Original code; no other addons or their assets are bundled. Beta and preinstalled launch client executables were both observed at 1.60.1.70532 on October 22, 2026. Gameplay and visual verification are still pending.
 
 ## Install and open
 
@@ -14,7 +14,7 @@ Extract the release ZIP into the intended client's `Interface/AddOns` folder. Th
 - Every feature starts off. Browse categories or search across all settings, tick a feature, and read its status.
 - **Details** explains what the setting changes, its default, what switching it off does, combat behavior and overlapping addons. CVar options also identify the underlying client setting and its current target value. Search covers categories, descriptions and option text.
 - Features with variants show an **Opt** button. It opens a per-feature options panel with the current value, the default, valid choices or ranges, and a reset button. Options never switch a feature on by themselves.
-- The interface takes visual inspiration from Leatrix Plus: a dark brown window, gold headings, a flat category sidebar, a Home page and compact grouped checkboxes. Short explanations stay beside controls; hover or click **?** for the complete setting details. The implementation and layout code are original.
+- The interface takes visual inspiration from Leatrix Plus: a dark brown window, gold headings, a flat category sidebar with live feature counts, a Home page and compact grouped checkboxes. Short explanations stay beside controls; hover or click **?** for the complete setting details. The implementation and layout code are original.
 - The same package targets both clients. Each client maintains its own SavedVariables. This preview does not migrate settings between them.
 
 Optional PowerShell installer, from the source repository:
@@ -26,15 +26,15 @@ Optional PowerShell installer, from the source repository:
 
 Without `-Install`, it only checks the selected client. It refuses to overwrite an existing ForeverSuite folder or copy while WoW is running. It does not modify other addons or saved settings.
 
-## Available now (84 features, 12 categories)
+## Available now (85 features, 12 categories)
 
 - **Automation (5):** personal-gold repairs with a configurable cap and a funding choice (personal, guild bank, or personal then guild), native Sell All Junk, faster auto-looting, accepting quests, turning in quests with no reward choices and no money requirement.
 - **Dialogs (2):** a configurable key (Space, Enter, E or the common letter keys) presses the visible Accept/Continue button, with an optional key hint; number keys 1-6 select a quest reward without turning the quest in.
 - **Windows (1):** Shift-drag 14 common Blizzard windows and keep each position, with options for the Shift requirement and for remembering positions across sessions.
-- **Tooltips (10):** maximum stack size, item ID, actual equipment item level, owned count with optional bank, spell ID, NPC ID, currency ID, quest ID, vendor sell price and a tooltip scale percentage.
+- **Tooltips (10):** maximum stack size, item ID, actual equipment item level, owned count with optional bank, spell ID, NPC ID, currency ID, quest ID, vendor sell price (per item or per stack) and a tooltip scale percentage.
 - **Inventory (8):** actual item levels on character-panel, inspect, bag and bank slots with position and size options; item levels on the loot window and on need/greed rolls; average equipped item level; durability percentages on character slots; free bag slots on the backpack.
 - **Interface (31):** auto-loot default, cast on key down, instant quest text, full-screen glow, low-health flash, target of target, loot history, spell activation artwork, quest tracking and progress, map quest difficulty, quest tooltips, numeric cooldowns, target cast bar, action bar lock and visibility, auto-cast protection, target aura filtering, aura durations, self-cast, spell effect emphasis, combat text toggles, minimap rotation, camera zoom distance, automatic reputation tracking, death screen effect, hidden objective tracker, gryphon end caps, zone name text and the boss banner.
-- **Nameplates (10):** visibility, maximum distance, stacking, class colors, friendly/enemy pet, guardian and totem plates, and the personal resource bar.
+- **Nameplates (11):** visibility, maximum distance, scale, stacking, class colors, friendly/enemy pet, guardian and totem plates, and the personal resource bar.
 - **Overhead names (5):** your own name, titles, guild names, guild ranks and critter names.
 - **Camera (3):** bobbing, terrain tilt and water collision.
 - **Chat (9):** mouse-wheel scrolling, persistent text, arrow-key editing without Alt, chat font size, chat bubbles and party bubbles, timestamps, hidden chat window buttons, and unclamped chat windows that can be dragged partly off screen.
@@ -52,6 +52,8 @@ Unsupported CVars appear as **API unavailable** when requested. Enabling a setti
 - **Item count** counts bags by default; enable **Include bank** to add bank contents. Other characters and other accounts are not counted.
 - **NPC ID** is shown only for creature and vehicle units, extracted from the standard GUID. Player, pet and game-object tooltips are left alone. Spell and currency IDs require the client to label the tooltip with that data type; otherwise the feature reports **API unavailable**.
 - **Tooltip scale** applies a percentage (80-200%) to the game, item, shopping and friend tooltips and restores each tooltip's previous scale when switched off.
+- **Sell price** has an option to multiply the price by the item's stack size, showing what a full stack vendors for.
+- Saved window positions are validated on load; corrupt or out-of-range entries are discarded instead of breaking a window.
 
 ## Keyboard dialogs
 

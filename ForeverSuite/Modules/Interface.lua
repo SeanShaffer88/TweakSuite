@@ -111,6 +111,11 @@ cvarFeature("rotateMinimap", "Rotate the minimap", "rotateMinimap", "1",
     "Turns the minimap with your character's facing direction instead of keeping north at the top.")
 cvarFeature("chatTimestamps", "Timestamps in chat", "showTimestamps", "1",
     "Adds a local time stamp in front of each chat message.")
+cvarFeature("nameplateScale", "Nameplate scale", "nameplateGlobalScale",
+    function() return tostring(F:GetOption("nameplateScale", "scale") / 100) end,
+    "Scales nameplates as a percentage of their default size. The client may clamp extreme values.",
+    { { key = "scale", type = "number", title = "Nameplate size (percent)", default = 100, min = 50, max = 200, step = 5, unit = "%",
+        description = "100 keeps the client size. Larger values make nameplates easier to read but take more screen space." } })
 cvarFeature("noDeathEffect", "Disable the death screen effect", "ffxDeath", "0",
     "Removes the desaturated death effect overlay when you die. The release dialog and corpse behavior are unchanged.")
 cvarFeature("autoTrackFaction", "Track reputation changes automatically", "autoTrackReputation", "1",
@@ -128,7 +133,7 @@ cvarFeature("cameraZoom", "Maximum camera zoom distance", "cameraDistanceMaxZoom
         description = "Camera distance multiplier. 1 is the closest view, 2 is the common default, 4 is the widest this setting allows. Some clients clamp the value." } })
 
 for category, ids in pairs({
-    Nameplates = { "nameplates", "stackPlates", "classPlates", "hideFriendlyPets", "hideFriendlyGuardians", "hideFriendlyTotems", "hideEnemyPets", "enemyTotems", "personalResource", "nameplateDistance" },
+    Nameplates = { "nameplates", "stackPlates", "classPlates", "hideFriendlyPets", "hideFriendlyGuardians", "hideFriendlyTotems", "hideEnemyPets", "enemyTotems", "personalResource", "nameplateDistance", "nameplateScale" },
     ["Overhead names"] = { "hideOwnName", "hideTitles", "hideGuildNames", "hideGuildRanks", "hideCritterNames" },
     Camera = { "noCameraBobbing", "noTerrainTilt", "noWaterCollision" },
     Chat = { "chatWheel", "chatBubbles", "partyBubbles", "chatTimestamps" },

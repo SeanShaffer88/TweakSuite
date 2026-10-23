@@ -69,8 +69,16 @@ local function itemTooltip(tooltip, data)
     if F:Active("sellPrice") then
         local price = info[11]
         if F:Plain(price) and type(price) == "number" and price > 0 then
+            local stack = info[8]
+            local stacked = F:GetOption("sellPrice", "stackTotal") == true
+                and F:Plain(stack) and type(stack) == "number" and stack > 1
+            local label = "Sells for: "
+            if stacked then
+                price = price * stack
+                label = "Stack sells for: "
+            end
             local money = GetMoneyString and GetMoneyString(price) or (price .. " copper")
-            add(tooltip, record, "sellPrice", "Sells for: " .. money)
+            add(tooltip, record, "sellPrice", label .. money)
         end
     end
 end
@@ -233,6 +241,10 @@ F:Register("sellPrice", {
     category = "Tooltips",
     description = "Adds the price a vendor pays for the hovered item, outside combat. Items the client reports as unsellable get no line.",
     conflicts = common,
+    options = {
+        { key = "stackTotal", type = "boolean", title = "Show stack total", default = false,
+          description = "Multiplies the unit sell price by the stack size, so a full stack shows what the whole stack is worth. Uses the item's maximum stack size, not how many you carry." },
+    },
     disableText = "Stops adding the price line to new tooltips. Move your mouse away and hover again to rebuild the current tooltip.",
     enable = function() install(Enum.TooltipDataType.Item, itemTooltip, { "sellPrice" }) end,
     available = function()

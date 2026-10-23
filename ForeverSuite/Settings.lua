@@ -341,12 +341,20 @@ function F:SetupSettings()
     local searchHint = label(frame, "Search all settings", "GameFontDisableSmall")
     searchHint:SetPoint("TOPRIGHT", -48, -46)
     frame.summary = label(frame, "", "GameFontHighlightSmall"); frame.summary:SetPoint("TOPLEFT", 180, -48)
+    local counts = {}
+    for _, id in ipairs(self.order) do
+        local category = self.features[id].category
+        counts[category] = (counts[category] or 0) + 1
+    end
     for index, category in ipairs(categories) do
         local control = CreateFrame("Button", nil, frame)
         control:SetSize(144, 26); control:SetPoint("TOPLEFT", 13, -78 - (index - 1) * 32)
         control.selected = control:CreateTexture(nil, "BACKGROUND"); control.selected:SetAllPoints()
         control.selected:SetColorTexture(0.42, 0.34, 0.02, 0.5)
-        local text = label(control, category); text:SetPoint("LEFT", 10, 0); text:SetTextColor(1, 0.82, 0.22)
+        local shown = category
+        if counts[category] then shown = category .. " (" .. counts[category] .. ")" end
+        local text = label(control, shown); text:SetPoint("LEFT", 10, 0); text:SetTextColor(1, 0.82, 0.22)
+        control.label = text
         control:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight", "ADD")
         control:SetScript("OnClick", function()
             F.selectedCategory = category; frame.search:SetText(""); frame.scroll:SetVerticalScroll(0); F:RefreshSettings()

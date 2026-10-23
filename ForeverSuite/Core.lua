@@ -302,6 +302,19 @@ function F:Initialize()
         for key, value in pairs(db.enabled) do
             if not self.features[key] or type(value) ~= "boolean" then db.enabled[key] = nil end
         end
+        if type(db.layouts) == "table" then
+            for name, stored in pairs(db.layouts) do
+                local valid = type(name) == "string" and type(stored) == "table"
+                    and type(stored.point) == "string"
+                    and type(stored.x) == "number" and stored.x == stored.x and math.abs(stored.x) <= 20000
+                    and type(stored.y) == "number" and stored.y == stored.y and math.abs(stored.y) <= 20000
+                    and (stored.relativePoint == nil or type(stored.relativePoint) == "string")
+                if not valid then db.layouts[name] = nil end
+            end
+            if next(db.layouts) == nil then db.layouts = nil end
+        else
+            db.layouts = nil
+        end
         for key, stored in pairs(db.options) do
             local feature = self.features[key]
             if not feature or type(stored) ~= "table" then

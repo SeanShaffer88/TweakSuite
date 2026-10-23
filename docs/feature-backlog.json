@@ -2005,5 +2005,14 @@
     "status": "implemented-preview; in-game validation pending",
     "detail": "Disables the desaturated death overlay while leaving the release dialog intact.",
     "feature_key": "noDeathEffect"
+  },
+  {
+    "id": "FS-243",
+    "title": "Nameplate scale",
+    "category": "Nameplates",
+    "stage": 2,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Scales nameplates by a percentage option from 50 to 200 percent. The client may clamp extreme values.",
+    "feature_key": "nameplateScale"
   }
 ]
