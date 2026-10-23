@@ -18,6 +18,7 @@ calls = { repair = 0, sell = 0, loot = 0, accept = 0, reward = 0, hooks = 0 }
 combat, shift, loaded, cvars, frames = false, false, {}, {}, {}
 repairCost, money, choices, requiredMoney = 10000, 1000000, 0, 0
 itemStack, itemLevel, itemEquip, itemReady = 20, 50, "INVTYPE_HEAD", true
+itemSellPrice = 1234
 itemCountValue, bankCountValue = 5, 9
 clientVersion, clientBuild, clientInterface = "1.60.1", "70532", 16001
 SlashCmdList, UISpecialFrames, CHAT_FRAMES = {}, {}, {"ChatFrame1"}
@@ -38,6 +39,10 @@ function methods:SetPoint(...) self.points = {...} end
 function methods:SetHeight(h) self.height = h end
 function methods:SetWidth(w) self.width = w end
 function methods:SetFont(_, size, flags) self.fontSize = size; self.fontFlags = flags end
+function methods:GetName() return self.name end
+function methods:GetPoint() if self.points then return unpack(self.points) end end
+function methods:SetScale(value) self.scale = value end
+function methods:GetScale() return self.scale or 1 end
 function methods:SetScript(name, fn) self.scripts[name] = fn end
 function methods:HookScript(name, fn)
  self.hooks[name] = self.hooks[name] or {}; table.insert(self.hooks[name], fn)
@@ -64,6 +69,7 @@ function methods:GetText() return self.text or "" end
 function methods:SetChecked(value) self.checked = value end
 function methods:GetChecked() return self.checked end
 function methods:SetEnabled(value) self.enabled = value end
+function methods:GetFont() return "Fonts/FRIZQT__.TTF", self.fontSize or 14, "" end
 function methods:GetFading() return self.fading == true end
 function methods:SetFading(value) self.fading = value end
 function methods:GetAltArrowKeyMode() return self.arrows == true end
@@ -73,7 +79,7 @@ function methods:GetUnit() return "Unit", self.unit end
 function methods:GetID() return self.bag or 0 end
 function methods:AddLine(text) table.insert(self.lines, text) end
 function CreateFrame(_, name)
- local frame = setmetatable({scripts={}, hooks={}, events={}, lines={}}, {__index=methods})
+ local frame = setmetatable({scripts={}, hooks={}, events={}, lines={}, name=name}, {__index=methods})
  if name then _G[name] = frame end; frames[#frames+1] = frame; return frame
 end
 function methods:CreateFontString()
@@ -107,6 +113,7 @@ for _, slot in ipairs(slotButtons) do
 end
 NUM_BAG_SLOTS, NUM_BANKBAGSLOTS, NUM_BANKGENERIC_SLOTS = 4, 7, 7
 containerLinks, containerSlots = {}, {}
+function GetMoneyString(copper) return copper .. "c" end
 function GetContainerItemLink(bag, slot) local contents = containerLinks[bag]; return contents and contents[slot] end
 function GetContainerNumSlots(bag) return containerSlots[bag] or 0 end
 for index = 1, NUM_BAG_SLOTS + NUM_BANKBAGSLOTS do
@@ -116,6 +123,33 @@ for index = 1, NUM_BAG_SLOTS + NUM_BANKBAGSLOTS do
 end
 for slot = 1, NUM_BANKGENERIC_SLOTS do namedButton("BankFrameItem" .. slot, true) end
 BankFrame = CreateFrame("Frame", "BankFrame")
+for _, name in ipairs({ "MerchantFrame", "QuestFrame", "GossipFrame", "MailFrame", "TradeFrame",
+    "TabardFrame", "TrainerFrame", "PetStableFrame", "SpellBookFrame", "FriendsFrame",
+    "AuctionHouseFrame", "WorldMapFrame" }) do
+ local frame = CreateFrame("Frame", name); frame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
+end
+ObjectiveTrackerFrame = CreateFrame("Frame", "ObjectiveTrackerFrame"); ObjectiveTrackerFrame.shown = true
+MainMenuBarBackpackButton = CreateFrame("Button", "MainMenuBarBackpackButton"); MainMenuBarBackpackButton.shown = true
+for _, name in ipairs({ "ChatFrame1ButtonFrame", "ChatFrameMenuButton", "ChatFrame1UpButton", "ChatFrame1DownButton", "ChatFrame1BottomButton" }) do
+ local frame = CreateFrame("Button", name); frame.shown = true
+end
+for _, name in ipairs({ "MainMenuBarLeftEndCap", "MainMenuBarRightEndCap", "BossBanner", "ZoneTextFrame", "SubZoneTextFrame" }) do
+ local frame = CreateFrame("Frame", name); frame.shown = true
+end
+GameTooltip = CreateFrame("GameTooltip", "GameTooltip")
+ItemRefTooltip = CreateFrame("GameTooltip", "ItemRefTooltip")
+ShoppingTooltip1 = CreateFrame("GameTooltip", "ShoppingTooltip1")
+ShoppingTooltip2 = CreateFrame("GameTooltip", "ShoppingTooltip2")
+FriendsTooltip = CreateFrame("GameTooltip", "FriendsTooltip")
+function GetAverageItemLevel() return overallItemLevel or 84, equippedItemLevel or 82, 0 end
+durabilities = { [1] = { 80, 100 }, [16] = { 12, 100 } }
+function GetInventoryItemDurability(slot)
+ local entry = durabilities[slot]
+ if entry then return entry[1], entry[2] end
+ return nil, nil
+end
+freeBagSlots = 12
+function GetNumFreeBagSlots() return freeBagSlots end
 function InCombatLockdown() return combat end
 function IsShiftKeyDown() return shift end
 function GetBuildInfo() return clientVersion, clientBuild, "", clientInterface end
@@ -123,6 +157,8 @@ function issecretvalue(value) return type(value) == "table" and value.secret == 
 prints = {}
 function print(message) table.insert(prints, tostring(message)) end
 function CanMerchantRepair() return true end
+function CanGuildBankRepair() return guildRepairAvailable == true end
+guildRepairAvailable = true
 function GetRepairAllCost() return repairCost, true end
 function GetMoney() return money end
 function RepairAllItems(guild) calls.repair=calls.repair+1; calls.guild=guild end
@@ -148,7 +184,7 @@ TooltipDataProcessor={AddTooltipPostCall=function(dataType, fn)
 end}
 C_Item={GetItemInfo=function()
  if not itemReady then return nil end
- return "Item", "item:123", 2, 45, 1, "Armor", "Plate", itemStack, itemEquip
+ return "Item", "item:123", 2, 45, 1, "Armor", "Plate", itemStack, itemEquip, "", itemSellPrice
  end, GetDetailedItemLevelInfo=function(link) return inventoryLevels[link] or itemLevel end,
  GetItemCount=function(_, includeBank) return includeBank and bankCountValue or itemCountValue end}
 Settings={RegisterCanvasLayoutCategory=function() return {} end, RegisterAddOnCategory=function() end}
@@ -201,7 +237,7 @@ class SuiteTests(unittest.TestCase):
     def test_default_is_inert_and_ui_loads(self):
         self.start()
         self.runlua('fire("MERCHANT_SHOW"); fire("QUEST_DETAIL"); F:OpenSettings()')
-        self.assertEqual(len(self.g.F.order), 45)
+        self.assertEqual(len(self.g.F.order), 77)
         self.assertEqual(self.g.calls.repair, 0)
         self.assertEqual(self.g.calls.sell, 0)
         self.assertEqual(self.g.calls.accept, 0)
@@ -654,7 +690,7 @@ class SuiteTests(unittest.TestCase):
         self.assertIn("Option not changed", self.g.prints[len(self.g.prints)])
         self.runlua('SlashCmdList.FOREVERSUITE("set dialogAccept key nope")')
         self.assertIn("choices: Space, Enter, E", self.g.prints[len(self.g.prints)])
-        self.runlua('SlashCmdList.FOREVERSUITE("options repair")')
+        self.runlua('SlashCmdList.FOREVERSUITE("options fastLoot")')
         self.assertIn("has no options", self.g.prints[len(self.g.prints)])
 
 
@@ -694,6 +730,208 @@ class SuiteTests(unittest.TestCase):
         self.runlua('ContainerFrame2:Show(); BankFrame:Show()')
         self.assertFalse(bagSlot.shown)
         self.assertFalse(self.g.BankFrameItem2.fontstrings[1].shown)
+
+
+    def test_vendor_sell_price_in_tooltips(self):
+        self.start()
+        self.runlua('F:SetEnabled("sellPrice", true); hover(); tip:Trigger("OnTooltipCleared"); hover()')
+        self.assertEqual(self.g.tip.lines[1], "Sells for: 1234c")
+        self.runlua('itemSellPrice=0; tip.lines={}; tip:Trigger("OnTooltipCleared"); hover()')
+        self.assertEqual(len(self.g.tip.lines), 0)
+        self.runlua('itemSellPrice={secret=true}; tip.lines={}; tip:Trigger("OnTooltipCleared"); hover()')
+        self.assertEqual(len(self.g.tip.lines), 0)
+        self.runlua('itemSellPrice=1234; F:SetEnabled("sellPrice", false); tip.lines={}; tip:Trigger("OnTooltipCleared"); hover()')
+        self.assertEqual(len(self.g.tip.lines), 0)
+
+    def test_stage_two_tweak_categories_and_disable(self):
+        self.start()
+        self.runlua('F:SetEnabled("chatBubbles", true); F:SetEnabled("cooldownCount", true)')
+        self.assertEqual(self.g.F.features["chatBubbles"].category, "Chat")
+        self.assertEqual(self.g.F.features["cooldownCount"].category, "Interface")
+        self.assertEqual(self.g.F.features["cooldownCount"].state, "active")
+        self.assertEqual(self.g.cvars.countdownForCooldowns, "1")
+        self.runlua('F:SetEnabled("cooldownCount", false)')
+        self.assertEqual(self.g.cvars.countdownForCooldowns, "0")
+
+
+    def test_move_blizzard_windows_requires_shift_and_saves_layout(self):
+        self.start()
+        self.runlua('F:SetEnabled("moveWindows", true)')
+        self.runlua('MerchantFrame:Trigger("OnDragStart")')
+        self.runlua('MerchantFrame:Trigger("OnDragStop")')
+        self.assertIsNone(self.g.ForeverSuiteDB.layouts)
+        self.runlua('shift=true; MerchantFrame:Trigger("OnDragStart"); '
+                    'MerchantFrame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 100, -100); '
+                    'shift=false; MerchantFrame:Trigger("OnDragStop")')
+        stored = self.g.ForeverSuiteDB.layouts.MerchantFrame
+        self.assertEqual(stored.point, "TOPLEFT")
+        self.assertEqual(stored.x, 100)
+        self.assertEqual(stored.y, -100)
+        self.runlua('MerchantFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0); MerchantFrame:Hide(); MerchantFrame:Show()')
+        self.assertEqual(self.g.MerchantFrame.points[1], "TOPLEFT")
+        self.assertEqual(self.g.MerchantFrame.points[3], 100)
+        self.runlua('F:SetEnabled("moveWindows", false)')
+        self.assertEqual(self.g.MerchantFrame.points[1], "CENTER")
+        self.assertEqual(self.g.MerchantFrame.points[3], 0)
+
+    def test_move_windows_combat_and_remember_off(self):
+        self.start()
+        self.runlua('F:SetEnabled("moveWindows", true); shift=true; combat=true')
+        self.runlua('MerchantFrame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 50, -50); MerchantFrame:Trigger("OnDragStart")')
+        self.runlua('combat=false; MerchantFrame:Trigger("OnDragStop")')
+        self.assertIsNone(self.g.ForeverSuiteDB.layouts)
+        self.runlua('F:SetOption("moveWindows", "remember", false); '
+                    'shift=true; MerchantFrame:Trigger("OnDragStart"); '
+                    'MerchantFrame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 25, -25); '
+                    'MerchantFrame:Trigger("OnDragStop")')
+        self.assertIsNone(self.g.ForeverSuiteDB.layouts)
+
+    def test_average_item_level_on_character_panel(self):
+        self.start()
+        self.runlua('F:SetEnabled("averageItemLevel", true)')
+        text = self.g.CharacterFrame.fontstrings[1]
+        self.assertEqual(text.text, "Item level 82")
+        self.assertTrue(text.shown)
+        self.runlua('F:SetOption("averageItemLevel", "showOverall", true)')
+        self.assertEqual(text.text, "Item level 82 (overall 84)")
+        self.runlua('equippedItemLevel=0; overallItemLevel=0; fire("PLAYER_EQUIPMENT_CHANGED")')
+        self.assertFalse(text.shown)
+        self.runlua('equippedItemLevel=82; overallItemLevel=84; fire("PLAYER_EQUIPMENT_CHANGED")')
+        self.assertTrue(text.shown)
+        self.runlua('F:SetEnabled("averageItemLevel", false)')
+        self.assertFalse(text.shown)
+
+    def test_hide_objective_tracker_hides_and_restores(self):
+        self.start()
+        self.runlua('F:SetEnabled("hideObjectiveTracker", true)')
+        self.assertFalse(self.g.ObjectiveTrackerFrame.shown)
+        self.runlua('ObjectiveTrackerFrame:Show()')
+        self.assertFalse(self.g.ObjectiveTrackerFrame.shown)
+        self.runlua('fire("QUEST_LOG_UPDATE")')
+        self.assertFalse(self.g.ObjectiveTrackerFrame.shown)
+        self.runlua('F:SetEnabled("hideObjectiveTracker", false)')
+        self.assertTrue(self.g.ObjectiveTrackerFrame.shown)
+
+    def test_tooltip_scale_option_combat_and_restore(self):
+        self.start()
+        self.runlua('F:SetEnabled("tooltipScale", true)')
+        self.assertEqual(self.g.GameTooltip.scale, 1)
+        self.runlua('F:SetOption("tooltipScale", "scale", 150)')
+        self.assertEqual(self.g.GameTooltip.scale, 1.5)
+        self.assertEqual(self.g.ShoppingTooltip1.scale, 1.5)
+        self.runlua('combat=true; F:SetOption("tooltipScale", "scale", 120)')
+        self.assertEqual(self.g.GameTooltip.scale, 1.5)
+        self.runlua('combat=false; fire("PLAYER_REGEN_ENABLED")')
+        self.assertEqual(self.g.GameTooltip.scale, 1.2)
+        self.runlua('F:SetEnabled("tooltipScale", false)')
+        self.assertEqual(self.g.GameTooltip.scale, 1)
+
+
+    def test_repair_funding_choices_and_cap(self):
+        self.start()
+        self.runlua('F:SetEnabled("repair", true); money=0; fire("MERCHANT_SHOW")')
+        self.assertEqual(self.g.calls.repair, 0)
+        self.runlua('F:SetOption("repair", "funding", "guild"); fire("MERCHANT_SHOW")')
+        self.assertEqual(self.g.calls.repair, 1)
+        self.assertTrue(self.g.calls.guild)
+        self.runlua('F:SetOption("repair", "funding", "both"); money=1000000; fire("MERCHANT_SHOW")')
+        self.assertEqual(self.g.calls.repair, 2)
+        self.assertFalse(self.g.calls.guild)
+        self.runlua('money=0; fire("MERCHANT_SHOW")')
+        self.assertEqual(self.g.calls.repair, 3)
+        self.assertTrue(self.g.calls.guild)
+        self.runlua('guildRepairAvailable=false; money=0; fire("MERCHANT_SHOW")')
+        self.assertEqual(self.g.calls.repair, 3)
+        self.runlua('guildRepairAvailable=true; F:SetOption("repair", "funding", "guild"); repairCost=100001; fire("MERCHANT_SHOW")')
+        self.assertEqual(self.g.calls.repair, 3)
+
+    def test_chat_font_size_applies_and_restores(self):
+        self.start()
+        self.runlua('F:SetEnabled("chatFont", true)')
+        self.assertEqual(self.g.ChatFrame1.fontSize, 14)
+        self.runlua('F:SetOption("chatFont", "size", 20)')
+        self.assertEqual(self.g.ChatFrame1.fontSize, 20)
+        self.runlua('F:SetEnabled("chatFont", false)')
+        self.assertEqual(self.g.ChatFrame1.fontSize, 14)
+
+    def test_camera_zoom_option_drives_cvar(self):
+        self.start()
+        self.runlua('F:SetEnabled("cameraZoom", true)')
+        self.assertEqual(self.g.cvars.cameraDistanceMaxZoomFactor, "2")
+        self.runlua('F:SetOption("cameraZoom", "distance", 3.5)')
+        self.assertEqual(self.g.cvars.cameraDistanceMaxZoomFactor, "3.5")
+        self.runlua('F:SetOption("cameraZoom", "distance", 2.0500000000000003)')
+        self.assertEqual(self.g.F.GetOption(self.g.F, "cameraZoom", "distance"), 2.05)
+        self.runlua('F:SetOption("cameraZoom", "distance", 3.5)')
+        self.runlua('F:SetEnabled("cameraZoom", false)')
+        self.assertEqual(self.g.cvars.cameraDistanceMaxZoomFactor, "0")
+
+    def test_combat_text_cvars(self):
+        self.start()
+        self.runlua('F:SetEnabled("fctDamage", true); F:SetEnabled("fctHealing", true)')
+        self.assertEqual(self.g.cvars.floatingCombatTextCombatDamage, "0")
+        self.assertEqual(self.g.cvars.floatingCombatTextCombatHealing, "0")
+        self.runlua('F:SetEnabled("fctDamage", false)')
+        self.assertEqual(self.g.cvars.floatingCombatTextCombatDamage, "0")
+
+
+    def test_hidden_client_frames_restore(self):
+        self.start()
+        self.runlua('F:SetEnabled("hideGryphons", true); F:SetEnabled("hideBossBanner", true);'
+                    'F:SetEnabled("hideZoneText", true)')
+        self.assertFalse(self.g.MainMenuBarLeftEndCap.shown)
+        self.assertFalse(self.g.MainMenuBarRightEndCap.shown)
+        self.assertFalse(self.g.BossBanner.shown)
+        self.assertFalse(self.g.ZoneTextFrame.shown)
+        self.assertFalse(self.g.SubZoneTextFrame.shown)
+        self.runlua('MainMenuBarLeftEndCap:Show(); fire("PLAYER_ENTERING_WORLD")')
+        self.assertFalse(self.g.MainMenuBarLeftEndCap.shown)
+        self.runlua('F:SetEnabled("hideChatButtons", true)')
+        self.assertFalse(self.g.ChatFrameMenuButton.shown)
+        self.assertFalse(self.g.ChatFrame1UpButton.shown)
+        self.runlua('F:SetEnabled("hideBossBanner", false); F:SetEnabled("hideZoneText", false)')
+        self.runlua('BossBanner:Show(); ZoneTextFrame:Show()')
+        self.assertTrue(self.g.BossBanner.shown)
+        self.assertTrue(self.g.ZoneTextFrame.shown)
+        self.runlua('F:SetEnabled("hideChatButtons", false)')
+        self.assertTrue(self.g.ChatFrameMenuButton.shown)
+        self.assertTrue(self.g.ChatFrame1UpButton.shown)
+        self.runlua('F:SetEnabled("hideGryphons", false)')
+        self.assertTrue(self.g.MainMenuBarLeftEndCap.shown)
+        self.assertTrue(self.g.MainMenuBarRightEndCap.shown)
+
+    def test_new_chat_and_minimap_cvars(self):
+        self.start()
+        self.runlua('F:SetEnabled("rotateMinimap", true); F:SetEnabled("chatTimestamps", true)')
+        self.assertEqual(self.g.cvars.rotateMinimap, "1")
+        self.assertEqual(self.g.cvars.showTimestamps, "1")
+        self.assertEqual(self.g.F.features.chatTimestamps.category, "Chat")
+        self.runlua('F:SetEnabled("rotateMinimap", false); F:SetEnabled("chatTimestamps", false)')
+        self.assertEqual(self.g.cvars.rotateMinimap, "0")
+        self.assertEqual(self.g.cvars.showTimestamps, "0")
+
+
+    def test_durability_percentages_and_bag_space(self):
+        self.start()
+        self.runlua('F:SetEnabled("slotDurability", true)')
+        head = self.g.CharacterHeadSlot.fontstrings[1]
+        self.assertEqual(head.text, "80%")
+        self.assertTrue(head.shown)
+        main = self.g.CharacterMainHandSlot.fontstrings[1]
+        self.assertEqual(main.text, "12%")
+        self.runlua('durabilities[1]=nil; fire("UPDATE_INVENTORY_DURABILITY")')
+        self.assertFalse(head.shown)
+        self.runlua('durabilities[1]={ 40, 100 }; fire("UPDATE_INVENTORY_DURABILITY")')
+        self.assertEqual(head.text, "40%")
+        self.runlua('F:SetEnabled("slotDurability", false)')
+        self.assertFalse(head.shown)
+        self.runlua('F:SetEnabled("bagSpace", true)')
+        label = self.g.MainMenuBarBackpackButton.fontstrings[1]
+        self.assertEqual(label.text, "12")
+        self.runlua('freeBagSlots=3; fire("BAG_UPDATE")')
+        self.assertEqual(label.text, "3")
+        self.runlua('F:SetEnabled("bagSpace", false)')
+        self.assertFalse(label.shown)
 
 
 if __name__ == "__main__":

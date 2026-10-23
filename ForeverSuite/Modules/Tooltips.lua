@@ -34,7 +34,7 @@ local function add(tooltip, record, key, text)
 end
 
 local function itemTooltip(tooltip, data)
-    if not anyActive({ "maxStack", "itemLevel", "itemID", "itemCount" }) then return end
+    if not anyActive({ "maxStack", "itemLevel", "itemID", "itemCount", "sellPrice" }) then return end
     if not tooltip or not tooltip.GetItem or type(data) ~= "table" or not F:Plain(data) then return end
     local _, link = tooltip:GetItem()
     if not F:Plain(link) or type(link) ~= "string" then return end
@@ -64,6 +64,13 @@ local function itemTooltip(tooltip, data)
                 add(tooltip, record, "itemCount", "Owned: " .. count
                     .. (includeBank and " (bags and bank)" or " (bags)"))
             end
+        end
+    end
+    if F:Active("sellPrice") then
+        local price = info[11]
+        if F:Plain(price) and type(price) == "number" and price > 0 then
+            local money = GetMoneyString and GetMoneyString(price) or (price .. " copper")
+            add(tooltip, record, "sellPrice", "Sells for: " .. money)
         end
     end
 end
@@ -129,7 +136,7 @@ local function itemAvailable()
         and C_Item.GetItemInfo and C_Item.GetDetailedItemLevelInfo
 end
 
-local function itemEnable() install(Enum.TooltipDataType.Item, itemTooltip, { "maxStack", "itemLevel", "itemID", "itemCount" }) end
+local function itemEnable() install(Enum.TooltipDataType.Item, itemTooltip, { "maxStack", "itemLevel", "itemID", "itemCount", "sellPrice" }) end
 local common = { "EnhanceQoL", "EnhanceQoLTooltip", "Leatrix_Plus", "Leatrix_Plus_Forever", "TweaksForever" }
 
 F:Register("maxStack", {
@@ -209,5 +216,70 @@ F:Register("currencyID", {
     available = function()
         return TooltipDataProcessor and TooltipDataProcessor.AddTooltipPostCall and Enum
             and Enum.TooltipDataType and Enum.TooltipDataType.Currency
+    end,
+})
+
+F:Register("sellPrice", {
+    title = "Vendor sell price in tooltips",
+    category = "Tooltips",
+    description = "Adds the price a vendor pays for the hovered item, outside combat. Items the client reports as unsellable get no line.",
+    conflicts = common,
+    disableText = "Stops adding the price line to new tooltips. Move your mouse away and hover again to rebuild the current tooltip.",
+    enable = function() install(Enum.TooltipDataType.Item, itemTooltip, { "sellPrice" }) end,
+    available = function()
+        return tooltipAvailable() and Enum.TooltipDataType.Item and C_Item and C_Item.GetItemInfo
+    end,
+})
+
+local TOOLTIP_FRAMES = { "GameTooltip", "ItemRefTooltip", "ShoppingTooltip1", "ShoppingTooltip2", "FriendsTooltip" }
+local scaleSaved, scaleHooked = {}, {}
+local function applyTooltipScale()
+    if not F:Active("tooltipScale") then return end
+    -- Tooltip frames belong to the client's UI; keep scale changes out of combat.
+    if InCombatLockdown() then return end
+    local scale = F:GetOption("tooltipScale", "scale") / 100
+    if type(scale) ~= "number" then return end
+    for _, name in ipairs(TOOLTIP_FRAMES) do
+        local frame = _G[name]
+        if frame and frame.SetScale then
+            if type(scaleSaved[frame]) ~= "table" and frame.GetScale then
+                scaleSaved[frame] = { before = frame:GetScale() }
+            end
+            frame:SetScale(scale)
+            if type(scaleSaved[frame]) == "table" then scaleSaved[frame].applied = scale end
+        end
+    end
+end
+F:Register("tooltipScale", {
+    title = "Tooltip scale",
+    category = "Tooltips",
+    description = "Scales the game, item, shopping and friend tooltips. The number applies to new and currently open tooltips outside combat. It does not resize the settings windows.",
+    disableText = "Restores the scale each tooltip had before ForeverSuite changed it, unless another addon has changed it since.",
+    conflicts = { "Leatrix_Plus", "Leatrix_Plus_Forever", "TinyTooltip", "TipTac" },
+    options = {
+        { key = "scale", type = "number", title = "Tooltip scale (percent)", default = 100, min = 80, max = 200, step = 5, unit = "%",
+          description = "Percent of the client's tooltip size. 100 keeps the default; 150 makes tooltips half again as large." },
+    },
+    available = function() return GameTooltip ~= nil and GameTooltip.SetScale ~= nil end,
+    enable = function()
+        for _, name in ipairs(TOOLTIP_FRAMES) do
+            local frame = _G[name]
+            if frame and frame.HookScript and not scaleHooked[frame] then
+                frame:HookScript("OnShow", applyTooltipScale)
+                scaleHooked[frame] = true
+            end
+        end
+        applyTooltipScale()
+        F:Listen("tooltipScale", "PLAYER_REGEN_ENABLED", applyTooltipScale)
+    end,
+    refresh = applyTooltipScale,
+    disable = function()
+        if InCombatLockdown() then return end
+        for frame, stored in pairs(scaleSaved) do
+            if frame.GetScale and frame:GetScale() == stored.applied and type(stored.before) == "number" then
+                frame:SetScale(stored.before)
+            end
+            scaleSaved[frame] = nil
+        end
     end,
 })

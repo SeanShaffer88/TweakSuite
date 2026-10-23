@@ -2,7 +2,7 @@
 
 A comprehensive, modular quality-of-life addon for **World of Warcraft: Forever**, combining overlapping ideas into one settings surface while retaining distinct useful features. The goal is broad feature coverage across all 13 requested addons, delivered in stages. There is no target cap on the number of tweaks.
 
-**0.2.0-alpha.1 starts Stage 2 with 45 opt-in features: the 36 Stage 1 settings plus keyboard dialogs, character/inspect/bag item levels and four more tooltip lines. It is not yet a replacement for the complete source addon collection.** Stage 2 is incomplete: window movement, loot/flyout overlays, beta report controls and most tooltip styling remain planned. Original code; no other addons or their assets are bundled. Beta and preinstalled launch client executables were both observed at 1.60.1.70532 on October 22, 2026. Gameplay and visual verification are still pending.
+**0.2.0-alpha.2 continues Stage 2 with 77 opt-in features: the 36 Stage 1 settings plus keyboard dialogs, item-level and durability overlays, movable Blizzard windows, tooltip styling and a larger set of interface and chat tweaks. It is not yet a replacement for the complete source addon collection.** Stage 2 is incomplete: window resizing, panel lifetimes, loot and flyout overlays, the beta report controls and advanced tooltip styling remain planned. Original code; no other addons or their assets are bundled. Beta and preinstalled launch client executables were both observed at 1.60.1.70532 on October 22, 2026. Gameplay and visual verification are still pending.
 
 ## Install and open
 
@@ -12,7 +12,7 @@ Extract the release ZIP into the intended client's `Interface/AddOns` folder. Th
 - Launch client folder: `_forever_`.
 - Restart the game after installing. Enable **ForeverSuite** on the AddOns screen, then type `/fs`.
 - Every feature starts off. Browse categories or search across all settings, tick a feature, and read its status.
-- **Details** explains what the setting changes, its default, what switching it off does, combat behavior and overlapping addons. CVar options also identify the underlying client setting. Search works across categories.
+- **Details** explains what the setting changes, its default, what switching it off does, combat behavior and overlapping addons. CVar options also identify the underlying client setting and its current target value. Search covers categories, descriptions and option text.
 - Features with variants show an **Opt** button. It opens a per-feature options panel with the current value, the default, valid choices or ranges, and a reset button. Options never switch a feature on by themselves.
 - The interface takes visual inspiration from Leatrix Plus: a dark brown window, gold headings, a flat category sidebar, a Home page and compact grouped checkboxes. Short explanations stay beside controls; hover or click **?** for the complete setting details. The implementation and layout code are original.
 - The same package targets both clients. Each client maintains its own SavedVariables. This preview does not migrate settings between them.
@@ -26,19 +26,31 @@ Optional PowerShell installer, from the source repository:
 
 Without `-Install`, it only checks the selected client. It refuses to overwrite an existing ForeverSuite folder or copy while WoW is running. It does not modify other addons or saved settings.
 
-## Available now
+## Available now (77 features, 12 categories)
 
-- **Automation (5):** personal-gold repairs with a configurable cap, native Sell All Junk, faster auto-looting, accepting quests, turning in quests with no reward choices and no money requirement.
+- **Automation (5):** personal-gold repairs with a configurable cap and a funding choice (personal, guild bank, or personal then guild), native Sell All Junk, faster auto-looting, accepting quests, turning in quests with no reward choices and no money requirement.
 - **Dialogs (2):** a configurable key (Space, Enter or E) presses the visible Accept/Continue button, with an optional key hint; number keys 1-6 select a quest reward without turning the quest in.
-- **Tooltips (7):** maximum stack size, item ID, actual equipment item level, owned count, spell ID, NPC ID and currency ID.
-- **Inventory (3):** actual item levels on equipped character-panel slots, the inspect panel, and bag/bank slots, with configurable text position and size and an optional bank switch.
-- **Interface (8):** auto-loot default, cast on key down, instant quest text, full-screen glow, low-health flash, target of target, loot history and spell activation artwork.
+- **Windows (1):** Shift-drag 14 common Blizzard windows and keep each position, with options for the Shift requirement and for remembering positions across sessions.
+- **Tooltips (9):** maximum stack size, item ID, actual equipment item level, owned count with optional bank, spell ID, NPC ID, currency ID, vendor sell price and a tooltip scale percentage.
+- **Inventory (6):** actual item levels on character-panel, inspect, bag and bank slots with position and size options; average equipped item level; durability percentages on character slots; free bag slots on the backpack.
+- **Interface (29):** auto-loot default, cast on key down, instant quest text, full-screen glow, low-health flash, target of target, loot history, spell activation artwork, quest tracking and progress, map quest difficulty, quest tooltips, numeric cooldowns, target cast bar, action bar lock and visibility, auto-cast protection, target aura filtering, aura durations, self-cast, spell effect emphasis, combat text toggles, minimap rotation, camera zoom distance, hidden objective tracker, gryphon end caps, zone name text and the boss banner.
 - **Nameplates (9):** visibility, stacking, class colors, friendly/enemy pet, guardian and totem plates, and the personal resource bar.
 - **Overhead names (5):** your own name, titles, guild names, guild ranks and critter names.
 - **Camera (3):** bobbing, terrain tilt and water collision.
-- **Chat (3):** mouse-wheel scrolling, persistent text and arrow-key editing without Alt.
+- **Chat (8):** mouse-wheel scrolling, persistent text, arrow-key editing without Alt, chat font size, chat bubbles and party bubbles, timestamps, and hidden chat window buttons.
 
 Unsupported CVars appear as **API unavailable** when requested. Enabling a setting means ForeverSuite owns the listed value; disabling restores its previous value only if another tool has not changed it. To restore those values before uninstalling, use `/fs reset` outside combat, then log out normally. Merely deleting the addon cannot run restoration code.
+
+## Windows, inventory and tooltips
+
+- **Moving windows** works on the character, spellbook, merchant, quest, gossip, mail, bank, trade, tabard, trainer, pet stable, friends, auction house and world map windows. Shift is required by default so tabs and buttons stay clickable; a left drag without Shift is left to the client. Positions are saved per window and restored when the window opens again. Drags are ignored in combat, and switching the feature off returns each window to where it was before the first move in that session.
+- Character, inspect, bag and bank overlays show `C_Item.GetDetailedItemLevelInfo` for equipped or contained slots. Empty slots, unavailable data and secret values show nothing. The inspect overlay waits for the client's normal inspect data and does not request extra inspection.
+- Bag overlays default to the top-left corner so the stack count stays readable. Enable **Include bank** to number the main bank slots and bank bags; the client only knows bank contents after the bank has been opened in this session.
+- **Durability percentages** appear in the lower-left corner of character slots and are colored green, yellow (50% or less) or red (20% or less). **Free bag slots** appear on the backpack button and update with bag changes.
+- Tooltip lines are added outside combat only, to avoid restricted values. Move the mouse away and hover again after changing a tooltip option.
+- **Item count** counts bags by default; enable **Include bank** to add bank contents. Other characters and other accounts are not counted.
+- **NPC ID** is shown only for creature and vehicle units, extracted from the standard GUID. Player, pet and game-object tooltips are left alone. Spell and currency IDs require the client to label the tooltip with that data type; otherwise the feature reports **API unavailable**.
+- **Tooltip scale** applies a percentage (80-200%) to the game, item, shopping and friend tooltips and restores each tooltip's previous scale when switched off.
 
 ## Keyboard dialogs
 
@@ -50,14 +62,6 @@ The dialog features are independently opt-in and stay off in combat and while Sh
 - **Number keys select quest rewards** clicks the reward icon for 1-6. Selecting a reward does not turn in the quest; you still confirm with the client's own button.
 - A small invisible keyboard catcher is shown only while one of these features is enabled. It is hidden during combat because the client restricts keyboard-propagation changes in combat. Nothing is clicked in combat.
 - Static popups, gossip text, paid gossip options, trainer windows and bonus rolls are not automated.
-
-## Inventory and tooltips
-
-- Character and inspect overlays show `C_Item.GetDetailedItemLevelInfo` for equipped slots. Empty slots, unavailable data and secret values show nothing. The inspect overlay waits for the client's normal inspect data and does not request extra inspection.
-- Bag overlays number each container slot, defaulting to the top-left corner so the stack count stays readable. Enable **Include bank** to add the main bank slots and bank bags; the client only knows bank contents after the bank has been opened in this session. Breaking an item, moving it or changing bags updates the numbers on the next bag event. Loot and equipment-flyout overlays are still planned.
-- Tooltip lines are added outside combat only, to avoid restricted values. Move the mouse away and hover again after changing a tooltip option.
-- **Item count** counts bags by default; enable **Include bank** to add bank contents. The client only knows bank contents after the bank has been opened in the session. Other characters and other accounts are not counted.
-- **NPC ID** is shown only for creature and vehicle units, extracted from the standard GUID. Player, pet and game-object tooltips are left alone. Spell and currency IDs require the client to label the tooltip with that data type; otherwise the feature reports **API unavailable**.
 
 ## Commands
 

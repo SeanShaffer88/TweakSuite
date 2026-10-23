@@ -2,7 +2,7 @@
 
 This is the initial capability backlog, not a complete parity claim. Distinct behaviors remain in scope; an implemented preview still requires in-game acceptance. Source options are separately indexed to catch omitted parameters and smaller features.
 
-229 tracked capabilities: 47 implemented in the Stage 2 preview (45 features plus two options of existing features) and 182 planned. IDs remain stable as work continues.
+239 tracked capabilities: 65 implemented and 174 planned. The shipped preview has 77 independently configurable features; several features and feature options share one capability row, and a few features (such as tooltip scale) were added to the index as FS-230 to FS-239 when they were implemented. IDs remain stable as work continues.
 
 | ID | Capability | Stage | Status |
 |---|---|---|---|
@@ -42,9 +42,9 @@ This is the initial capability backlog, not a complete parity claim. Distinct be
 | FS-034 | Hide spell activation overlays | 1 | Preview; game test pending |
 | FS-035 | Keep chat text visible | 1 | Preview; game test pending |
 | FS-036 | Arrow keys edit chat | 1 | Preview; game test pending |
-| FS-037 | Drag Blizzard windows | 2 | Planned |
+| FS-037 | Drag Blizzard windows | 2 | Preview; game test pending |
 | FS-038 | Resize and scale windows | 2 | Planned |
-| FS-039 | Remember window positions | 2 | Planned |
+| FS-039 | Remember window positions | 2 | Preview (option of FS-037) |
 | FS-040 | Per-layout window profiles | 2 | Planned |
 | FS-041 | Reset a single window | 2 | Planned |
 | FS-042 | Snap windows to screen bounds | 2 | Planned |
@@ -68,13 +68,13 @@ This is the initial capability backlog, not a complete parity claim. Distinct be
 | FS-060 | Inspect item-level overlays | 2 | Preview; game test pending |
 | FS-061 | Loot item-level overlays | 2 | Planned |
 | FS-062 | Equipment flyout item levels | 2 | Planned |
-| FS-063 | Average equipped item level | 2 | Planned |
+| FS-063 | Average equipped item level | 2 | Preview; game test pending |
 | FS-064 | Missing enchant indicators | 2 | Planned |
 | FS-065 | Missing gem indicators | 2 | Planned |
 | FS-066 | Socket inspection helpers | 2 | Planned |
 | FS-067 | Upgrade arrows | 2 | Planned |
 | FS-068 | Bind-type labels | 2 | Planned |
-| FS-069 | Durability overlays | 2 | Planned |
+| FS-069 | Durability overlays | 2 | Preview; game test pending |
 | FS-070 | Equipment label positioning | 2 | Planned |
 | FS-071 | Tooltip class colors | 2 | Planned |
 | FS-072 | Tooltip health bar | 2 | Planned |
@@ -88,7 +88,17 @@ This is the initial capability backlog, not a complete parity claim. Distinct be
 | FS-080 | Item counts by storage location | 2 | Preview; game test pending |
 | FS-081 | Reputation token details | 2 | Planned |
 | FS-082 | Quest-starting item details | 2 | Planned |
-| FS-083 | Guild repair funds policy | 3 | Planned |
+| FS-230 | Vendor sell price in tooltips | 2 | Preview; game test pending |
+| FS-231 | Tooltip scale | 2 | Preview; game test pending |
+| FS-232 | Hide action bar gryphons | 2 | Preview; game test pending |
+| FS-233 | Hide zone name text | 2 | Preview; game test pending |
+| FS-234 | Hide the objective tracker | 2 | Preview; game test pending |
+| FS-235 | Chat timestamps | 2 | Preview; game test pending |
+| FS-236 | Rotate the minimap | 2 | Preview; game test pending |
+| FS-237 | Floating combat text toggles | 2 | Preview; game test pending |
+| FS-238 | Maximum camera zoom distance | 2 | Preview; game test pending |
+| FS-239 | Free bag slots on the backpack | 2 | Preview; game test pending |
+| FS-083 | Guild repair funds policy | 3 | Preview (option of FS-001) |
 | FS-084 | Repair feedback and totals | 3 | Planned |
 | FS-085 | Never-sell item list | 3 | Planned |
 | FS-086 | Sell whitelist | 3 | Planned |
@@ -116,9 +126,9 @@ This is the initial capability backlog, not a complete parity claim. Distinct be
 | FS-108 | Opt-in loot trade confirmation | 3 | Planned |
 | FS-109 | Opt-in crafting confirmation | 3 | Planned |
 | FS-110 | Opt-in destruction text helper | 3 | Planned |
-| FS-111 | Chat font sizes | 3 | Planned |
+| FS-111 | Chat font sizes | 3 | Preview; game test pending |
 | FS-112 | Chat edit box placement | 3 | Planned |
-| FS-113 | Chat button visibility | 3 | Planned |
+| FS-113 | Chat button visibility | 3 | Preview; game test pending |
 | FS-114 | Sticky chat controls | 3 | Planned |
 | FS-115 | Chat history length | 3 | Planned |
 | FS-116 | Copy chat text | 3 | Planned |
@@ -200,7 +210,7 @@ This is the initial capability backlog, not a complete parity claim. Distinct be
 | FS-192 | Target cast tooltip information | 4 | Planned |
 | FS-193 | Target ability reference | 4 | Planned |
 | FS-194 | Talking head replacement | 4 | Planned |
-| FS-195 | Boss banner controls | 4 | Planned |
+| FS-195 | Boss banner controls | 4 | Preview; game test pending |
 | FS-196 | Event toast controls | 4 | Planned |
 | FS-197 | Sound category muting | 4 | Planned |
 | FS-198 | Music and movie browser | 4 | Planned |

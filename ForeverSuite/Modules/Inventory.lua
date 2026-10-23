@@ -362,3 +362,191 @@ F:Register("bagItemLevel", {
     refresh = applyBags,
     disable = hideBagOverlays,
 })
+
+local averageLabel
+local function averageValues()
+    if not GetAverageItemLevel then return nil end
+    local overall, equipped = GetAverageItemLevel()
+    if type(equipped) ~= "number" then equipped = overall end
+    if type(equipped) ~= "number" or equipped <= 0 then return nil end
+    if type(overall) ~= "number" or overall <= 0 then overall = equipped end
+    return equipped, overall
+end
+
+local function applyAverage()
+    if not F:Active("averageItemLevel") or InCombatLockdown() then return end
+    local equipped, overall = averageValues()
+    if not equipped or not CharacterFrame then
+        if averageLabel then averageLabel:Hide() end
+        return
+    end
+    if not averageLabel then
+        averageLabel = CharacterFrame:CreateFontString(nil, "OVERLAY")
+        averageLabel:SetPoint("TOPLEFT", 14, -70)
+        averageLabel:SetJustifyH("LEFT")
+        averageLabel:SetTextColor(1, 0.82, 0.22)
+        if STANDARD_TEXT_FONT and averageLabel.SetFont then
+            averageLabel:SetFont(STANDARD_TEXT_FONT, 11, "OUTLINE")
+        elseif GameFontNormalSmall then
+            averageLabel:SetFontObject(GameFontNormalSmall)
+        end
+    end
+    local text = "Item level " .. math.floor(equipped + 0.5)
+    if F:GetOption("averageItemLevel", "showOverall") == true and overall ~= equipped then
+        text = text .. " (overall " .. math.floor(overall + 0.5) .. ")"
+    end
+    averageLabel:SetText(text)
+    averageLabel:Show()
+end
+
+F:Register("averageItemLevel", {
+    title = "Average item level on the character panel",
+    category = "Inventory",
+    description = "Shows the client's average equipped item level at the top left of the character panel. The number comes from the client; ForeverSuite does not estimate or change equipment. Its fixed position is a preview detail.",
+    disableText = "Hides the text. Equipment and Blizzard's own stats are unchanged.",
+    conflicts = { "SimpleItemLevel", "EnhanceQoL", "TinyInspect", "Pawn" },
+    options = {
+        { key = "showOverall", type = "boolean", title = "Also show overall average", default = false,
+          description = "Adds the client's average across every equipped and inventory slot when it differs from the equipped average. Includes items you are not wearing." },
+    },
+    available = function()
+        return GetAverageItemLevel ~= nil and CharacterFrame ~= nil
+    end,
+    enable = function()
+        if CharacterFrame and CharacterFrame.HookScript then CharacterFrame:HookScript("OnShow", applyAverage) end
+        F:Listen("averageItemLevel", "PLAYER_ENTERING_WORLD", applyAverage)
+        F:Listen("averageItemLevel", "PLAYER_EQUIPMENT_CHANGED", applyAverage)
+        F:Listen("averageItemLevel", "PLAYER_REGEN_ENABLED", applyAverage)
+        applyAverage()
+    end,
+    refresh = applyAverage,
+    disable = function()
+        if averageLabel then averageLabel:Hide() end
+    end,
+})
+
+local durabilityLabels = {}
+local function durabilityColor(percent)
+    if percent <= 20 then return 1, 0.3, 0.25 end
+    if percent <= 50 then return 1, 0.82, 0.22 end
+    return 0.6, 1, 0.6
+end
+
+local function applyDurability()
+    if not F:Active("slotDurability") or InCombatLockdown() then return end
+    if not GetInventoryItemDurability then return end
+    for _, entry in ipairs(CHARACTER_SLOTS) do
+        local button = _G[entry[1]]
+        if button then
+            local label = durabilityLabels[button]
+            local current, maximum = GetInventoryItemDurability(entry[2])
+            if type(current) == "number" and type(maximum) == "number" and maximum > 0 then
+                if not label then
+                    label = button:CreateFontString(nil, "OVERLAY")
+                    label:SetPoint("BOTTOMLEFT", 2, 2)
+                    label:SetJustifyH("LEFT")
+                    if STANDARD_TEXT_FONT and label.SetFont then
+                        label:SetFont(STANDARD_TEXT_FONT, 10, "OUTLINE")
+                    elseif GameFontNormalSmall then
+                        label:SetFontObject(GameFontNormalSmall)
+                    end
+                    durabilityLabels[button] = label
+                end
+                local percent = math.floor(current / maximum * 100 + 0.5)
+                label:SetText(percent .. "%")
+                label:SetTextColor(durabilityColor(percent))
+                label:Show()
+            elseif label then
+                label:Hide()
+            end
+        end
+    end
+end
+
+F:Register("slotDurability", {
+    title = "Durability percentages on equipment slots",
+    category = "Inventory",
+    description = "Shows each equipped item's remaining durability as a percentage in the lower-left corner of its character-panel slot, colored green, yellow or red. Items without durability show nothing.",
+    disableText = "Hides the durability percentages. Equipment and repair state are unchanged.",
+    conflicts = { "Leatrix_Plus", "Leatrix_Plus_Forever", "EnhanceQoL", "SimpleItemLevel", "TinyInspect" },
+    available = function()
+        return GetInventoryItemDurability ~= nil and CharacterFrame ~= nil
+    end,
+    enable = function()
+        if CharacterFrame and CharacterFrame.HookScript then CharacterFrame:HookScript("OnShow", applyDurability) end
+        F:Listen("slotDurability", "PLAYER_ENTERING_WORLD", applyDurability)
+        F:Listen("slotDurability", "PLAYER_EQUIPMENT_CHANGED", applyDurability)
+        F:Listen("slotDurability", "UPDATE_INVENTORY_DURABILITY", applyDurability)
+        F:Listen("slotDurability", "PLAYER_REGEN_ENABLED", applyDurability)
+        applyDurability()
+    end,
+    refresh = applyDurability,
+    disable = function()
+        for _, label in pairs(durabilityLabels) do label:Hide() end
+    end,
+})
+
+local bagSpaceLabel
+local function freeBagSlots()
+    if GetNumFreeBagSlots then
+        local free = GetNumFreeBagSlots()
+        if type(free) == "number" then return free end
+    end
+    if C_Container and C_Container.GetContainerNumFreeSlots then
+        local total = 0
+        for bag = 0, NUM_BAG_SLOTS or 4 do
+            local free = C_Container.GetContainerNumFreeSlots(bag)
+            if type(free) == "number" then total = total + free end
+        end
+        return total
+    end
+end
+
+local function applyBagSpace()
+    local button = _G.MainMenuBarBackpackButton
+    if not F:Active("bagSpace") or InCombatLockdown() or not button then
+        if bagSpaceLabel then bagSpaceLabel:Hide() end
+        return
+    end
+    local free = freeBagSlots()
+    if type(free) ~= "number" then
+        if bagSpaceLabel then bagSpaceLabel:Hide() end
+        return
+    end
+    if not bagSpaceLabel then
+        bagSpaceLabel = button:CreateFontString(nil, "OVERLAY")
+        bagSpaceLabel:SetPoint("TOPLEFT", 2, -2)
+        bagSpaceLabel:SetJustifyH("LEFT")
+        bagSpaceLabel:SetTextColor(1, 0.82, 0.22)
+        if STANDARD_TEXT_FONT and bagSpaceLabel.SetFont then
+            bagSpaceLabel:SetFont(STANDARD_TEXT_FONT, 10, "OUTLINE")
+        elseif GameFontNormalSmall then
+            bagSpaceLabel:SetFontObject(GameFontNormalSmall)
+        end
+    end
+    bagSpaceLabel:SetText(tostring(free))
+    bagSpaceLabel:Show()
+end
+
+F:Register("bagSpace", {
+    title = "Free bag slots on the backpack",
+    category = "Inventory",
+    description = "Shows the number of empty bag slots on the backpack button, updated when bags change. It counts carried bags only, not the bank or reagent bank.",
+    disableText = "Hides the number. No item or bag is moved.",
+    conflicts = { "Leatrix_Plus", "Leatrix_Plus_Forever", "EnhanceQoL", "Bagnon", "AdiBags" },
+    available = function()
+        return _G.MainMenuBarBackpackButton ~= nil
+            and (GetNumFreeBagSlots ~= nil or (C_Container and C_Container.GetContainerNumFreeSlots ~= nil))
+    end,
+    enable = function()
+        F:Listen("bagSpace", "PLAYER_ENTERING_WORLD", applyBagSpace)
+        F:Listen("bagSpace", "BAG_UPDATE", applyBagSpace)
+        F:Listen("bagSpace", "BAG_UPDATE_DELAYED", applyBagSpace)
+        F:Listen("bagSpace", "PLAYER_REGEN_ENABLED", applyBagSpace)
+        applyBagSpace()
+    end,
+    refresh = applyBagSpace,
+    disable = function()
+        if bagSpaceLabel then bagSpaceLabel:Hide() end
+    end,
+})

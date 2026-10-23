@@ -328,8 +328,9 @@
     "title": "Drag Blizzard windows",
     "category": "Windows and dialogs",
     "stage": 2,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Shift-drag common client windows to a new place. Sizes, tabs and buttons are unchanged; drag is disabled in combat.",
+    "feature_key": "moveWindows"
   },
   {
     "id": "FS-038",
@@ -344,8 +345,9 @@
     "title": "Remember window positions",
     "category": "Windows and dialogs",
     "stage": 2,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview as an option of FS-037; in-game validation pending",
+    "detail": "Saved per window in ForeverSuiteDB.layouts and restored when the window opens, including after a reload. Configured by the Remember positions option of FS-037.",
+    "feature_key": "moveWindows"
   },
   {
     "id": "FS-040",
@@ -543,8 +545,9 @@
     "title": "Average equipped item level",
     "category": "Inventory and tooltips",
     "stage": 2,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Shows the client average equipped item level on the character panel. An option adds the overall average, which includes carried items.",
+    "feature_key": "averageItemLevel"
   },
   {
     "id": "FS-064",
@@ -591,8 +594,9 @@
     "title": "Durability overlays",
     "category": "Inventory and tooltips",
     "stage": 2,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Shows remaining durability as a colored percentage in each character-panel slot. Items without durability show nothing.",
+    "feature_key": "slotDurability"
   },
   {
     "id": "FS-070",
@@ -707,8 +711,9 @@
     "title": "Guild repair funds policy",
     "category": "Merchant and automation",
     "stage": 3,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview as an option of FS-001; in-game validation pending",
+    "detail": "Repair funding option: personal gold, guild bank only, or personal then guild. Guild funding is used only when the client allows guild repairs; the repair cap still applies.",
+    "feature_key": "repair"
   },
   {
     "id": "FS-084",
@@ -931,8 +936,9 @@
     "title": "Chat font sizes",
     "category": "Chat and social",
     "stage": 3,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Changes chat window font size without changing the font itself. The previous size is restored when the feature is switched off.",
+    "feature_key": "chatFont"
   },
   {
     "id": "FS-112",
@@ -947,8 +953,9 @@
     "title": "Chat button visibility",
     "category": "Chat and social",
     "stage": 3,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Hides the chat menu and scroll buttons. Chat, typing and mouse-wheel scrolling keep working.",
+    "feature_key": "hideChatButtons"
   },
   {
     "id": "FS-114",
@@ -1603,8 +1610,9 @@
     "title": "Boss banner controls",
     "category": "Specialized systems",
     "stage": 4,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Hides the large boss encounter banner. Encounter mechanics and warnings are not changed.",
+    "feature_key": "hideBossBanner"
   },
   {
     "id": "FS-196",
@@ -1877,5 +1885,95 @@
     "stage": 5,
     "status": "planned",
     "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+  },
+  {
+    "id": "FS-230",
+    "title": "Vendor sell price in tooltips",
+    "category": "Inventory and tooltips",
+    "stage": 2,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Shows the price a vendor pays for the hovered item, outside combat.",
+    "feature_key": "sellPrice"
+  },
+  {
+    "id": "FS-231",
+    "title": "Tooltip scale",
+    "category": "Inventory and tooltips",
+    "stage": 2,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Scales game, item, shopping and friend tooltips by a percentage option.",
+    "feature_key": "tooltipScale"
+  },
+  {
+    "id": "FS-232",
+    "title": "Hide action bar gryphons",
+    "category": "Interface",
+    "stage": 2,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Hides the decorative gryphon end caps beside the main action bar.",
+    "feature_key": "hideGryphons"
+  },
+  {
+    "id": "FS-233",
+    "title": "Hide zone name text",
+    "category": "Interface",
+    "stage": 2,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Hides the large zone name shown after loading or crossing a zone boundary.",
+    "feature_key": "hideZoneText"
+  },
+  {
+    "id": "FS-234",
+    "title": "Hide the objective tracker",
+    "category": "Interface",
+    "stage": 2,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Hides the on-screen quest objective list. Quests are still tracked and completed.",
+    "feature_key": "hideObjectiveTracker"
+  },
+  {
+    "id": "FS-235",
+    "title": "Chat timestamps",
+    "category": "Chat and social",
+    "stage": 2,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Adds a local time stamp in front of each chat message.",
+    "feature_key": "chatTimestamps"
+  },
+  {
+    "id": "FS-236",
+    "title": "Rotate the minimap",
+    "category": "Maps and travel",
+    "stage": 2,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Turns the minimap with the character facing direction instead of north up.",
+    "feature_key": "rotateMinimap"
+  },
+  {
+    "id": "FS-237",
+    "title": "Floating combat text toggles",
+    "category": "Interface",
+    "stage": 2,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Hides floating damage and healing numbers independently.",
+    "feature_key": "fctDamage"
+  },
+  {
+    "id": "FS-238",
+    "title": "Maximum camera zoom distance",
+    "category": "Interface",
+    "stage": 2,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Sets the camera distance multiplier between 1 and 4.",
+    "feature_key": "cameraZoom"
+  },
+  {
+    "id": "FS-239",
+    "title": "Free bag slots on the backpack",
+    "category": "Inventory and tooltips",
+    "stage": 2,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Shows the number of empty carried bag slots on the backpack button.",
+    "feature_key": "bagSpace"
   }
 ]

@@ -33,3 +33,8 @@ Licenses above are evidence notes, not a comprehensive legal review. Each future
 - [Lupa 2.8](https://pypi.org/project/lupa/): MIT-style Python/Lua wrapper, Windows CPython 3.12 wheel used only in development; Lua 5.1 test runtime selected explicitly. Not included in the install ZIP.
 
 Online checks found stale indexed versions in some pages. The baseline table prefers the installed TOC when available. Feature inventories inspect addon distribution files only, never account SavedVariables or character data.
+
+
+## Stage 2 additions
+
+The window-movement service (`Modules/Windows.lua`) follows the same behavior class as BlizzMove but is an original implementation: it hooks existing frames, saves positions in ForeverSuite's own schema and refuses drags in combat. No BlizzMove code or assets are used. Tooltip scale, sell price, durability, bag-slot, chat and frame-visibility tweaks are likewise written from the client APIs, with upstream addons used only to identify which capabilities users expect.

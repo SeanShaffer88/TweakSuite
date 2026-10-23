@@ -1,7 +1,7 @@
 -- SPDX-License-Identifier: MIT
 local addonName, F = ...
 F.name = addonName
-F.version = "0.2.0-alpha.1"
+F.version = "0.2.0-alpha.2"
 F.features, F.order, F.listeners, F.errors = {}, {}, {}, {}
 F.frame = CreateFrame("Frame")
 F.paused = false
@@ -184,6 +184,10 @@ function F:ValidateOption(option, value)
         if type(value) ~= "number" or value ~= value or value == math.huge or value == -math.huge then return nil end
         if option.integer and value % 1 ~= 0 then return nil end
         if value < option.min or value > option.max then return nil end
+        if not option.integer then
+            -- Keep fractional options stable when the options panel steps them repeatedly.
+            value = math.floor(value * 1000 + 0.5) / 1000
+        end
         return value
     elseif option.type == "choice" then
         for _, choice in ipairs(option.choices) do

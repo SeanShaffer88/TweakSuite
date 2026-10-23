@@ -1,23 +1,43 @@
 -- SPDX-License-Identifier: MIT
 local _, F = ...
 local common = { "Leatrix_Plus", "Leatrix_Plus_Forever", "EnhanceQoL", "TweaksForever" }
-local function define(id, title, description, event, available, action, conflicts)
+local function define(id, title, description, event, available, action, conflicts, options)
     F:Register(id, { title = title, category = "Automation", description = description,
-        conflicts = conflicts or common, available = available,
+        conflicts = conflicts or common, available = available, options = options or {},
         enable = function() F:Listen(id, event, function(_, ...)
             if F:CanAutomate() then action(...) end
         end) end })
 end
 
+local function repairAction()
+    if not CanMerchantRepair() then return end
+    local cost, needed = GetRepairAllCost()
+    if not (F:Plain(cost) and F:Plain(needed) and needed and type(cost) == "number") then return end
+    if cost <= 0 or cost > F.db.repairCap then return end
+    local funding = F:GetOption("repair", "funding")
+    local guildOK = funding ~= "personal" and CanGuildBankRepair and CanGuildBankRepair()
+    if funding == "guild" then
+        if guildOK then RepairAllItems(true) end
+        return
+    end
+    local money = GetMoney and GetMoney() or 0
+    if cost <= money then
+        RepairAllItems(false)
+    elseif funding == "both" and guildOK then
+        RepairAllItems(true)
+    end
+end
+
 define("repair", "Repair with personal gold",
-    "Repairs at merchants using your gold, up to the cap (default 10g). /fs cap 25 changes it. Hold Shift to skip.",
+    "Repairs at merchants using your gold, guild funds or both, up to the cap (default 10g). /fs cap 25 changes it. Hold Shift to skip.",
     "MERCHANT_SHOW", function() return CanMerchantRepair and GetRepairAllCost and RepairAllItems and GetMoney end,
-    function()
-        if not CanMerchantRepair() then return end
-        local cost, needed = GetRepairAllCost()
-        if F:Plain(cost) and F:Plain(needed) and needed and type(cost) == "number"
-            and cost > 0 and cost <= F.db.repairCap and cost <= GetMoney() then RepairAllItems(false) end
-    end)
+    repairAction, nil, {
+        { key = "funding", type = "choice", title = "Repair funding", default = "personal",
+          choices = { { value = "personal", label = "Personal gold" },
+              { value = "guild", label = "Guild bank only" },
+              { value = "both", label = "Personal, then guild" } },
+          description = "Guild funding is used only when the client says you may withdraw guild repair money. Personal funding still checks that you can pay. The /fs cap limit applies to every choice." },
+    })
 
 define("sellJunk", "Sell junk at merchants",
     "Uses the game's Sell All Junk operation, including items YOU marked as junk. Hold Shift to skip. No custom selling rules yet.",

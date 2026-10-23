@@ -1,7 +1,7 @@
 -- SPDX-License-Identifier: MIT
 -- Original UI. Leatrix Plus's published gallery informs the visual direction only.
 local _, F = ...
-local categories = { "Home", "All tweaks", "Automation", "Dialogs", "Tooltips", "Inventory",
+local categories = { "Home", "All tweaks", "Automation", "Dialogs", "Windows", "Tooltips", "Inventory",
     "Interface", "Nameplates", "Overhead names", "Camera", "Chat" }
 F.categories = categories
 local function label(parent, text, size)
@@ -67,7 +67,16 @@ function F:DetailText(id)
         lines[#lines + 1] = ""; lines[#lines + 1] = "Overlapping addons: " .. conflicts
         lines[#lines + 1] = "A loaded overlap blocks this feature even if its internal option is off. Disable that addon and reload for a controlled test."
     end
-    if feature.cvar then lines[#lines + 1] = "\nClient setting: " .. feature.cvar .. " = " .. feature.value end
+    if feature.cvar then
+        local valueText
+        if type(feature.value) == "function" then
+            local ok, resolved = pcall(feature.value)
+            valueText = ok and tostring(resolved) or "follows the option"
+        else
+            valueText = tostring(feature.value)
+        end
+        lines[#lines + 1] = "\nClient setting: " .. feature.cvar .. " = " .. valueText
+    end
     lines[#lines + 1] = "\nCommand: /fs on " .. id .. "  or  /fs off " .. id
     return table.concat(lines, "\n")
 end
@@ -387,7 +396,7 @@ function F:SetupSettings()
     local intro = label(frame.home, "A growing collection of optional tweaks for WoW Forever.\n\nChoose a category on the left, or search for a setting above.\nEach checkbox controls one feature. Its status tells you whether it is active.\n\nHover over a checkbox or its ? button for a quick explanation.\nClick ? for the full effect, default, restore behavior and conflicts.\nUse Opt to change a feature's key, position or size.", "GameFontHighlight")
     intro:SetPoint("TOPLEFT", 0, -40); intro:SetWidth(590)
     frame.homeStats = label(frame.home, "", "GameFontNormal"); frame.homeStats:SetPoint("TOPLEFT", 0, -218)
-    local preview = label(frame.home, "Development preview - Stage 2 in progress\n\nThe complete addon collection is being consolidated in stages.\nStage 1 added 36 settings; this build adds keyboard dialogs,\nitem-level overlays and more tooltip lines.\n\nKeep your existing addons available while individual replacements are tested.\nAn overlapping loaded addon blocks the matching ForeverSuite feature.\n\nHold Shift to skip automation. Use /fs cap 10 to set the repair limit.", "GameFontHighlightSmall")
+    local preview = label(frame.home, "Development preview - Stage 2 in progress\n\nThe complete addon collection is being consolidated in stages.\nStage 1 added 36 settings; this build adds keyboard dialogs,\nitem-level and durability overlays, movable windows, tooltip\nstyles and more interface and chat tweaks.\n\nKeep your existing addons available while individual replacements are tested.\nAn overlapping loaded addon blocks the matching ForeverSuite feature.\n\nHold Shift to skip automation. Use /fs cap 10 to set the repair limit.", "GameFontHighlightSmall")
     preview:SetPoint("TOPLEFT", 0, -286); preview:SetWidth(590)
     local pause = button(frame, "Pause / resume", 120, function() F.paused = not F.paused; F:Refresh(); F:RefreshSettings() end)
     pause:SetPoint("BOTTOMLEFT", 180, 18)
