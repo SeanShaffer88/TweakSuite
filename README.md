@@ -74,6 +74,7 @@ The dialog features are independently opt-in and stay off in combat and while Sh
 | Command | Purpose |
 |---|---|
 | `/fs` | Searchable shared settings |
+| `/fs help` | Print the command list in chat |
 | `/fs on repair` / `/fs off repair` | Switch a named feature on/off; feature IDs appear in settings |
 | `/fs set dialogAccept key enter` | Change a feature option; accepts choice labels, on/off, or a number |
 | `/fs options dialogAccept` | Print the feature's options, defaults and descriptions in chat |

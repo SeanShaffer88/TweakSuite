@@ -406,11 +406,22 @@ local function optionFromCommand(feature, key, raw)
     return value
 end
 
+local function helpText()
+    F:Print("Commands:")
+    F:Print("  /fs - open settings; /fs on <id> / /fs off <id> switch one feature")
+    F:Print("  /fs set <id> <option> <value>, /fs options <id>, /fs resetoptions")
+    F:Print("  /fs cap <gold>, /fs pause, /fs reset [id], /fs report")
+    F:Print("  /fs windows [list | reset [name]], /fs gold")
+    F:Print("  Feature IDs appear in settings and in /fs report.")
+end
+
 SlashCmdList.FOREVERSUITE = function(message)
     F:Initialize()
     local command, rest = (message or ""):match("^%s*(%S*)%s*(.-)%s*$")
     command = command:lower()
-    if command == "pause" then
+    if command == "help" then
+        helpText()
+    elseif command == "pause" then
         F.paused = not F.paused; F:Refresh()
         F:Print(F.paused and "Paused for this session." or "Resumed.")
     elseif command == "off" or command == "on" then

@@ -306,7 +306,14 @@ function F:RefreshSettings()
     frame.pageTitle:SetText(query ~= "" and "Search results" or selected)
     frame.summary:SetText(active .. " active / " .. #self.order .. " settings"
         .. (self.paused and "  |  Paused" or "") .. (self.pending and "  |  Waiting for combat to end" or ""))
-    frame.homeStats:SetText(#self.order .. " settings available in this preview\n" .. active .. " active; " .. enabled .. " requested\nClient " .. (self.build or "unknown"))
+    local goldLine = ""
+    if self.db and type(self.db.gold) == "table" and next(self.db.gold) ~= nil and self.GoldSummary then
+        local rows, total = self:GoldSummary()
+        if #rows > 0 then
+            goldLine = "\nGold recorded on " .. #rows .. " character(s): " .. self:MoneyText(total)
+        end
+    end
+    frame.homeStats:SetText(#self.order .. " settings available in this preview\n" .. active .. " active; " .. enabled .. " requested\nClient " .. (self.build or "unknown") .. goldLine)
     for category, control in pairs(self.categoryButtons) do
         control.selected:SetShown(selected == category)
     end
@@ -322,6 +329,11 @@ end
 
 function F:SetupSettings()
     if self.window then return end
+    if self.db and type(self.db.lastCategory) == "string" then
+        for _, category in ipairs(categories) do
+            if category == self.db.lastCategory then self.selectedCategory = category end
+        end
+    end
     self.rows, self.categoryButtons, self.groupHeadings = {}, {}, {}
     local frame = window("ForeverSuiteOptions", "ForeverSuite", 850, 610)
     self.window = frame
@@ -357,7 +369,9 @@ function F:SetupSettings()
         control.label = text
         control:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight", "ADD")
         control:SetScript("OnClick", function()
-            F.selectedCategory = category; frame.search:SetText(""); frame.scroll:SetVerticalScroll(0); F:RefreshSettings()
+            F.selectedCategory = category; frame.search:SetText(""); frame.scroll:SetVerticalScroll(0)
+            if F.db then F.db.lastCategory = category end
+            F:RefreshSettings()
         end)
         self.categoryButtons[category] = control
     end

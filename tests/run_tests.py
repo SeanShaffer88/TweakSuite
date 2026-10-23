@@ -1238,5 +1238,21 @@ class SuiteTests(unittest.TestCase):
         self.assertIn("MerchantFrame", self.g.prints[len(self.g.prints)])
 
 
+    def test_help_command_and_last_category_persistence(self):
+        self.runlua('ForeverSuiteDB={schema=1, lastCategory="Tooltips"}')
+        self.start()
+        self.runlua('F:OpenSettings()')
+        self.assertEqual(self.lua.eval('F.selectedCategory'), "Tooltips")
+        self.runlua('F.categoryButtons.Camera:Trigger("OnClick")')
+        self.assertEqual(self.g.ForeverSuiteDB.lastCategory, "Camera")
+        before = len(self.g.prints)
+        self.runlua('SlashCmdList.FOREVERSUITE("help")')
+        self.assertGreater(len(self.g.prints), before)
+        self.assertIn("Commands:", self.g.prints[before + 1])
+        texts = " ".join([self.g.prints[i] for i in range(before + 1, len(self.g.prints) + 1)])
+        self.assertIn("/fs gold", texts)
+        self.assertIn("/fs windows", texts)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

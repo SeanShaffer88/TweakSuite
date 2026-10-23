@@ -700,23 +700,25 @@ function F:GoldSummary()
     return rows, total
 end
 
+function F:MoneyText(copper)
+    if type(copper) ~= "number" then return "0g" end
+    if GetMoneyString then
+        local ok, text = pcall(GetMoneyString, copper)
+        if ok and type(text) == "string" then return text end
+    end
+    return math.floor(copper / 10000) .. "g"
+end
+
 function F:PrintGold()
     local rows, total = self:GoldSummary()
     if #rows == 0 then
         self:Print("No gold recorded yet. The tracker records each character while it is enabled.")
         return
     end
-    local function moneyText(copper)
-        if GetMoneyString then
-            local ok, text = pcall(GetMoneyString, copper)
-            if ok and type(text) == "string" then return text end
-        end
-        return math.floor(copper / 10000) .. "g"
-    end
     for _, row in ipairs(rows) do
-        self:Print(row.key .. ": " .. moneyText(row.value))
+        self:Print(row.key .. ": " .. self:MoneyText(row.value))
     end
-    self:Print("Total across " .. #rows .. " character(s): " .. moneyText(total))
+    self:Print("Total across " .. #rows .. " character(s): " .. self:MoneyText(total))
 end
 
 F:Register("goldTracker", {
