@@ -2,21 +2,17 @@
 
 ![TweakSuite](media/logo.png)
 
-A comprehensive, modular quality-of-life addon for **World of Warcraft: Forever** by **Malikor**. Source: [github.com/SeanShaffer88/TweakSuite](https://github.com/SeanShaffer88/TweakSuite) (formerly `ForeverSuite`; old links redirect). It combines overlapping ideas into one settings surface while keeping distinct useful features, and every feature starts **off**.
+A comprehensive, modular quality-of-life addon for **World of Warcraft: Forever** by **Malikor**. It combines overlapping ideas into one settings surface while keeping distinct useful features, and every feature starts **off**.
 
-**0.3.0-alpha.1** renames the project from ForeverSuite to TweakSuite, relicenses it under the GNU GPL v3 (or later), adds an addon icon and logo, and keeps all 227 opt-in features. The capability backlog has no planned rows left: every row is implemented in preview or scoped out with a written reason. Original code; no other addons or their assets are bundled. Beta and launch client executables were both observed at 1.60.1.70532 on October 22, 2026. **In-game gameplay and visual verification are still pending**, so treat this as a preview and keep the addons you rely on until each replacement is tested.
+## Download
 
-### Upgrading from ForeverSuite
+**[Download TweakSuite 0.3.0-alpha.2 (ZIP)](https://github.com/SeanShaffer88/TweakSuite/releases/download/v0.3.0-alpha.2/TweakSuite-0.3.0-alpha.2.zip)** · [All releases](https://github.com/SeanShaffer88/TweakSuite/releases) · [Source](https://github.com/SeanShaffer88/TweakSuite)
 
-TweakSuite is the same addon under a new name, with a new settings store (`TweakSuiteDB`), so settings start fresh.
+Extract the ZIP into your client's `Interface/AddOns` folder (`_classic_beta_` for the beta, `_forever_` for launch), restart the game, enable **TweakSuite** on the AddOns screen, then click the minimap button or type `/ts`.
 
-1. In game, with ForeverSuite still installed, type `/fs reset` outside combat and log out normally. This restores any client settings ForeverSuite changed.
-2. Delete the `Interface/AddOns/ForeverSuite` folder, then install TweakSuite.
-3. If ForeverSuite is still loaded, TweakSuite blocks every feature and its status reads *conflict: ForeverSuite (previous name of this addon)*, so nothing runs twice.
+**0.3.0-alpha.2** ships 227 opt-in features under the GNU GPL v3 (or later), with an addon icon, a minimap button and a standalone settings window. The capability backlog has no planned rows left: every row is implemented in preview or scoped out with a written reason. Original code; no other addons or their assets are bundled. Beta and launch client executables were both observed at 1.60.1.70532 on October 22, 2026. **In-game gameplay and visual verification are still pending**, so treat this as a preview and keep the addons you rely on until each replacement is tested.
 
-The chat command is now `/ts` (or `/tweaksuite`).
-
-### Opening TweakSuite
+## Opening TweakSuite
 
 - Click the **minimap button** (left-click opens or closes the window, right-click opens Options > AddOns > TweakSuite, drag to move it). Hide it with **Show minimap button** on that Options page or `/ts button`.
 - Type `/ts`, or use **Open TweakSuite** in Options > AddOns > TweakSuite.
