@@ -133,6 +133,8 @@ for _, name in ipairs({ "MerchantFrame", "QuestFrame", "GossipFrame", "MailFrame
  local frame = CreateFrame("Frame", name); frame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
 end
 ObjectiveTrackerFrame = CreateFrame("Frame", "ObjectiveTrackerFrame"); ObjectiveTrackerFrame.shown = true
+TimeManagerClockButton = CreateFrame("Button", "TimeManagerClockButton"); TimeManagerClockButton.shown = true
+MinimapZoneText = CreateFrame("FontString", "MinimapZoneText"); MinimapZoneText.shown = true
 MainMenuBarBackpackButton = CreateFrame("Button", "MainMenuBarBackpackButton"); MainMenuBarBackpackButton.shown = true
 LootFrame = CreateFrame("Frame", "LootFrame")
 for index = 1, 4 do CreateFrame("Button", "LootButton" .. index) end
@@ -251,7 +253,7 @@ class SuiteTests(unittest.TestCase):
     def test_default_is_inert_and_ui_loads(self):
         self.start()
         self.runlua('fire("MERCHANT_SHOW"); fire("QUEST_DETAIL"); F:OpenSettings()')
-        self.assertEqual(len(self.g.F.order), 85)
+        self.assertEqual(len(self.g.F.order), 87)
         self.assertEqual(self.g.calls.repair, 0)
         self.assertEqual(self.g.calls.sell, 0)
         self.assertEqual(self.g.calls.accept, 0)
@@ -910,6 +912,12 @@ class SuiteTests(unittest.TestCase):
         self.runlua('F:SetEnabled("hideChatButtons", false)')
         self.assertTrue(self.g.ChatFrameMenuButton.shown)
         self.assertTrue(self.g.ChatFrame1UpButton.shown)
+        self.runlua('F:SetEnabled("hideMinimapClock", true); F:SetEnabled("hideMinimapZone", true)')
+        self.assertFalse(self.g.TimeManagerClockButton.shown)
+        self.assertFalse(self.g.MinimapZoneText.shown)
+        self.runlua('F:SetEnabled("hideMinimapClock", false); F:SetEnabled("hideMinimapZone", false)')
+        self.assertTrue(self.g.TimeManagerClockButton.shown)
+        self.assertTrue(self.g.MinimapZoneText.shown)
         self.runlua('F:SetEnabled("hideGryphons", false)')
         self.assertTrue(self.g.MainMenuBarLeftEndCap.shown)
         self.assertTrue(self.g.MainMenuBarRightEndCap.shown)
@@ -1031,7 +1039,7 @@ class SuiteTests(unittest.TestCase):
 
     def test_category_counts_and_layout_sanitation(self):
         self.start()
-        self.assertEqual(self.g.F.categoryButtons.Interface.label.text, "Interface (31)")
+        self.assertEqual(self.g.F.categoryButtons.Interface.label.text, "Interface (33)")
         self.assertEqual(self.g.F.categoryButtons.Home.label.text, "Home")
         self.runlua('F:SetEnabled("moveWindows", true); shift=true;'
                     'MerchantFrame:Trigger("OnDragStart");'

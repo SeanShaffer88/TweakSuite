@@ -2,7 +2,7 @@
 
 This is the initial capability backlog, not a complete parity claim. Distinct behaviors remain in scope; an implemented preview still requires in-game acceptance. Source options are separately indexed to catch omitted parameters and smaller features.
 
-243 tracked capabilities: 72 implemented and 171 planned. The shipped preview has 85 independently configurable features; several features and feature options share one capability row, and features added ahead of the index were recorded as FS-230 to FS-243. IDs remain stable as work continues.
+245 tracked capabilities: 74 implemented and 171 planned. The shipped preview has 87 independently configurable features; several features and feature options share one capability row, and features added ahead of the index were recorded as FS-230 to FS-245. IDs remain stable as work continues.
 
 | ID | Capability | Stage | Status |
 |---|---|---|---|
@@ -102,6 +102,8 @@ This is the initial capability backlog, not a complete parity claim. Distinct be
 | FS-241 | Automatic reputation tracking | 2 | Preview; game test pending |
 | FS-242 | Death screen effect toggle | 2 | Preview; game test pending |
 | FS-243 | Nameplate scale | 2 | Preview; game test pending |
+| FS-244 | Hide the minimap clock | 2 | Preview; game test pending |
+| FS-245 | Hide the minimap zone label | 2 | Preview; game test pending |
 | FS-083 | Guild repair funds policy | 3 | Preview (option of FS-001) |
 | FS-084 | Repair feedback and totals | 3 | Planned |
 | FS-085 | Never-sell item list | 3 | Planned |

@@ -2014,5 +2014,23 @@
     "status": "implemented-preview; in-game validation pending",
     "detail": "Scales nameplates by a percentage option from 50 to 200 percent. The client may clamp extreme values.",
     "feature_key": "nameplateScale"
+  },
+  {
+    "id": "FS-244",
+    "title": "Hide the minimap clock",
+    "category": "Interface",
+    "stage": 2,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Hides the clock button beside the minimap without changing game time or chat timestamps.",
+    "feature_key": "hideMinimapClock"
+  },
+  {
+    "id": "FS-245",
+    "title": "Hide the minimap zone label",
+    "category": "Interface",
+    "stage": 2,
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Hides the zone name text on the minimap; zone-change text and minimap tracking are unchanged.",
+    "feature_key": "hideMinimapZone"
   }
 ]

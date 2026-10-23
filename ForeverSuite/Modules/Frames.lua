@@ -82,3 +82,15 @@ simpleHide("hideChatButtons", "Hide chat window buttons",
     { "ChatFrame1ButtonFrame", "ChatFrameMenuButton", "ChatFrame1UpButton", "ChatFrame1DownButton", "ChatFrame1BottomButton" },
     { "Leatrix_Plus", "Leatrix_Plus_Forever", "EnhanceQoL", "Prat-3.0", "Chatter" },
     "Chat")
+
+simpleHide("hideMinimapClock", "Hide the minimap clock",
+    "Hides the clock button beside the minimap. The in-game time itself and chat timestamps are unchanged.",
+    "Shows the client's clock button again.",
+    { "TimeManagerClockButton", "GameTimeFrame" },
+    { "Leatrix_Plus", "Leatrix_Plus_Forever", "EnhanceQoL" })
+
+simpleHide("hideMinimapZone", "Hide the minimap zone label",
+    "Hides the zone name text on the minimap while keeping the minimap, tracking dots and the zone text shown at zone changes untouched.",
+    "Shows the minimap zone label again.",
+    { "MinimapZoneText", "MinimapZoneTextButton" },
+    { "Leatrix_Plus", "Leatrix_Plus_Forever", "EnhanceQoL", "SexyMap" })
