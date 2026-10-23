@@ -1,7 +1,7 @@
 -- SPDX-License-Identifier: MIT
 local addonName, F = ...
 F.name = addonName
-F.version = "0.2.0-alpha.5"
+F.version = "0.2.0-alpha.6"
 F.features, F.order, F.listeners, F.errors = {}, {}, {}, {}
 F.frame = CreateFrame("Frame")
 F.paused = false
@@ -302,6 +302,31 @@ function F:Initialize()
         for key, value in pairs(db.enabled) do
             if not self.features[key] or type(value) ~= "boolean" then db.enabled[key] = nil end
         end
+        if type(db.neverSell) ~= "table" then db.neverSell = nil else
+            local kept = {}
+            for _, value in ipairs(db.neverSell) do
+                if type(value) == "number" and value > 0 then kept[#kept + 1] = value end
+            end
+            if #kept > 0 then db.neverSell = kept else db.neverSell = nil end
+        end
+        if type(db.junk) ~= "table" then db.junk = nil else
+            for key, value in pairs(db.junk) do
+                if type(key) ~= "number" or key <= 0 or value ~= true then db.junk[key] = nil end
+            end
+            if next(db.junk) == nil then db.junk = nil end
+        end
+        if type(db.except) ~= "table" then db.except = nil else
+            for key, list in pairs(db.except) do
+                if type(key) ~= "string" or type(list) ~= "table" then db.except[key] = nil else
+                    local kept = {}
+                    for _, value in ipairs(list) do
+                        if type(value) == "string" and value ~= "" and #value <= 120 then kept[#kept + 1] = value end
+                    end
+                    if #kept > 0 then db.except[key] = kept else db.except[key] = nil end
+                end
+            end
+            if next(db.except) == nil then db.except = nil end
+        end
         if type(db.gold) == "table" then
             for key, value in pairs(db.gold) do
                 if type(key) ~= "string" or type(value) ~= "number" or value ~= value
@@ -412,6 +437,8 @@ local function helpText()
     F:Print("  /fs set <id> <option> <value>, /fs options <id>, /fs resetoptions")
     F:Print("  /fs cap <gold>, /fs pause, /fs reset [id], /fs report")
     F:Print("  /fs windows [list | reset [name]], /fs gold")
+    F:Print("  /fs junk <item> / /fs unjunk <item>, /fs neversell [add|remove|clear] <item>, /fs except [accept|turnin] <text>")
+    F:Print("  /fs copy [lines], /fs xp, /fs bag <text>, /fs watch <button> | clear")
     F:Print("  Feature IDs appear in settings and in /fs report.")
 end
 
@@ -487,6 +514,132 @@ SlashCmdList.FOREVERSUITE = function(message)
         end
     elseif command == "gold" then
         if F.PrintGold then F:PrintGold() else F:Print("Gold tracking is unavailable.") end
+    elseif command == "junk" or command == "unjunk" then
+        if F.readOnly then F:Print("Settings are read only."); return end
+        local id = tonumber(tostring(rest):match("item:(%d+)") or rest)
+        if not id or id <= 0 then F:Print("Use /fs " .. command .. " <itemID or shift-clicked link>."); return end
+        if type(F.db.junk) ~= "table" then F.db.junk = {} end
+        F.db.junk[id] = command == "junk" and true or nil
+        if next(F.db.junk) == nil then F.db.junk = nil end
+        F:Print((command == "junk" and "Marked as junk: " or "Removed junk mark: ") .. id)
+    elseif command == "neversell" then
+        if F.readOnly then F:Print("Settings are read only."); return end
+        local action, value = rest:match("^(%S*)%s*(.-)$")
+        action = action:lower()
+        if action == "clear" then
+            F.db.neverSell = nil
+            F:Print("Never-sell list cleared.")
+        elseif action == "remove" then
+            if F.RemoveNeverSell and F:RemoveNeverSell(tonumber(value)) then
+                F:Print("Removed " .. value .. " from the never-sell list.")
+            else
+                F:Print("That item ID is not on the never-sell list.")
+            end
+        elseif action == "add" or action == "" then
+            local target = action == "add" and value or rest
+            local ok, id
+            if F.AddNeverSell then ok, id = F:AddNeverSell(target) end
+            if ok then F:Print("Added " .. tostring(id) .. " to the never-sell list.")
+            else F:Print("Use /fs neversell add <itemID or link>, or /fs neversell to list.") end
+        else
+            local list = (F.db and F.db.neverSell) or {}
+            if #list == 0 then F:Print("The never-sell list is empty.")
+            else F:Print("Never sell: " .. table.concat(list, ", ")) end
+        end
+    elseif command == "except" then
+        if F.readOnly then F:Print("Settings are read only."); return end
+        local kind, text = rest:match("^(%S*)%s*(.-)%s*$")
+        kind = kind:lower()
+        if kind ~= "accept" and kind ~= "turnin" then
+            local accept = (F.db.except or {}).accept or {}
+            local turnin = (F.db.except or {}).turnin or {}
+            F:Print("Never accept (" .. #accept .. "): "
+                .. (#accept > 0 and table.concat(accept, "; ") or "none"))
+            F:Print("Never turn in (" .. #turnin .. "): "
+                .. (#turnin > 0 and table.concat(turnin, "; ") or "none"))
+            return
+        end
+        if type(F.db.except) ~= "table" then F.db.except = {} end
+        local list = F.db.except[kind] or {}
+        if text == "" then
+            F:Print(table.concat(list, "; "))
+            return
+        end
+        for index = #list, 1, -1 do
+            if list[index] == text then table.remove(list, index) end
+        end
+        list[#list + 1] = text
+        F.db.except[kind] = list
+        F:Print("Added to the " .. kind .. " exception list: " .. text)
+    elseif command == "copy" then
+        if F.CopyChat then
+            local lines = F:CopyChat(rest)
+            if lines == 0 then F:Print("Nothing to copy.") else F:Print("Copied " .. lines .. " chat line(s) to the copy box.") end
+        else F:Print("Chat copying is unavailable.") end
+    elseif command == "xp" then
+        if not F.features.xpTracker or not F:Active("xpTracker") then
+            F:Print("Enable Experience per hour first.")
+        elseif F.XPRate then
+            local gained, elapsed, perHour = F:XPRate()
+            if not gained then F:Print("Tracking starts when experience is next gained.")
+            else F:Print(string.format("%d XP in %d seconds, about %d XP per hour.", gained, math.floor(elapsed), perHour)) end
+        end
+    elseif command == "bag" then
+        if not F.features.bagSearch or not F:Active("bagSearch") then
+            F:Print("Enable Bag item search first."); return
+        end
+        if rest == "" then F:Print("Use /fs bag <text> to search your bags."); return end
+        local needle = rest:lower()
+        local found = {}
+        local function scan(bag)
+            local slots = 0
+            if C_Container and C_Container.GetContainerNumSlots then slots = C_Container.GetContainerNumSlots(bag) or 0
+            elseif GetContainerNumSlots then slots = GetContainerNumSlots(bag) or 0 end
+            for slot = 1, slots do
+                local link
+                if C_Container and C_Container.GetContainerItemLink then link = C_Container.GetContainerItemLink(bag, slot)
+                elseif GetContainerItemLink then link = GetContainerItemLink(bag, slot) end
+                if type(link) == "string" then
+                    local name = C_Item and C_Item.GetItemInfo and C_Item.GetItemInfo(link)
+                    if type(name) == "string" and name:lower():find(needle, 1, true) then
+                        found[#found + 1] = name .. " (bag " .. bag .. ", slot " .. slot .. ")"
+                    end
+                end
+            end
+        end
+        for bag = 0, (NUM_BAG_SLOTS or 4) do scan(bag) end
+        if #found == 0 then F:Print("No bag item matches \"" .. rest .. "\".")
+        else
+            F:Print(#found .. " matching item(s):")
+            for index = 1, math.min(#found, 20) do F:Print("  " .. found[index]) end
+        end
+    elseif command == "watch" then
+        if F.readOnly then F:Print("Settings are read only."); return end
+        if rest == "" then
+            local list = (F.db and F.db.watch) or {}
+            F:Print(#list .. " watched button(s): " .. (#list > 0 and table.concat(list, ", ") or "none"))
+            return
+        end
+        if rest:lower() == "clear" then
+            F.db.watch = nil; F:Print("Watched button list cleared."); return
+        end
+        if not F.db.watch then F.db.watch = {} end
+        for index = #F.db.watch, 1, -1 do
+            if F.db.watch[index] == rest then table.remove(F.db.watch, index) end
+        end
+        F.db.watch[#F.db.watch + 1] = rest
+        F:Print("Also watching button " .. rest .. " for the dialog key.")
+    elseif command == "sell" then
+        if F.readOnly then F:Print("Settings are read only."); return end
+        local rows = F.SaleCandidates and F:SaleCandidates() or {}
+        if #rows == 0 then F:Print("No bag item matches the current merchant rules.")
+        else
+            F:Print(#rows .. " item(s) match: " .. table.concat((function()
+                local names = {}
+                for _, row in ipairs(rows) do names[#names + 1] = row.name or row.link end
+                return names
+            end)(), ", "))
+        end
     elseif command == "reset" then
         if F.readOnly then return end
         if rest ~= "" then

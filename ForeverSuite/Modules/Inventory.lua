@@ -736,3 +736,17 @@ F:Register("goldTracker", {
     refresh = recordGold,
     disable = function() end,
 })
+
+F:Register("bagSearch", {
+    title = "Bag item search",
+    category = "Inventory",
+    description = "Adds /fs bag <text> to list every carried item whose name contains the text, with its bag and slot number. It only reads containers and never moves, sells or uses an item.",
+    disableText = "Stops the search command. No item or bag setting changes.",
+    conflicts = { "Bagnon", "AdiBags", "Leatrix_Plus", "Leatrix_Plus_Forever", "EnhanceQoL" },
+    available = function()
+        return ((C_Container and C_Container.GetContainerItemLink) or GetContainerItemLink) ~= nil
+            and C_Item ~= nil and C_Item.GetItemInfo ~= nil
+    end,
+    enable = function() end,
+    disable = function() end,
+})

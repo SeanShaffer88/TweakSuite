@@ -80,6 +80,28 @@ define("fastLoot", "Faster automatic looting",
         for slot = count, 1, -1 do LootSlot(slot) end
     end, { "Leatrix_Plus", "Leatrix_Plus_Forever", "EnhanceQoL", "TweaksForever", "Plumber", "Leatrix_Faster_Loot" })
 
+local function excepted(kind)
+    local list = (F.db and F.db.except and F.db.except[kind]) or {}
+    if #list == 0 or type(GetTitleText) ~= "function" then return false end
+    local ok, title = pcall(GetTitleText)
+    if not ok or type(title) ~= "string" then return false end
+    for _, entry in ipairs(list) do
+        if entry == title then return true end
+    end
+    return false
+end
+
+local function alreadyCompleted()
+    if F:GetOption("acceptQuests", "skipCompleted") ~= true then return false end
+    if type(GetQuestID) ~= "function" or not C_QuestLog or not C_QuestLog.IsQuestFlaggedCompleted then
+        return false
+    end
+    local ok, questID = pcall(GetQuestID)
+    if not ok or type(questID) ~= "number" or questID <= 0 then return false end
+    local done, completed = pcall(C_QuestLog.IsQuestFlaggedCompleted, questID)
+    return done and completed == true
+end
+
 local function skipBecauseDaily()
     if F:GetOption("acceptQuests", "skipDailies") ~= true then return false end
     if type(IsDailyQuest) ~= "function" then return false end
@@ -98,10 +120,17 @@ define("acceptQuests", "Accept offered quests",
     "Accepts a quest when its details open. Hold Shift to read normally. Optional filters skip daily and repeatable quests. Named quest exceptions are still planned.",
     "QUEST_DETAIL", function() return AcceptQuest end,
     function()
+        if excepted("accept") then return end
+        if alreadyCompleted() then return end
+        if excepted("accept") then return end
+        if alreadyCompleted() then return end
         if skipBecauseDaily() then return end
         if skipBecauseRepeatable() then return end
         AcceptQuest()
     end, nil, {
+        { key = "skipCompleted", type = "boolean", title = "Skip quests already completed", default = false,
+          description = "Leaves a quest open when the client reports you have finished it before. "
+              .. "Requires the client's quest-history API; without it every quest is accepted as normal." },
         { key = "skipDailies", type = "boolean", title = "Skip daily quests", default = false,
           description = "Leaves daily quests open for you to read and accept yourself. Requires the client's daily-quest API; if it is missing, the quest is accepted as normal." },
         { key = "skipRepeatable", type = "boolean", title = "Skip repeatable quests", default = false,
@@ -109,9 +138,11 @@ define("acceptQuests", "Accept offered quests",
     })
 
 define("turnInQuests", "Turn in quests without reward choices",
-    "Completes quests with zero reward choices and no money requirement. Multiple or single choice rewards remain manual. Hold Shift to skip.",
+    "Completes quests with zero reward choices and no money requirement. Multiple or single choice rewards remain manual. "
+        .. "Quests named on the never-turn-in list are always left open. Hold Shift to skip.",
     "QUEST_COMPLETE", function() return GetNumQuestChoices and GetQuestReward and GetQuestRequiredMoney end,
     function()
+        if excepted("turnin") then return end
         local choices, cost = GetNumQuestChoices(), GetQuestRequiredMoney()
         if F:Plain(choices) and F:Plain(cost) and choices == 0 and cost == 0 then GetQuestReward(0) end
     end)

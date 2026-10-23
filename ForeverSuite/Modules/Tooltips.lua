@@ -33,7 +33,7 @@ local function add(tooltip, record, key, text)
     record[key] = true
 end
 
-local ITEM_TOOLTIP_FEATURES = { "maxStack", "itemLevel", "itemID", "itemCount", "sellPrice", "upgradeHint" }
+local ITEM_TOOLTIP_FEATURES = { "maxStack", "itemLevel", "itemID", "itemCount", "sellPrice", "upgradeHint", "bindType" }
 
 local SLOT_FOR_EQUIP = {
     INVTYPE_HEAD = { 1 }, INVTYPE_NECK = { 2 }, INVTYPE_SHOULDER = { 3 }, INVTYPE_SHIRT = { 4 },
@@ -109,6 +109,14 @@ local function itemTooltip(tooltip, data)
             end
             local money = GetMoneyString and GetMoneyString(price) or (price .. " copper")
             add(tooltip, record, "sellPrice", label .. money)
+        end
+    end
+    if F:Active("bindType") then
+        local BIND = { [1] = "Binds when picked up", [2] = "Binds when equipped",
+            [3] = "Binds when used", [4] = "Quest item", [5] = "Binds to account" }
+        local bind = info[14]
+        if F:Plain(bind) and type(bind) == "number" and BIND[bind] then
+            add(tooltip, record, "bindType", "Binding: " .. BIND[bind])
         end
     end
     if F:Active("upgradeHint") and type(equip) == "string" then
@@ -379,5 +387,87 @@ F:Register("upgradeHint", {
     available = function()
         return tooltipAvailable() and Enum.TooltipDataType.Item and C_Item
             and C_Item.GetItemInfo and C_Item.GetDetailedItemLevelInfo and GetInventoryItemLink ~= nil
+    end,
+})
+
+F:Register("bindType", {
+    title = "Binding type in tooltips",
+    category = "Tooltips",
+    description = "Adds how an item binds, such as binds when equipped or binds when picked up, outside combat. It reads the client's item data and never changes the item.",
+    conflicts = common,
+    disableText = "Stops adding the binding line to new tooltips. Re-hover to rebuild the current tooltip.",
+    enable = itemEnable,
+    available = itemAvailable,
+})
+
+local BORDER_COLORS = {
+    gold = { 1, 0.82, 0.22 }, blue = { 0.3, 0.6, 1 }, green = { 0.35, 0.85, 0.4 }, red = { 0.9, 0.3, 0.25 },
+}
+local borderSaved, borderHooked = {}, {}
+local function applyTooltipBorderOn(tooltip)
+    if not F:Active("tooltipBorder") or InCombatLockdown() then return end
+    if not tooltip or not tooltip.SetBackdropBorderColor then return end
+    local choice = F:GetOption("tooltipBorder", "color") or "gold"
+    local color = BORDER_COLORS[choice] or BORDER_COLORS.gold
+    if type(borderSaved[tooltip]) ~= "table" then
+        borderSaved[tooltip] = {
+            r = tooltip.GetBackdropBorderColor and select(1, tooltip:GetBackdropBorderColor()) or nil,
+        }
+    end
+    tooltip:SetBackdropBorderColor(color[1], color[2], color[3], 1)
+end
+local function applyTooltipBorder()
+    for _, name in ipairs({ "GameTooltip", "ItemRefTooltip", "ShoppingTooltip1", "ShoppingTooltip2" }) do
+        local frame = _G[name]
+        if frame then
+            if not borderHooked[frame] and frame.HookScript then
+                frame:HookScript("OnShow", applyTooltipBorderOn)
+                borderHooked[frame] = true
+            end
+            applyTooltipBorderOn(frame)
+        end
+    end
+end
+F:Register("tooltipBorder", {
+    title = "Tooltip border colour",
+    category = "Tooltips",
+    description = "Colours the border of the game, item and shopping tooltips so they stand out against the background. It does not change tooltip text, content or size.",
+    disableText = "Restores the border colour each tooltip had before ForeverSuite changed it.",
+    conflicts = { "Leatrix_Plus", "Leatrix_Plus_Forever", "TinyTooltip", "TipTac", "EnhanceQoL" },
+    options = {
+        { key = "color", type = "choice", title = "Border colour", default = "gold",
+          choices = { { value = "gold", label = "Gold" }, { value = "blue", label = "Blue" },
+              { value = "green", label = "Green" }, { value = "red", label = "Red" } },
+          description = "Border colour used while the feature is on. Gold matches the ForeverSuite palette." },
+    },
+    available = function() return GameTooltip ~= nil and GameTooltip.SetBackdropBorderColor ~= nil end,
+    enable = applyTooltipBorder,
+    refresh = applyTooltipBorder,
+    disable = function()
+        for frame, saved in pairs(borderSaved) do
+            if frame.SetBackdropBorderColor and type(saved.r) == "number" then
+                frame:SetBackdropBorderColor(saved.r, saved.g or 0, saved.b or 0, 1)
+            end
+            borderSaved[frame] = nil
+        end
+    end,
+})
+
+local function hideCombatTooltips()
+    if not F:Active("tooltipHideCombat") then return end
+    if not InCombatLockdown() then return end
+    for _, frame in ipairs(_G.GameTooltip and { GameTooltip, ItemRefTooltip, ShoppingTooltip1, ShoppingTooltip2 } or {}) do
+        if frame and frame.Hide then frame:Hide() end
+    end
+end
+F:Register("tooltipHideCombat", {
+    title = "Hide tooltips in combat",
+    category = "Tooltips",
+    description = "Hides any open game tooltip when combat starts and keeps tooltips from staying on screen during a fight. It does not block your own hover after combat ends.",
+    disableText = "Stops hiding tooltips. Nothing else is restored because no tooltip setting is changed.",
+    conflicts = common,
+    available = function() return GameTooltip ~= nil and GameTooltip.Hide ~= nil end,
+    enable = function()
+        F:Listen("tooltipHideCombat", "PLAYER_REGEN_DISABLED", hideCombatTooltips)
     end,
 })

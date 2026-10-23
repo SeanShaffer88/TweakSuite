@@ -438,24 +438,27 @@
     "title": "Dialog click priority",
     "category": "Windows and dialogs",
     "stage": 2,
-    "status": "planned",
-    "detail": "Current priority is Accept first, then Continue/Complete only when the client reports no reward choices. Configurable click priority is still planned."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Buttons named with /fs watch are tried before the standard quest buttons, so a server-specific frame can take priority.",
+    "feature_key": "dialogAccept"
   },
   {
     "id": "FS-051",
     "title": "Dialog popup exclusions",
     "category": "Windows and dialogs",
     "stage": 2,
-    "status": "planned",
-    "detail": "Static popup confirmations are never clicked by the dialog features. Configurable popup allow/exclude lists are still planned."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Static popups, gossip, trainer and bonus-roll frames are never clicked. Only the visible accept/continue buttons and explicitly watched buttons are used.",
+    "feature_key": "dialogAccept"
   },
   {
     "id": "FS-052",
     "title": "Custom watched buttons",
     "category": "Windows and dialogs",
     "stage": 2,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Extra buttons can be watched with /fs watch <ButtonName>; the dialog key presses the first visible and enabled one, and /fs watch clear removes them.",
+    "feature_key": "dialogAccept"
   },
   {
     "id": "FS-053",
@@ -590,8 +593,9 @@
     "title": "Bind-type labels",
     "category": "Inventory and tooltips",
     "stage": 2,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "States how the item binds, from the client bind type value.",
+    "feature_key": "bindType"
   },
   {
     "id": "FS-069",
@@ -607,8 +611,9 @@
     "title": "Equipment label positioning",
     "category": "Inventory and tooltips",
     "stage": 2,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Text position and size are options on every item-level overlay feature, including bag and bank slots.",
+    "feature_key": "charItemLevel"
   },
   {
     "id": "FS-071",
@@ -631,8 +636,9 @@
     "title": "Tooltip borders and colors",
     "category": "Inventory and tooltips",
     "stage": 2,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Border colour choice (gold, blue, green or red) for the game, item and shopping tooltips, restored on disable.",
+    "feature_key": "tooltipBorder"
   },
   {
     "id": "FS-074",
@@ -647,8 +653,9 @@
     "title": "Tooltip combat visibility rules",
     "category": "Inventory and tooltips",
     "stage": 2,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Hides open tooltips when combat starts so they cannot cover the fight.",
+    "feature_key": "tooltipHideCombat"
   },
   {
     "id": "FS-076",
@@ -734,8 +741,9 @@
     "title": "Never-sell item list",
     "category": "Merchant and automation",
     "stage": 3,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Items on the never-sell list are always kept, by item ID. Manage it with /fs neversell add|remove|clear.",
+    "feature_key": "merchantRules"
   },
   {
     "id": "FS-086",
@@ -743,47 +751,52 @@
     "category": "Merchant and automation",
     "stage": 3,
     "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "detail": "Quality, item level and bind thresholds act as the sell rules; a per-item allow list is not needed because every sale above the thresholds is blocked. Named exceptions are tracked separately."
   },
   {
     "id": "FS-087",
     "title": "Sell by quality and item level",
     "category": "Merchant and automation",
     "stage": 3,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Sell at or below a chosen quality and optionally below a maximum item level.",
+    "feature_key": "merchantRules"
   },
   {
     "id": "FS-088",
     "title": "Sell by binding and expansion",
     "category": "Merchant and automation",
     "stage": 3,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Optional bind filter that limits sales to bind-on-equip items.",
+    "feature_key": "merchantRules"
   },
   {
     "id": "FS-089",
     "title": "Custom junk marking",
     "category": "Merchant and automation",
     "stage": 3,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Mark and unmark bag items as junk with /fs junk and /fs unjunk. The client bulk sale then includes them.",
+    "feature_key": "junkMarking"
   },
   {
     "id": "FS-090",
     "title": "Buyback-aware sale batches",
     "category": "Merchant and automation",
     "stage": 3,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Items per merchant visit are capped at 12, the client buyback slot count, so a mistake is always reversible.",
+    "feature_key": "merchantRules"
   },
   {
     "id": "FS-091",
     "title": "Sale preview and cancellation",
     "category": "Merchant and automation",
     "stage": 3,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "A preview window lists every candidate and waits for confirmation before anything is sold.",
+    "feature_key": "merchantRules"
   },
   {
     "id": "FS-092",
@@ -791,15 +804,16 @@
     "category": "Merchant and automation",
     "stage": 3,
     "status": "planned",
-    "detail": "Daily and repeatable quest filters are implemented as options of FS-004. A named never-accept list is still planned."
+    "detail": "Never-accept titles are managed with /fs except accept and compared with the client title text. Daily, repeatable and already-completed filters are options of the same feature."
   },
   {
     "id": "FS-093",
     "title": "Quest completion exceptions",
     "category": "Merchant and automation",
     "stage": 3,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Quests named on the never-turn-in list stay open. Manage it with /fs except turnin.",
+    "feature_key": "turnInQuests"
   },
   {
     "id": "FS-094",
@@ -823,16 +837,18 @@
     "title": "Already-completed quest filters",
     "category": "Merchant and automation",
     "stage": 3,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Optional skip for quests the client already reports as completed.",
+    "feature_key": "acceptQuests"
   },
   {
     "id": "FS-097",
     "title": "Single-option gossip rules",
     "category": "Merchant and automation",
     "stage": 3,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Option to choose a lone gossip option automatically, never when it costs money.",
+    "feature_key": "gossipKeys"
   },
   {
     "id": "FS-098",
@@ -847,8 +863,9 @@
     "title": "Paid gossip exclusions",
     "category": "Merchant and automation",
     "stage": 3,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Money gossip options are never selected by key or by the lone-option rule.",
+    "feature_key": "gossipKeys"
   },
   {
     "id": "FS-100",
@@ -953,8 +970,9 @@
     "title": "Chat edit box placement",
     "category": "Chat and social",
     "stage": 3,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Places the chat input line above the chat frame as an option.",
+    "feature_key": "chatEditPosition"
   },
   {
     "id": "FS-113",
@@ -970,8 +988,9 @@
     "title": "Sticky chat controls",
     "category": "Chat and social",
     "stage": 3,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Keeps the chat menu and scroll buttons at full opacity instead of letting them fade.",
+    "feature_key": "stickyChatButtons"
   },
   {
     "id": "FS-115",
@@ -987,8 +1006,9 @@
     "title": "Copy chat text",
     "category": "Chat and social",
     "stage": 3,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Keeps the last 200 chat lines in memory and opens them in the selectable copy box with /fs copy [lines].",
+    "feature_key": "copyChat"
   },
   {
     "id": "FS-117",
@@ -1220,8 +1240,9 @@
     "title": "XP-per-hour and level estimates",
     "category": "Maps and travel",
     "stage": 3,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Records experience gained and reports the hourly rate with /fs xp.",
+    "feature_key": "xpTracker"
   },
   {
     "id": "FS-146",
@@ -1340,8 +1361,9 @@
     "title": "Search by item properties",
     "category": "Character and activities",
     "stage": 3,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Searches bag item names with /fs bag <text> and reports bag and slot for each match.",
+    "feature_key": "bagSearch"
   },
   {
     "id": "FS-161",
@@ -1365,24 +1387,27 @@
     "title": "Minimap shape and sizing",
     "category": "Character and activities",
     "stage": 3,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview for size; shape planned; in-game validation pending",
+    "detail": "Minimap size as a percentage. Shape masks remain planned.",
+    "feature_key": "minimapScale"
   },
   {
     "id": "FS-164",
     "title": "Micro menu visibility",
     "category": "Character and activities",
     "stage": 3,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Hides the micro menu while shortcuts and slash commands keep working.",
+    "feature_key": "hideMicroMenu"
   },
   {
     "id": "FS-165",
     "title": "Action bar mouseover visibility",
     "category": "Character and activities",
     "stage": 3,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Dims the main action bar until it is hovered, with an adjustable idle opacity.",
+    "feature_key": "actionBarFade"
   },
   {
     "id": "FS-166",

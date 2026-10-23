@@ -353,3 +353,144 @@ F:Register("chatHistory", { title = "Chat history length", category = "Chat",
             maxLinesSaved[frame] = nil
         end
     end })
+
+-- Recent chat lines, kept for /fs copy. Nothing is written to disk.
+local chatLog, CHAT_LOG_MAX = {}, 200
+local CHAT_EVENTS = { "CHAT_MSG_SAY", "CHAT_MSG_YELL", "CHAT_MSG_WHISPER", "CHAT_MSG_WHISPER_INFORM",
+    "CHAT_MSG_PARTY", "CHAT_MSG_PARTY_LEADER", "CHAT_MSG_RAID", "CHAT_MSG_RAID_LEADER",
+    "CHAT_MSG_GUILD", "CHAT_MSG_OFFICER", "CHAT_MSG_CHANNEL", "CHAT_MSG_SYSTEM", "CHAT_MSG_LOOT" }
+local chatHooked = false
+local function recordChat(_, message, author)
+    if type(message) ~= "string" then return end
+    chatLog[#chatLog + 1] = (type(author) == "string" and author ~= "" and (author .. ": ") or "") .. message
+    while #chatLog > CHAT_LOG_MAX do table.remove(chatLog, 1) end
+end
+
+function F:CopyChat(count)
+    count = tonumber(count) or 20
+    if count < 1 then count = 1 end
+    if count > CHAT_LOG_MAX then count = CHAT_LOG_MAX end
+    if #chatLog == 0 then
+        self:Print("No chat lines recorded yet. Lines are recorded while ForeverSuite is loaded.")
+        return 0
+    end
+    local first = math.max(1, #chatLog - count + 1)
+    local lines = {}
+    for index = first, #chatLog do lines[#lines + 1] = chatLog[index] end
+    self:ShowReport(table.concat(lines, "\n"))
+    return #lines
+end
+
+F:Register("copyChat", { title = "Copy recent chat", category = "Chat",
+    description = "Keeps the last 200 chat lines in memory and opens them in a selectable box with /fs copy. Nothing is written to disk and nothing is sent to other players.",
+    disableText = "Stops copying. /fs copy then reports that the feature is off.",
+    conflicts = { "Leatrix_Plus", "Leatrix_Plus_Forever", "EnhanceQoL", "Prat-3.0", "Chatter" },
+    available = function() return 1 == 1 end,
+    enable = function()
+        if not chatHooked then
+            for _, event in ipairs(CHAT_EVENTS) do F:Listen("copyChat", event, recordChat) end
+            chatHooked = true
+        else
+            for _, event in ipairs(CHAT_EVENTS) do F:Listen("copyChat", event, recordChat) end
+        end
+    end,
+    disable = function() end })
+
+local stickyHooked = false
+local function stickyButtons()
+    if not F:Active("stickyChatButtons") then return end
+    local frame = _G.ChatFrame1ButtonFrame
+    if frame and frame.SetAlpha then frame:SetAlpha(1) end
+    if frame and frame.Show then frame:Show() end
+end
+F:Register("stickyChatButtons", { title = "Keep chat buttons visible", category = "Chat",
+    description = "Stops the chat menu and scroll buttons from fading away when the mouse is not over the chat, so they are always clickable.",
+    disableText = "Stops forcing the buttons visible; the client fades them again on its own.",
+    conflicts = { "Leatrix_Plus", "Leatrix_Plus_Forever", "EnhanceQoL", "Prat-3.0", "Chatter" },
+    available = function() return _G.ChatFrame1ButtonFrame ~= nil end,
+    enable = function()
+        local frame = _G.ChatFrame1ButtonFrame
+        if frame and not stickyHooked and frame.HookScript then
+            frame:HookScript("OnShow", stickyButtons)
+            stickyHooked = true
+        end
+        stickyButtons()
+        F:Listen("stickyChatButtons", "UPDATE_CHAT_WINDOWS", stickyButtons)
+    end,
+    refresh = stickyButtons,
+    disable = function() end })
+
+local editPoints = {}
+local function placeEditBox()
+    local edit = _G.ChatFrame1EditBox
+    local frame = _G.ChatFrame1
+    if not edit or not frame or not edit.SetPoint then return end
+    if F:GetOption("chatEditPosition", "where") == "top" then
+        if editPoints[edit] == nil then editPoints[edit] = true end
+        edit:ClearAllPoints()
+        edit:SetPoint("BOTTOMLEFT", frame, "TOPLEFT", 0, 2)
+        edit:SetPoint("BOTTOMRIGHT", frame, "TOPRIGHT", 0, 2)
+    elseif editPoints[edit] then
+        edit:ClearAllPoints()
+        edit:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 0, 0)
+        edit:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", 0, 0)
+        editPoints[edit] = nil
+    end
+end
+F:Register("chatEditPosition", { title = "Chat edit box position", category = "Chat",
+    description = "Places the chat input line above the chat frame instead of at the bottom of it, so typing does not cover the newest messages.",
+    disableText = "Puts the input line back at the bottom of the chat frame.",
+    conflicts = { "Leatrix_Plus", "Leatrix_Plus_Forever", "EnhanceQoL", "Prat-3.0" },
+    options = {
+        { key = "where", type = "choice", title = "Input line position", default = "bottom",
+          choices = { { value = "bottom", label = "Bottom (client default)" }, { value = "top", label = "Above the chat frame" } },
+          description = "Where the typing line sits. Above the frame keeps the newest messages visible while typing." },
+    },
+    available = function() return _G.ChatFrame1EditBox ~= nil and _G.ChatFrame1 ~= nil end,
+    enable = function()
+        placeEditBox()
+        F:Listen("chatEditPosition", "UPDATE_CHAT_WINDOWS", placeEditBox)
+    end,
+    refresh = placeEditBox,
+    disable = function()
+        for edit in pairs(editPoints) do
+            edit:ClearAllPoints()
+            edit:SetPoint("BOTTOMLEFT", _G.ChatFrame1, "BOTTOMLEFT", 0, 0)
+            edit:SetPoint("BOTTOMRIGHT", _G.ChatFrame1, "BOTTOMRIGHT", 0, 0)
+        end
+        editPoints = {}
+    end })
+
+local xpStart, xpStartTime = nil, nil
+local function xpSnapshot()
+    if not F:Active("xpTracker") then return end
+    if type(UnitXP) ~= "function" or type(GetTime) ~= "function" then return end
+    local xp, maxXP = UnitXP("player"), UnitXPMax("player")
+    if type(xp) ~= "number" or type(maxXP) ~= "number" or maxXP <= 0 then return end
+    if xpStart == nil then
+        xpStart, xpStartTime = xp, GetTime()
+        return
+    end
+    local elapsed = GetTime() - (xpStartTime or GetTime())
+    if elapsed < 60 then return end
+end
+function F:XPRate()
+    if not xpStart then return nil end
+    local elapsed = (GetTime and GetTime() or 0) - (xpStartTime or 0)
+    if elapsed < 1 then return nil end
+    local gained = (UnitXP("player") or 0) - xpStart
+    return gained, elapsed, gained / elapsed * 3600
+end
+F:Register("xpTracker", { title = "Experience per hour", category = "Interface",
+    description = "Records experience gained since the feature was switched on and reports the rate with /fs xp. It reads experience only and never changes quests, rests or bonuses.",
+    disableText = "Stops recording. The last recorded rate stays available until the feature is enabled again.",
+    conflicts = { "Leatrix_Plus", "Leatrix_Plus_Forever", "EnhanceQoL", "TitanPanel" },
+    available = function() return UnitXP ~= nil and UnitXPMax ~= nil and GetTime ~= nil end,
+    enable = function()
+        xpStart, xpStartTime = nil, nil
+        xpSnapshot()
+        F:Listen("xpTracker", "PLAYER_XP_UPDATE", xpSnapshot)
+        F:Listen("xpTracker", "PLAYER_ENTERING_WORLD", xpSnapshot)
+    end,
+    refresh = function() end,
+    disable = function() xpStart, xpStartTime = nil, nil end })

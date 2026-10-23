@@ -29,7 +29,7 @@ inventoryLinks = { player = { [1] = "item:1001", [16] = "item:1002" }, target = 
 inventoryLevels = { ["item:1001"] = 82, ["item:1002"] = 90, ["item:2001"] = 75 }
 tips = {}
 local methods = {}
-local noops = {"SetSize", "SetFrameStrata", "EnableMouse", "SetAlpha",
+local noops = {"SetSize", "SetFrameStrata", "EnableMouse",
  "SetMovable", "SetBackdrop", "SetJustifyH", "SetJustifyV", "RegisterForDrag", "StartMoving", "StopMovingOrSizing",
  "SetAutoFocus", "SetFontObject", "SetMaxLetters", "SetMultiLine", "SetScrollChild",
  "UpdateScrollChildRect", "SetFocus", "ClearFocus", "HighlightText", "ClearAllPoints", "SetTextColor", "SetVerticalScroll",
@@ -44,6 +44,7 @@ function methods:SetClampedToScreen(value) self.clamped = value end
 function methods:IsClampedToScreen() return self.clamped ~= false end
 function methods:GetPoint() if self.points then return unpack(self.points) end end
 function methods:SetScale(value) self.scale = value end
+function methods:SetAlpha(value) self.alpha = value end
 function methods:GetScale() return self.scale or 1 end
 function methods:SetScript(name, fn) self.scripts[name] = fn end
 function methods:HookScript(name, fn)
@@ -121,6 +122,16 @@ function GetMoneyString(copper) return copper .. "c" end
 lootLinks = {}
 function GetLootSlotLink(index) return lootLinks[index] end
 function GetContainerItemLink(bag, slot) local contents = containerLinks[bag]; return contents and contents[slot] end
+sold = {}
+function UseContainerItem(bag, slot)
+ local contents = containerLinks[bag]
+ local link = contents and contents[slot]
+ table.insert(sold, { bag = bag, slot = slot, link = link })
+ if contents then contents[slot] = nil end
+ calls.sold = (calls.sold or 0) + 1
+end
+C_Container = { GetContainerItemLink = GetContainerItemLink, GetContainerNumSlots = GetContainerNumSlots,
+ UseContainerItem = UseContainerItem }
 function GetContainerNumSlots(bag) return containerSlots[bag] or 0 end
 for index = 1, NUM_BAG_SLOTS + NUM_BANKBAGSLOTS do
  local frame = CreateFrame("Frame", "ContainerFrame" .. index)
@@ -165,6 +176,11 @@ freeBagSlots = 12
 function GetNumFreeBagSlots() return freeBagSlots end
 questDaily, questRepeatable = false, false
 function IsDailyQuest() return questDaily end
+function GetQuestID() return questID end
+function GetTitleText() return questTitle end
+C_QuestLog = { IsQuestFlaggedCompleted = function(id) return completedQuests[id] == true end }
+completedQuests = {}
+questID, questTitle = 1001, "A Test Quest"
 function IsRepeatableQuest() return questRepeatable end
 playedSounds = {}
 function PlaySound(id) table.insert(playedSounds, id) end
@@ -186,6 +202,20 @@ function DeclineGroup() calls.declines = (calls.declines or 0) + 1 end
 function UnitName(unit) if unit == "player" then return "Tester" end return unit end
 function GetRealmName() return "TestRealm" end
 GossipFrame = CreateFrame("Frame", "GossipFrame")
+MicroMenuContainer = CreateFrame("Frame", "MicroMenuContainer"); MicroMenuContainer.shown = true
+MainMenuBar = CreateFrame("Frame", "MainMenuBar"); MainMenuBar.alpha = 1
+function methods:IsMouseOver() return self.mouseOver == true end
+MinimapCluster = CreateFrame("Frame", "MinimapCluster"); MinimapCluster.scale = 1
+Minimap = CreateFrame("Frame", "Minimap")
+GameTooltipSetBackdrop = {}
+function methods:SetBackdropBorderColor(r, g, b, a) self.border = { r, g, b, a } end
+function methods:GetBackdropBorderColor() local b = self.border or { 0, 0, 0, 1 }; return b[1], b[2], b[3], b[4] end
+UnitXPValue, UnitXPMaxValue, now = 0, 1000, 0
+function UnitXP() return UnitXPValue end
+function UnitXPMax() return UnitXPMaxValue end
+function GetTime() return now end
+ChatFrame1.text = ""
+function methods:GetText() return self.text or "" end
 function InCombatLockdown() return combat end
 function IsShiftKeyDown() return shift end
 function GetBuildInfo() return clientVersion, clientBuild, "", clientInterface end
@@ -218,7 +248,21 @@ tooltipCallbacks = {}
 TooltipDataProcessor={AddTooltipPostCall=function(dataType, fn)
  tooltipCallbacks[dataType]=fn; calls.hooks=calls.hooks+1
 end}
-C_Item={GetItemInfo=function()
+itemMeta = {}
+local function metaFor(link)
+ local meta = itemMeta[link]
+ if meta then
+  return meta.name or "Test Item", link, meta.quality or 1, meta.itemLevel or 1, 1,
+   "Armor", "Plate", meta.stack or 1, meta.equipLoc or "", nil, meta.sellPrice or 0,
+   meta.classID or 4, 0, meta.bindType or 2, 0, 0, false
+ end
+ return "Item", "item:123", 2, 45, 1, "Armor", "Plate", itemStack, itemEquip, "", itemSellPrice
+end
+C_Item={GetItemInfo=function(link)
+ if not itemReady then return nil end
+ return metaFor(link)
+end,
+ GetItemInfoLegacy=function()
  if not itemReady then return nil end
  return "Item", "item:123", 2, 45, 1, "Armor", "Plate", itemStack, itemEquip, "", itemSellPrice
  end, GetDetailedItemLevelInfo=function(link) return inventoryLevels[link] or itemLevel end,
@@ -278,7 +322,7 @@ class SuiteTests(unittest.TestCase):
     def test_default_is_inert_and_ui_loads(self):
         self.start()
         self.runlua('fire("MERCHANT_SHOW"); fire("QUEST_DETAIL"); F:OpenSettings()')
-        self.assertEqual(len(self.g.F.order), 96)
+        self.assertEqual(len(self.g.F.order), 109)
         self.assertEqual(self.g.calls.repair, 0)
         self.assertEqual(self.g.calls.sell, 0)
         self.assertEqual(self.g.calls.accept, 0)
@@ -1064,7 +1108,7 @@ class SuiteTests(unittest.TestCase):
 
     def test_category_counts_and_layout_sanitation(self):
         self.start()
-        self.assertEqual(self.g.F.categoryButtons.Interface.label.text, "Interface (35)")
+        self.assertEqual(self.g.F.categoryButtons.Interface.label.text, "Interface (39)")
         self.assertEqual(self.g.F.categoryButtons.Home.label.text, "Home")
         self.runlua('F:SetEnabled("moveWindows", true); shift=true;'
                     'MerchantFrame:Trigger("OnDragStart");'
@@ -1252,6 +1296,176 @@ class SuiteTests(unittest.TestCase):
         texts = " ".join([self.g.prints[i] for i in range(before + 1, len(self.g.prints) + 1)])
         self.assertIn("/fs gold", texts)
         self.assertIn("/fs windows", texts)
+
+
+    def test_merchant_rules_preview_filters_and_batch(self):
+        self.start()
+        self.runlua('itemMeta["item:3001"]={name="Gray Trinket", quality=0, itemLevel=5, sellPrice=10}'
+                    ';itemMeta["item:3002"]={name="Green Sword", quality=2, itemLevel=80, sellPrice=200}'
+                    ';itemMeta["item:3003"]={name="Quest Thing", quality=1, itemLevel=10, sellPrice=50, classID=12}'
+                    ';itemMeta["item:3004"]={name="White Cloth", quality=1, itemLevel=20, sellPrice=5}'
+                    ';itemMeta["item:3005"]={name="Recipe: Thing", quality=1, itemLevel=1, sellPrice=5, classID=9}'
+                    ';containerLinks[1]={[1]="item:3001",[2]="item:3002",[3]="item:3003",[4]="item:3004"}'
+                    ';containerLinks[2]={[1]="item:3005"};containerSlots[1]=4;containerSlots[2]=1')
+        self.runlua('F:SetEnabled("merchantRules", true); fire("MERCHANT_SHOW")')
+        self.assertEqual(self.g.calls.sold or 0, 0)
+        self.assertIsNotNone(self.g.F.previewRows)
+        self.assertEqual(self.g.F.previewRows[1].link, "item:3001")
+        self.assertEqual(len(self.g.F.previewRows), 1)
+        self.runlua('F.previewRows=nil; F:SetOption("merchantRules", "preview", false);'
+                    'F:SetOption("merchantRules", "quality", "Common"); fire("MERCHANT_SHOW")')
+        links = [row.link for row in (self.g.sold[i] for i in range(1, len(self.g.sold) + 1))]
+        self.assertIn("item:3001", links)
+        self.assertIn("item:3004", links)
+        self.assertNotIn("item:3002", links)
+        self.assertNotIn("item:3003", links)
+        self.assertNotIn("item:3005", links)
+        self.assertEqual(len(self.g.sold), 2)
+
+    def test_merchant_never_sell_list_and_batch_cap(self):
+        self.start()
+        self.runlua('itemMeta["item:4001"]={name="Keep Me", quality=0, itemLevel=1, sellPrice=5}'
+                    ';itemMeta["item:4002"]={name="Sell Me", quality=0, itemLevel=1, sellPrice=5}'
+                    ';containerLinks[1]={[1]="item:4001",[2]="item:4002"};containerSlots[1]=2')
+        self.runlua('F:SetEnabled("merchantRules", true); F:SetOption("merchantRules", "preview", false)')
+        self.runlua('SlashCmdList.FOREVERSUITE("neversell add 4001")')
+        self.assertIn("Added 4001", self.g.prints[len(self.g.prints)])
+        self.runlua('fire("MERCHANT_SHOW")')
+        self.assertEqual(self.g.calls.sold, 1)
+        self.assertEqual(self.g.sold[1].link, "item:4002")
+        self.runlua('containerLinks[1]={[1]="item:4001"}; fire("MERCHANT_SHOW")')
+        self.assertEqual(self.g.calls.sold, 1)
+        self.runlua('SlashCmdList.FOREVERSUITE("neversell remove 4001"); containerLinks[1]={[1]="item:4001"}; fire("MERCHANT_SHOW")')
+        self.assertEqual(self.g.calls.sold, 2)
+        self.runlua('containerLinks[1]={[1]="item:4001",[2]="item:4002"}; F:SetOption("merchantRules", "batchSize", 1); fire("MERCHANT_SHOW")')
+        self.assertEqual(self.g.calls.sold, 3)
+
+    def test_quest_exceptions_and_completed_filter(self):
+        self.start()
+        self.runlua('F:SetEnabled("acceptQuests", true); SlashCmdList.FOREVERSUITE("except accept A Test Quest");'
+                    'fire("QUEST_DETAIL")')
+        self.assertEqual(self.g.calls.accept, 0)
+        self.runlua('questTitle="Another Quest"; fire("QUEST_DETAIL")')
+        self.assertEqual(self.g.calls.accept, 1)
+        self.runlua('F:SetOption("acceptQuests", "skipCompleted", true); completedQuests[1001]=true; fire("QUEST_DETAIL")')
+        self.assertEqual(self.g.calls.accept, 1)
+        self.runlua('completedQuests[1001]=nil; fire("QUEST_DETAIL")')
+        self.assertEqual(self.g.calls.accept, 2)
+        self.runlua('questTitle="A Test Quest"; SlashCmdList.FOREVERSUITE("except accept A Test Quest")')
+        self.runlua('F:SetEnabled("turnInQuests", true); SlashCmdList.FOREVERSUITE("except turnin Another Quest");'
+                    'fire("QUEST_COMPLETE")')
+        self.assertEqual(self.g.calls.reward, 1)
+        self.runlua('questTitle="Another Quest"; fire("QUEST_COMPLETE")')
+        self.assertEqual(self.g.calls.reward, 1)
+
+    def test_single_option_gossip_rule(self):
+        self.start()
+        self.runlua('F:SetEnabled("gossipKeys", true); gossipOptions={{text="Only Option", kind="gossip"}};'
+                    'GossipFrame:Show(); fire("GOSSIP_SHOW")')
+        self.assertEqual(self.g.calls.gossip, None)
+        self.runlua('F:SetOption("gossipKeys", "autoSingle", true); fire("GOSSIP_SHOW")')
+        self.assertEqual(self.g.calls.gossip, 1)
+        self.runlua('gossipOptions={{text="Buy", kind="money"}}; fire("GOSSIP_SHOW")')
+        self.assertEqual(self.g.calls.gossip, 1)
+        self.runlua('gossipOptions={{text="A", kind="gossip"},{text="B", kind="gossip"}}; fire("GOSSIP_SHOW")')
+        self.assertEqual(self.g.calls.gossip, 1)
+
+    def test_junk_marking_command_and_saved_sanitation(self):
+        self.start()
+        self.runlua('SlashCmdList.FOREVERSUITE("junk 5001")')
+        self.assertTrue(self.g.ForeverSuiteDB.junk[5001])
+        self.runlua('SlashCmdList.FOREVERSUITE("unjunk 5001")')
+        self.assertIsNone(self.g.ForeverSuiteDB.junk)
+        self.runlua('ForeverSuiteDB.junk={[5001]=true, ["bad"]=true, [0]=true}; ForeverSuiteDB.neverSell={"x", 7, -1};'
+                    'F.db=nil; F:Initialize()')
+        self.assertTrue(self.g.ForeverSuiteDB.junk[5001])
+        self.assertIsNone(self.g.ForeverSuiteDB.junk["bad"])
+        self.assertEqual(len(self.g.ForeverSuiteDB.neverSell), 1)
+        self.assertEqual(self.g.ForeverSuiteDB.neverSell[1], 7)
+
+
+    def test_bind_type_and_tooltip_border(self):
+        self.start()
+        self.runlua('itemMeta["item:123"]={name="Blade", quality=2, itemLevel=40, bindType=2, sellPrice=10};'
+                    'F:SetEnabled("bindType", true); hover(); tip:Trigger("OnTooltipCleared"); hover()')
+        self.assertIn("Binding: Binds when equipped", [self.g.tip.lines[i] for i in range(1, len(self.g.tip.lines) + 1)])
+        self.runlua('F:SetEnabled("tooltipBorder", true)')
+        self.assertEqual(self.g.GameTooltip.border[1], 1)
+        self.assertEqual(self.g.GameTooltip.border[2], 0.82)
+        self.runlua('F:SetOption("tooltipBorder", "color", "blue")')
+        self.assertEqual(self.g.GameTooltip.border[3], 1)
+        self.runlua('F:SetEnabled("tooltipBorder", false)')
+        self.assertNotEqual(self.g.GameTooltip.border[3], 1)
+
+    def test_hide_tooltips_in_combat(self):
+        self.start()
+        self.runlua('F:SetEnabled("tooltipHideCombat", true); GameTooltip:Show()')
+        self.assertTrue(self.g.GameTooltip.shown)
+        self.runlua('combat=true; fire("PLAYER_REGEN_DISABLED")')
+        self.assertFalse(self.g.GameTooltip.shown)
+        self.runlua('combat=false; GameTooltip:Show(); fire("PLAYER_REGEN_DISABLED")')
+        self.assertTrue(self.g.GameTooltip.shown)
+
+    def test_micro_menu_minimap_and_action_bar_fade(self):
+        self.start()
+        self.runlua('F:SetEnabled("hideMicroMenu", true)')
+        self.assertFalse(self.g.MicroMenuContainer.shown)
+        self.runlua('F:SetEnabled("hideMicroMenu", false)')
+        self.assertTrue(self.g.MicroMenuContainer.shown)
+        self.runlua('F:SetEnabled("minimapScale", true)')
+        self.assertEqual(self.g.MinimapCluster.scale, 1)
+        self.runlua('F:SetOption("minimapScale", "scale", 80)')
+        self.assertEqual(self.g.MinimapCluster.scale, 0.8)
+        self.runlua('F:SetEnabled("minimapScale", false)')
+        self.assertEqual(self.g.MinimapCluster.scale, 1)
+        self.runlua('F:SetEnabled("actionBarFade", true)')
+        self.assertEqual(self.g.MainMenuBar.alpha, 0.25)
+        self.runlua('MainMenuBar.mouseOver=true; MainMenuBar:Trigger("OnEnter")')
+        self.assertEqual(self.g.MainMenuBar.alpha, 1)
+        self.runlua('MainMenuBar.mouseOver=false; MainMenuBar:Trigger("OnLeave")')
+        self.assertEqual(self.g.MainMenuBar.alpha, 0.25)
+        self.runlua('F:SetEnabled("actionBarFade", false)')
+        self.assertEqual(self.g.MainMenuBar.alpha, 1)
+
+    def test_copy_chat_and_watched_buttons(self):
+        self.start()
+        self.runlua('F:SetEnabled("copyChat", true); fire("CHAT_MSG_SAY", "hello there", "Tester")')
+        self.runlua('SlashCmdList.FOREVERSUITE("copy")')
+        self.assertIn("hello there", self.g.F.reportWindow.edit.text)
+        self.runlua('SlashCmdList.FOREVERSUITE("watch QuestFrameAcceptButton")')
+        self.assertIn("Also watching button", self.g.prints[len(self.g.prints)])
+        self.runlua('F:SetEnabled("dialogAccept", true); showButton("QuestFrameAcceptButton"); fire("QUEST_DETAIL")')
+        self.runlua('pressKey("SPACE")')
+        self.assertEqual(self.g.QuestFrameAcceptButton.clicks, 1)
+        self.runlua('SlashCmdList.FOREVERSUITE("watch clear")')
+        self.assertIsNone(self.g.ForeverSuiteDB.watch)
+
+    def test_chat_edit_position_and_sticky_buttons(self):
+        self.start()
+        self.runlua('F:SetEnabled("chatEditPosition", true); F:SetOption("chatEditPosition", "where", "top")')
+        self.assertEqual(self.g.ChatFrame1EditBox.points[1], "BOTTOMRIGHT")
+        self.assertEqual(self.g.ChatFrame1EditBox.points[3], "TOPRIGHT")
+        self.runlua('F:SetEnabled("chatEditPosition", false)')
+        self.assertEqual(self.g.ChatFrame1EditBox.points[1], "BOTTOMRIGHT")
+        self.assertEqual(self.g.ChatFrame1EditBox.points[3], "BOTTOMRIGHT")
+        self.runlua('ChatFrame1ButtonFrame.alpha=0; F:SetEnabled("stickyChatButtons", true)')
+        self.assertEqual(self.g.ChatFrame1ButtonFrame.alpha, 1)
+
+    def test_bag_search_and_xp_rate(self):
+        self.start()
+        self.runlua('itemMeta["item:6001"]={name="Silver Ore", quality=1, itemLevel=10, sellPrice=5};'
+                    'containerLinks[1]={[1]="item:6001"}; containerSlots[1]=2')
+        self.runlua('SlashCmdList.FOREVERSUITE("bag silver")')
+        self.assertIn("Enable Bag item search", self.g.prints[len(self.g.prints)])
+        self.runlua('F:SetEnabled("bagSearch", true); SlashCmdList.FOREVERSUITE("bag silver")')
+        self.assertIn("Silver Ore", self.g.prints[len(self.g.prints)])
+        self.runlua('SlashCmdList.FOREVERSUITE("bag zzz")')
+        self.assertIn("No bag item matches", self.g.prints[len(self.g.prints)])
+        self.runlua('F:SetEnabled("xpTracker", true)')
+        self.runlua('UnitXPValue=100; now=100; fire("PLAYER_XP_UPDATE")')
+        self.runlua('UnitXPValue=600; now=1060; fire("PLAYER_XP_UPDATE")')
+        self.runlua('SlashCmdList.FOREVERSUITE("xp")')
+        self.assertIn("XP per hour", self.g.prints[len(self.g.prints)])
 
 
 if __name__ == "__main__":

@@ -6,7 +6,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 parser = argparse.ArgumentParser()
-parser.add_argument("--output", type=Path, default=ROOT / "dist" / "ForeverSuite-0.2.0-alpha.5.zip")
+parser.add_argument("--output", type=Path, default=ROOT / "dist" / "ForeverSuite-0.2.0-alpha.6.zip")
 args = parser.parse_args()
 args.output.parent.mkdir(parents=True, exist_ok=True)
 with zipfile.ZipFile(args.output, "w", zipfile.ZIP_DEFLATED) as archive:

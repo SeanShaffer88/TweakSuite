@@ -24,6 +24,11 @@ local function visibleButton(name)
     return control
 end
 
+local function watchedButtons()
+    local list = (F.db and F.db.watch) or {}
+    return type(list) == "table" and list or {}
+end
+
 local function hintTarget()
     for _, name in ipairs(buttons) do
         local control = visibleButton(name)
@@ -51,6 +56,15 @@ local function refreshHints()
         hideHints(); return
     end
     local targetName, target = hintTarget()
+    if not target then
+        for _, name in ipairs(watchedButtons()) do
+            local control = visibleButton(name)
+            if control then
+                targetName, target = name, control
+                break
+            end
+        end
+    end
     for name, hint in pairs(hints) do
         if name ~= targetName then hint:Hide() end
     end
@@ -68,6 +82,13 @@ local function refreshHints()
 end
 
 local function clickContinue()
+    for _, name in ipairs(watchedButtons()) do
+        local control = visibleButton(name)
+        if control then
+            control:Click()
+            return true
+        end
+    end
     for _, name in ipairs(buttons) do
         local control = visibleButton(name)
         if control then
@@ -122,6 +143,26 @@ local function selectGossip(index)
     if not visible then return false end
     SelectGossipOption(visible)
     return true
+end
+
+local function gossipCount()
+    if C_GossipInfo and C_GossipInfo.GetOptions then
+        local options = C_GossipInfo.GetOptions()
+        if type(options) == "table" then return #options end
+    end
+    if GetNumGossipOptions then
+        local count = GetNumGossipOptions()
+        if type(count) == "number" then return count end
+    end
+end
+
+-- Selects the only gossip option when it is free and the option is enabled. Never runs on money.
+local function autoSingleGossip()
+    if not F:Active("gossipKeys") or not F:GetOption("gossipKeys", "autoSingle") then return end
+    if F:GetOption("gossipKeys", "autoSingle") ~= true then return end
+    if InCombatLockdown() or not F:CanAutomate() then return end
+    if gossipCount() ~= 1 then return end
+    if gossipOption(1) then selectGossip(1) end
 end
 
 local function syncKeyboard()
@@ -241,11 +282,20 @@ F:Register("gossipKeys", {
         return _G.GossipFrame ~= nil and SelectGossipOption ~= nil
             and (GetNumGossipOptions ~= nil or (C_GossipInfo and C_GossipInfo.GetOptions ~= nil))
     end,
+    options = {
+        { key = "autoSingle", type = "boolean", title = "Choose a lone gossip option", default = false,
+          description = "When a gossip window offers exactly one option and it does not cost money, choose it automatically. "
+              .. "Dialogs with several options, money costs, quests or popups are never touched." },
+    },
     enable = function()
         ensureKeyFrame()
+        -- One listener per event: Listen replaces any earlier handler with the same id.
         F:Listen("gossipKeys", "PLAYER_REGEN_DISABLED", syncKeyboard)
         F:Listen("gossipKeys", "PLAYER_REGEN_ENABLED", syncKeyboard)
-        F:Listen("gossipKeys", "GOSSIP_SHOW", syncKeyboard)
+        F:Listen("gossipKeys", "GOSSIP_SHOW", function()
+            syncKeyboard()
+            autoSingleGossip()
+        end)
         F:Listen("gossipKeys", "GOSSIP_CLOSED", syncKeyboard)
         syncKeyboard()
     end,

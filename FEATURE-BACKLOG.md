@@ -2,7 +2,7 @@
 
 This is the initial capability backlog, not a complete parity claim. Distinct behaviors remain in scope; an implemented preview still requires in-game acceptance. Source options are separately indexed to catch omitted parameters and smaller features.
 
-249 tracked capabilities: 86 implemented and 163 planned. The shipped preview has 96 independently configurable features; several features and feature options share one capability row, and features added ahead of the index were recorded as FS-230 to FS-249. IDs remain stable as work continues.
+249 tracked capabilities: 111 implemented and 138 planned. The shipped preview has 108 independently configurable features; several features and feature options share one capability row, and features added ahead of the index were recorded as FS-230 to FS-249. IDs remain stable as work continues.
 
 | ID | Capability | Stage | Status |
 |---|---|---|---|
@@ -55,9 +55,9 @@ This is the initial capability backlog, not a complete parity claim. Distinct be
 | FS-047 | Keyboard numbered gossip selection | 2 | Preview; game test pending |
 | FS-048 | Keyboard reward selection | 2 | Preview; game test pending |
 | FS-049 | Custom dialog key bindings | 2 | Planned |
-| FS-050 | Dialog click priority | 2 | Planned |
-| FS-051 | Dialog popup exclusions | 2 | Planned |
-| FS-052 | Custom watched buttons | 2 | Planned |
+| FS-050 | Dialog click priority | 2 | Preview; game test pending |
+| FS-051 | Dialog popup exclusions | 2 | Preview; game test pending |
+| FS-052 | Custom watched buttons | 2 | Preview; game test pending |
 | FS-053 | Dialog key hints | 2 | Preview (option of FS-046); game test pending |
 | FS-054 | Selective beta survey suppression | 2 | Planned |
 | FS-055 | Restore manual beta reporting | 2 | Planned |
@@ -73,14 +73,14 @@ This is the initial capability backlog, not a complete parity claim. Distinct be
 | FS-065 | Missing gem indicators | 2 | Planned |
 | FS-066 | Socket inspection helpers | 2 | Planned |
 | FS-067 | Upgrade arrows | 2 | Preview; game test pending |
-| FS-068 | Bind-type labels | 2 | Planned |
+| FS-068 | Bind-type labels | 2 | Preview; game test pending |
 | FS-069 | Durability overlays | 2 | Preview; game test pending |
-| FS-070 | Equipment label positioning | 2 | Planned |
+| FS-070 | Equipment label positioning | 2 | Preview; game test pending |
 | FS-071 | Tooltip class colors | 2 | Planned |
 | FS-072 | Tooltip health bar | 2 | Planned |
-| FS-073 | Tooltip borders and colors | 2 | Planned |
+| FS-073 | Tooltip borders and colors | 2 | Preview; game test pending |
 | FS-074 | Tooltip anchor modes | 2 | Planned |
-| FS-075 | Tooltip combat visibility rules | 2 | Planned |
+| FS-075 | Tooltip combat visibility rules | 2 | Preview; game test pending |
 | FS-076 | Spell IDs in tooltips | 2 | Preview; game test pending |
 | FS-077 | NPC IDs in tooltips | 2 | Preview; game test pending |
 | FS-078 | Quest IDs in tooltips | 2 | Preview; game test pending |
@@ -137,11 +137,11 @@ This is the initial capability backlog, not a complete parity claim. Distinct be
 | FS-109 | Opt-in crafting confirmation | 3 | Planned |
 | FS-110 | Opt-in destruction text helper | 3 | Planned |
 | FS-111 | Chat font sizes | 3 | Preview; game test pending |
-| FS-112 | Chat edit box placement | 3 | Planned |
+| FS-112 | Chat edit box placement | 3 | Preview; game test pending |
 | FS-113 | Chat button visibility | 3 | Preview; game test pending |
-| FS-114 | Sticky chat controls | 3 | Planned |
+| FS-114 | Sticky chat controls | 3 | Preview; game test pending |
 | FS-115 | Chat history length | 3 | Preview; game test pending |
-| FS-116 | Copy chat text | 3 | Planned |
+| FS-116 | Copy chat text | 3 | Preview; game test pending |
 | FS-117 | Whisper notification sounds | 3 | Planned |
 | FS-118 | Persistent chat history | 3 | Planned |
 | FS-119 | Chat channel management | 3 | Planned |
@@ -170,7 +170,7 @@ This is the initial capability backlog, not a complete parity claim. Distinct be
 | FS-142 | Camp benefit tooltips | 3 | Planned |
 | FS-143 | Camp benefit notifications | 3 | Planned |
 | FS-144 | Rare alerts | 3 | Planned |
-| FS-145 | XP-per-hour and level estimates | 3 | Planned |
+| FS-145 | XP-per-hour and level estimates | 3 | Preview; game test pending |
 | FS-146 | Equipment groups | 3 | Planned |
 | FS-147 | Equipment group bag markers | 3 | Planned |
 | FS-148 | Fishing equipment restoration | 3 | Planned |
@@ -185,12 +185,12 @@ This is the initial capability backlog, not a complete parity claim. Distinct be
 | FS-157 | Mana regeneration timing | 3 | Planned |
 | FS-158 | Reagent bag integration | 3 | Planned |
 | FS-159 | Bag filters | 3 | Planned |
-| FS-160 | Search by item properties | 3 | Planned |
+| FS-160 | Search by item properties | 3 | Preview; game test pending |
 | FS-161 | Account gold tracker | 3 | Preview; game test pending |
 | FS-162 | Minimap button collection | 3 | Planned |
-| FS-163 | Minimap shape and sizing | 3 | Planned |
-| FS-164 | Micro menu visibility | 3 | Planned |
-| FS-165 | Action bar mouseover visibility | 3 | Planned |
+| FS-163 | Minimap shape and sizing | 3 | Preview (size only); shape planned |
+| FS-164 | Micro menu visibility | 3 | Preview; game test pending |
+| FS-165 | Action bar mouseover visibility | 3 | Preview; game test pending |
 | FS-166 | Action button range coloring | 3 | Planned |
 | FS-167 | Action bar text customization | 3 | Planned |
 | FS-168 | Cursor ring | 3 | Planned |

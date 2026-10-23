@@ -94,3 +94,78 @@ simpleHide("hideMinimapZone", "Hide the minimap zone label",
     "Shows the minimap zone label again.",
     { "MinimapZoneText", "MinimapZoneTextButton" },
     { "Leatrix_Plus", "Leatrix_Plus_Forever", "EnhanceQoL", "SexyMap" })
+
+simpleHide("hideMicroMenu", "Hide the micro menu",
+    "Hides the row of small buttons that opens the spellbook, talents, quest log and the rest. The keyboard shortcuts and slash commands still open those windows.",
+    "Shows the micro menu again.",
+    { "MicroMenuContainer" },
+    { "Leatrix_Plus", "Leatrix_Plus_Forever", "EnhanceQoL", "Bartender4", "Dominos" })
+
+local barHooked = false
+local function barAlpha()
+    local bar = _G.MainMenuBar
+    if not bar or not bar.SetAlpha then return end
+    if not F:Active("actionBarFade") then
+        bar:SetAlpha(1); return
+    end
+    local alpha = F:GetOption("actionBarFade", "alpha") / 100
+    local hovered = false
+    if bar.IsMouseOver then hovered = bar:IsMouseOver() == true end
+    if hovered then bar:SetAlpha(1) else bar:SetAlpha(alpha) end
+end
+F:Register("actionBarFade", { title = "Dim action bars until the mouse is over them", category = "Interface",
+    description = "Lowers the opacity of the main action bar and restores full opacity while the mouse is over it. Buttons keep working and bindings are unchanged.",
+    disableText = "Restores full opacity on the action bar.",
+    conflicts = { "Leatrix_Plus", "Leatrix_Plus_Forever", "EnhanceQoL", "Bartender4", "Dominos", "ElvUI" },
+    options = {
+        { key = "alpha", type = "number", title = "Opacity when idle", default = 25, min = 0, max = 90, step = 5, unit = "%",
+          description = "Opacity of the bar while the mouse is elsewhere. 0 makes the bar invisible until hovered. "
+              .. "Not recommended for new players, because the bar looks missing." },
+    },
+    available = function() return _G.MainMenuBar ~= nil and MainMenuBar.SetAlpha ~= nil end,
+    enable = function()
+        local bar = _G.MainMenuBar
+        if bar and not barHooked and bar.HookScript then
+            bar:HookScript("OnEnter", barAlpha)
+            bar:HookScript("OnLeave", barAlpha)
+            bar:HookScript("OnShow", barAlpha)
+            barHooked = true
+        end
+        barAlpha()
+        F:Listen("actionBarFade", "PLAYER_ENTERING_WORLD", barAlpha)
+    end,
+    refresh = barAlpha,
+    disable = function()
+        local bar = _G.MainMenuBar
+        if bar and bar.SetAlpha then bar:SetAlpha(1) end
+    end })
+
+local minimapSaved
+F:Register("minimapScale", { title = "Minimap scale", category = "Interface",
+    description = "Scales the minimap cluster by a percentage so it takes less or more screen space. Tracking dots, the zone label and the clock keep their relative position.",
+    disableText = "Restores the minimap scale that was in use before ForeverSuite changed it.",
+    conflicts = { "Leatrix_Plus", "Leatrix_Plus_Forever", "EnhanceQoL", "SexyMap", "ElvUI" },
+    options = {
+        { key = "scale", type = "number", title = "Minimap size", default = 100, min = 60, max = 140, step = 5, unit = "%",
+          description = "Percentage of the client's minimap size. 100 keeps the default. Very small values can hide the zone label." },
+    },
+    available = function()
+        return _G.MinimapCluster ~= nil and MinimapCluster.SetScale ~= nil and MinimapCluster.GetScale ~= nil
+    end,
+    enable = function()
+        local cluster = _G.MinimapCluster
+        if minimapSaved == nil and cluster and cluster.GetScale then minimapSaved = cluster:GetScale() end
+        if cluster then cluster:SetScale(F:GetOption("minimapScale", "scale") / 100) end
+        F:Listen("minimapScale", "PLAYER_ENTERING_WORLD", function()
+            if cluster then cluster:SetScale(F:GetOption("minimapScale", "scale") / 100) end
+        end)
+    end,
+    refresh = function()
+        local cluster = _G.MinimapCluster
+        if cluster then cluster:SetScale(F:GetOption("minimapScale", "scale") / 100) end
+    end,
+    disable = function()
+        local cluster = _G.MinimapCluster
+        if cluster and type(minimapSaved) == "number" then cluster:SetScale(minimapSaved) end
+        minimapSaved = nil
+    end })
