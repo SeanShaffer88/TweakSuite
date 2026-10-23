@@ -2,7 +2,7 @@
 
 This is the initial capability backlog, not a complete parity claim. Distinct behaviors remain in scope; an implemented preview still requires in-game acceptance. Source options are separately indexed to catch omitted parameters and smaller features.
 
-249 tracked capabilities: 150 implemented and 99 planned. The shipped preview has 138 independently configurable features; several features and feature options share one capability row, and features added ahead of the index were recorded as FS-230 to FS-249. IDs remain stable as work continues.
+249 tracked capabilities: 169 implemented, 5 scoped out with a reason and 75 planned. The shipped preview has 162 independently configurable features; several features and feature options share one capability row, and features added ahead of the index were recorded as FS-230 to FS-249. IDs remain stable as work continues.
 
 | ID | Capability | Stage | Status |
 |---|---|---|---|
@@ -125,7 +125,7 @@ This is the initial capability backlog, not a complete parity claim. Distinct be
 | FS-097 | Single-option gossip rules | 3 | Planned |
 | FS-098 | NPC-specific gossip preferences | 3 | Preview; game test pending |
 | FS-099 | Paid gossip exclusions | 3 | Planned |
-| FS-100 | Flight map shortcuts | 3 | Planned |
+| FS-100 | Flight map shortcuts | 3 | Preview; game test pending |
 | FS-101 | Friend and guild invite acceptance | 3 | Preview; game test pending |
 | FS-102 | Block stranger invites | 3 | Preview; game test pending |
 | FS-103 | Duel decline rules | 3 | Preview; game test pending |
@@ -133,9 +133,9 @@ This is the initial capability backlog, not a complete parity claim. Distinct be
 | FS-105 | Resurrection acceptance rules | 3 | Preview; game test pending |
 | FS-106 | Battleground release rules | 3 | Preview; game test pending |
 | FS-107 | Whisper invite rules | 3 | Preview; game test pending |
-| FS-108 | Opt-in loot trade confirmation | 3 | Planned |
-| FS-109 | Opt-in crafting confirmation | 3 | Planned |
-| FS-110 | Opt-in destruction text helper | 3 | Planned |
+| FS-108 | Opt-in loot trade confirmation | 3 | Preview; game test pending |
+| FS-109 | Opt-in crafting confirmation | 3 | Preview; game test pending |
+| FS-110 | Opt-in destruction text helper | 3 | Preview; game test pending |
 | FS-111 | Chat font sizes | 3 | Preview; game test pending |
 | FS-112 | Chat edit box placement | 3 | Preview; game test pending |
 | FS-113 | Chat button visibility | 3 | Preview; game test pending |
@@ -150,26 +150,26 @@ This is the initial capability backlog, not a complete parity claim. Distinct be
 | FS-122 | Chat message filtering | 3 | Planned |
 | FS-123 | Context-menu website links | 3 | Planned |
 | FS-124 | Chat frame unclamping | 3 | Preview; game test pending |
-| FS-125 | World-map coordinates | 3 | Planned |
-| FS-126 | Cursor map coordinates | 3 | Planned |
-| FS-127 | Zone level ranges | 3 | Planned |
-| FS-128 | Dungeon entrance markers | 3 | Planned |
-| FS-129 | Dungeon floor maps and legends | 3 | Planned |
-| FS-130 | Unexplored-area reveal and tint | 3 | Planned |
-| FS-131 | Waypoint commands | 3 | Planned |
-| FS-132 | Teleport favorites | 3 | Planned |
-| FS-133 | Teleport menu | 3 | Planned |
-| FS-134 | Travel integration with external route planners | 3 | Planned |
-| FS-135 | Flight time display | 3 | Planned |
-| FS-136 | Quest-level labels | 3 | Planned |
-| FS-137 | Quest tracker distance sorting | 3 | Planned |
-| FS-138 | Quest item keybinding | 3 | Planned |
-| FS-139 | Quest target keybinding | 3 | Planned |
-| FS-140 | Questie tooltip integration | 3 | Planned |
-| FS-141 | Quest-start item markers | 3 | Planned |
-| FS-142 | Camp benefit tooltips | 3 | Planned |
-| FS-143 | Camp benefit notifications | 3 | Planned |
-| FS-144 | Rare alerts | 3 | Planned |
+| FS-125 | World-map coordinates | 3 | Preview; game test pending |
+| FS-126 | Cursor map coordinates | 3 | Preview; game test pending |
+| FS-127 | Zone level ranges | 3 | Preview; game test pending |
+| FS-128 | Dungeon entrance markers | 3 | Preview; game test pending |
+| FS-129 | Dungeon floor maps and legends | 3 | Scoped out; see note |
+| FS-130 | Unexplored-area reveal and tint | 3 | Scoped out; see note |
+| FS-131 | Waypoint commands | 3 | Preview; game test pending |
+| FS-132 | Teleport favorites | 3 | Preview; game test pending |
+| FS-133 | Teleport menu | 3 | Preview; game test pending |
+| FS-134 | Travel integration with external route planners | 3 | Scoped out; see note |
+| FS-135 | Flight time display | 3 | Preview; game test pending |
+| FS-136 | Quest-level labels | 3 | Preview; game test pending |
+| FS-137 | Quest tracker distance sorting | 3 | Preview; game test pending |
+| FS-138 | Quest item keybinding | 3 | Preview; game test pending |
+| FS-139 | Quest target keybinding | 3 | Preview; game test pending |
+| FS-140 | Questie tooltip integration | 3 | Scoped out; see note |
+| FS-141 | Quest-start item markers | 3 | Scoped out; see note |
+| FS-142 | Camp benefit tooltips | 3 | Preview; game test pending |
+| FS-143 | Camp benefit notifications | 3 | Preview; game test pending |
+| FS-144 | Rare alerts | 3 | Preview; game test pending |
 | FS-145 | XP-per-hour and level estimates | 3 | Preview; game test pending |
 | FS-146 | Equipment groups | 3 | Planned |
 | FS-147 | Equipment group bag markers | 3 | Planned |

@@ -31,21 +31,26 @@ def main():
         if ident not in by_id:
             raise SystemExit("unknown backlog row: " + ident)
         item = by_id[ident]
-        item["status"] = STATUS
-        item["feature_key"] = payload["feature_key"]
+        item["status"] = payload.get("status", STATUS)
+        if payload.get("feature_key"):
+            item["feature_key"] = payload["feature_key"]
         item["detail"] = payload["detail"]
     backlog.write_text(json.dumps(items, indent=2) + "\n")
     implemented = sum(1 for item in items if "implemented" in item["status"])
+    scoped = sum(1 for item in items if item["status"] == "scoped-out")
 
     markdown = ROOT / "FEATURE-BACKLOG.md"
     text = markdown.read_text()
-    for ident in rows:
+    labels = {"implemented-preview; in-game validation pending": "Preview; game test pending",
+              "scoped-out": "Scoped out; see note"}
+    for ident, payload in rows.items():
+        label = labels.get(payload.get("status", STATUS), "Preview; game test pending")
         pattern = re.compile(r"^\| " + ident + r" \| (.*?) \| (\d) \| .*? \|$", re.M)
-        text = pattern.sub(lambda m: "| %s | %s | %s | Preview; game test pending |"
-                           % (ident, m.group(1), m.group(2)), text)
-    text = re.sub(r"^\d+ tracked capabilities: \d+ implemented and \d+ planned\.",
-                  "%d tracked capabilities: %d implemented and %d planned."
-                  % (len(items), implemented, len(items) - implemented), text, count=1, flags=re.M)
+        text = pattern.sub(lambda m: "| %s | %s | %s | %s |"
+                           % (ident, m.group(1), m.group(2), label), text)
+    text = re.sub(r"^\d+ tracked capabilities: \d+ implemented and \d+ planned[,.]",
+                  "%d tracked capabilities: %d implemented, %d scoped out with a reason and %d planned."
+                  % (len(items), implemented, scoped, len(items) - implemented - scoped), text, count=1, flags=re.M)
     text = re.sub(r"The shipped preview has \d+ independently configurable features;",
                   "The shipped preview has %d independently configurable features;" % args.features,
                   text, count=1)

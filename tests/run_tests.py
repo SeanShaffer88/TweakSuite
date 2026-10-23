@@ -222,6 +222,28 @@ function IsInInstance() return true, instanceKind end
 questLevelValue, questGreenRange = 10, 5
 function GetQuestLevel() return questLevelValue end
 function GetQuestGreenRange() return questGreenRange end
+questLogEntries = {}
+function GetNumQuestLogEntries() return #questLogEntries, #questLogEntries end
+function GetQuestLogTitle(index)
+ local entry = questLogEntries[index]
+ if not entry then return nil end
+ return entry.title, entry.level, entry.tag, nil, entry.header, false, entry.complete, entry.frequency, entry.id
+end
+C_QuestLog = { IsQuestFlaggedCompleted = C_QuestLog and C_QuestLog.IsQuestFlaggedCompleted,
+ GetDistanceSqToQuest = function(id) return questDistances[id] end }
+questDistances = {}
+function GetQuestDifficultyColor(level) return { red = 1, green = 0.5, blue = 0.25 } end
+function TargetByName(name) targetedName = name; return name ~= "Nobody" end
+targetedName = nil
+function UnitClassification(unit) return unitClassifications[unit] end
+unitClassifications = {}
+function GetTradePlayerItemLink(index) return tradeLinks[index] end
+tradeLinks = {}
+tsRecipes, tsSelection, tsReagents = {}, 0, {}
+function GetTradeSkillSelectionIndex() return tsSelection end
+function GetTradeSkillInfo(index) return tsRecipes[index] end
+function GetTradeSkillNumReagents(index) return #(tsReagents[index] or {}) end
+function GetTradeSkillReagentInfo(index, r) local entry = (tsReagents[index] or {})[r]; if entry then return entry[1], nil, entry[2] end end
 function UnitName(unit) if unit == "player" then return "Tester" end return unit end
 unitClasses, unitHealths = {}, {}
 RAID_CLASS_COLORS = { WARRIOR = { r = 0.78, g = 0.61, b = 0.43 }, MAGE = { r = 0.25, g = 0.78, b = 0.92 } }
@@ -236,6 +258,31 @@ socketStats = {}
 function GetItemStats(link) return socketStats[link] end
 function GetRealmName() return "TestRealm" end
 GossipFrame = CreateFrame("Frame", "GossipFrame")
+WorldMapFrame = CreateFrame("Frame", "WorldMapFrame"); WorldMapFrame.width = 1000; WorldMapFrame.height = 700
+WorldMapFrame.left = 100; WorldMapFrame.top = 800; WorldMapFrame.cursor = { 500, 450 }
+function GetCursorPosition() return WorldMapFrame.cursor[1], WorldMapFrame.cursor[2] end
+function methods:GetLeft() return self.left or 0 end
+function methods:GetTop() return self.top or 0 end
+function methods:GetEffectiveScale() return self.effectiveScale or 1 end
+function GetRealZoneText() return zoneName end
+function GetZoneText() return zoneName end
+function GetSubZoneText() return "" end
+zoneName = "Elwynn Forest"
+taxiNodes = {}
+function NumTaxiNodes() return #taxiNodes end
+function GetTaxiNodeName(index) return taxiNodes[index] end
+takenTaxi, castSpells = {}, {}
+function TakeTaxiNode(index) table.insert(takenTaxi, index) end
+function CastSpellByID(id) table.insert(castSpells, id) end
+userWaypoint = nil
+function SetUserWaypoint(point) userWaypoint = point end
+function ClearUserWaypoint() userWaypoint = nil end
+unitOnTaxi = false
+function UnitOnTaxi() return unitOnTaxi end
+C_Map = { GetBestMapForUnit = function() return 1429 end,
+ SetUserWaypoint = function(point) userWaypoint = point end,
+ GetUserWaypoint = function() return userWaypoint end,
+ ClearUserWaypoint = function() userWaypoint = nil end }
 MicroMenuContainer = CreateFrame("Frame", "MicroMenuContainer"); MicroMenuContainer.shown = true
 MainMenuBar = CreateFrame("Frame", "MainMenuBar"); MainMenuBar.alpha = 1
 function methods:IsMouseOver() return self.mouseOver == true end
@@ -305,6 +352,22 @@ end,
  GetItemCount=function(_, includeBank) return includeBank and bankCountValue or itemCountValue end}
 Settings={RegisterCanvasLayoutCategory=function() return {} end, RegisterAddOnCategory=function() end}
 function fire(event, ...) F.frame:Trigger("OnEvent", event, ...) end
+chatFilters = {}
+function ChatFrame_AddMessageEventFilter(event, filter) chatFilters[event] = filter end
+function ApplyChatFilter(event, ...)
+ local filter = chatFilters[event]
+ if not filter then return true, ... end
+ local hide, t, n, rest = filter(ChatFrame1, event, ...)
+ return hide, t, n
+end
+classForGUID = {}
+function GetPlayerInfoByGUID(guid) return nil, classForGUID[guid] end
+joinedChannels, leftChannels, sentMessages = {}, {}, {}
+function JoinChannelByName(name) table.insert(joinedChannels, name) end
+function LeaveChannelByName(name) table.insert(leftChannels, name) end
+function SendChatMessage(text, chatType, language, target)
+ table.insert(sentMessages, { text = text, kind = chatType, target = target })
+end
 function pressKey(key) ForeverSuiteKeyCatcher:Trigger("OnKeyDown", key) end
 function tipFor(kind)
  if not tips[kind] then tips[kind] = CreateFrame("GameTooltip"); tips[kind].lines = {} end
@@ -358,7 +421,7 @@ class SuiteTests(unittest.TestCase):
     def test_default_is_inert_and_ui_loads(self):
         self.start()
         self.runlua('fire("MERCHANT_SHOW"); fire("QUEST_DETAIL"); F:OpenSettings()')
-        self.assertEqual(len(self.g.F.order), 138)
+        self.assertEqual(len(self.g.F.order), 162)
         self.assertEqual(self.g.calls.repair, 0)
         self.assertEqual(self.g.calls.sell, 0)
         self.assertEqual(self.g.calls.accept, 0)
@@ -1144,11 +1207,14 @@ class SuiteTests(unittest.TestCase):
 
     def test_category_counts_and_layout_sanitation(self):
         self.start()
-        self.assertEqual(self.g.F.categoryButtons.Interface.label.text, "Interface (44)")
+        self.assertEqual(self.g.F.categoryButtons.Interface.label.text, "Interface (45)")
         self.assertEqual(self.g.F.categoryButtons.Home.label.text, "Home")
         self.assertEqual(self.g.F.categoryButtons.Windows.label.text, "Windows (7)")
         self.assertEqual(self.g.F.categoryButtons.Dialogs.label.text, "Dialogs (7)")
         self.assertEqual(self.g.F.categoryButtons.Tooltips.label.text, "Tooltips (21)")
+        self.assertEqual(self.g.F.categoryButtons.Chat.label.text, "Chat (19)")
+        self.assertEqual(self.g.F.categoryButtons.Maps.label.text, "Maps (9)")
+        self.assertEqual(self.g.F.categoryButtons.Quests.label.text, "Quests (9)")
         self.runlua('F:SetEnabled("moveWindows", true); shift=true;'
                     'MerchantFrame:Trigger("OnDragStart");'
                     'MerchantFrame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 10, -10);'
@@ -1899,6 +1965,225 @@ class SuiteTests(unittest.TestCase):
         self.assertIsNone(self.g.ForeverSuiteDB.gossipPrefs.Bad)
         self.assertIsNone(self.g.ForeverSuiteDB.gossipPrefs["777"])
         self.assertEqual([self.g.ForeverSuiteDB.sellWhitelist[i] for i in (1, 2)], [3001, 3002])
+
+
+    def test_chat_log_store_and_clear(self):
+        self.start()
+        self.runlua('F:SetEnabled("chatLogStore", true); F:SetOption("chatLogStore", "size", 20)')
+        self.runlua('for i = 1, 25 do fire("CHAT_MSG_SAY", "line " .. i, "Tester") end')
+        log = self.g.ForeverSuiteDB.chatLog
+        self.assertEqual(len(log), 20)
+        self.assertEqual(log[len(log)].text, "line 25")
+        self.runlua('fire("CHAT_MSG_WHISPER", "secret", "Buddy")')
+        self.assertEqual(self.g.ForeverSuiteDB.lastWhisper, "Buddy")
+        self.runlua('SlashCmdList.FOREVERSUITE("chatlog")')
+        self.assertIn("Buddy: secret", self.g.F.reportWindow.edit.text)
+        self.runlua('SlashCmdList.FOREVERSUITE("chatlog clear")')
+        self.assertIsNone(self.g.ForeverSuiteDB.chatLog)
+
+    def test_chat_log_whispers_only_option(self):
+        self.start()
+        self.runlua('F:SetEnabled("chatLogStore", true); F:SetOption("chatLogStore", "whispersOnly", true)')
+        self.runlua('fire("CHAT_MSG_SAY", "public", "Tester"); fire("CHAT_MSG_WHISPER", "private", "Buddy")')
+        log = self.g.ForeverSuiteDB.chatLog
+        self.assertEqual(len(log), 1)
+        self.assertEqual(log[1].text, "private")
+
+    def test_saved_channels_join_and_remove(self):
+        self.start()
+        self.runlua('F:SetEnabled("chatChannels", true); SlashCmdList.FOREVERSUITE("channels add world")')
+        self.assertEqual([self.g.ForeverSuiteDB.channels[i] for i in (1,)], ["world"])
+        self.runlua('fire("PLAYER_LOGIN")')
+        self.assertIn("world", list(self.g.joinedChannels.values()))
+        self.runlua('SlashCmdList.FOREVERSUITE("channels remove world")')
+        self.assertIn("world", list(self.g.leftChannels.values()))
+        self.assertIsNone(self.g.ForeverSuiteDB.channels)
+
+    def test_chat_class_colours_and_word_filter(self):
+        self.start()
+        self.runlua('classForGUID["Player-970-1"] = "WARRIOR"; F:SetEnabled("chatClassColors", true)')
+        self.runlua('hide, shownText, tintedName = ApplyChatFilter("CHAT_MSG_SAY", "hello", "Buddy", "Common", nil, nil, nil, nil, nil, nil, nil, nil, "Player-970-1")')
+        hide, name = self.g.hide, self.g.tintedName
+        self.assertFalse(hide)
+        self.assertIn("|cff", name)
+        self.assertIn("Buddy", name)
+        self.runlua('F:SetEnabled("chatFilters", true); SlashCmdList.FOREVERSUITE("filter add spam")')
+        self.runlua('hide, shownText, tintedName = ApplyChatFilter("CHAT_MSG_SAY", "buy SPAM now", "Buddy", "Common", nil, nil, nil, nil, nil, nil, nil, nil, "Player-970-1")')
+        hide = self.g.hide
+        self.assertTrue(hide)
+        self.runlua('SlashCmdList.FOREVERSUITE("filter remove spam")')
+        self.runlua('hide, shownText, tintedName = ApplyChatFilter("CHAT_MSG_SAY", "buy SPAM now", "Buddy", "Common", nil, nil, nil, nil, nil, nil, nil, nil, "Player-970-1")')
+        hide = self.g.hide
+        self.assertFalse(hide)
+
+    def test_whisper_window_shows_and_replies(self):
+        self.start()
+        self.runlua('F:SetEnabled("chatLogStore", true); F:SetEnabled("whisperWindow", true)')
+        self.runlua('fire("CHAT_MSG_WHISPER", "are you there", "Buddy")')
+        self.runlua('SlashCmdList.FOREVERSUITE("whisper Buddy")')
+        self.assertTrue(self.g.ForeverSuiteWhisperWindow.shown)
+        self.assertIn("are you there", self.g.ForeverSuiteWhisperWindow.body.text)
+        self.runlua('ForeverSuiteWhisperWindow.edit:SetText("yes"); F:SendWhisperFromWindow()')
+        sent = self.g.sentMessages
+        self.assertEqual(sent[len(sent)].text, "yes")
+        self.assertEqual(sent[len(sent)].target, "Buddy")
+        self.runlua('SlashCmdList.FOREVERSUITE("whisper close")')
+        self.assertFalse(self.g.ForeverSuiteWhisperWindow.shown)
+
+    def test_chat_db_sanitation(self):
+        self.runlua('ForeverSuiteDB={schema=1, chatLog={ {text="ok", name="A", channel="Say"}, {text="", name="B"}, "junk",'
+                    ' {text=string.rep("x", 500)} }, channels={"world", "", 5, string.rep("y", 60)},'
+                    ' chatFilters={"spam", "", 7}, lastWhisper=""}')
+        self.start()
+        log = self.g.ForeverSuiteDB.chatLog
+        self.assertEqual(len(log), 1)
+        self.assertEqual(log[1].text, "ok")
+        channels = self.g.ForeverSuiteDB.channels
+        self.assertEqual(len(channels), 1)
+        self.assertEqual(channels[1], "world")
+        self.assertEqual(len(self.g.ForeverSuiteDB.chatFilters), 1)
+        self.assertIsNone(self.g.ForeverSuiteDB.lastWhisper)
+
+
+    def test_map_cursor_coordinates_and_zone_range(self):
+        self.start()
+        self.runlua('F:SetEnabled("worldMapCoords", true); F:SetEnabled("zoneLevels", true)')
+        self.runlua('SlashCmdList.FOREVERSUITE("where")')
+        self.assertIn("40, 50", self.g.prints[len(self.g.prints)])
+        self.runlua('WorldMapFrame.cursor = { 1300, 100 }')
+        self.runlua('SlashCmdList.FOREVERSUITE("where")')
+        self.assertIn("Move the mouse", self.g.prints[len(self.g.prints)])
+        self.runlua('SlashCmdList.FOREVERSUITE("zone")')
+        self.assertIn("Elwynn Forest: levels 1-10", self.g.prints[len(self.g.prints)])
+        self.runlua('zoneName = "Unknown Isle"; SlashCmdList.FOREVERSUITE("zone")')
+        self.assertIn("no level range recorded", self.g.prints[len(self.g.prints)])
+        self.runlua('zoneName = "Westfall"; fire("ZONE_CHANGED_NEW_AREA")')
+        self.assertIn("Westfall", self.g.prints[len(self.g.prints)])
+
+    def test_waypoint_and_dungeon_commands(self):
+        self.start()
+        self.runlua('F:SetEnabled("waypoints", true); F:SetEnabled("dungeonMarkers", true)')
+        self.runlua('SlashCmdList.FOREVERSUITE("way 40 60")')
+        self.assertIn("Set a waypoint at 40, 60", self.g.prints[len(self.g.prints)])
+        self.assertEqual(self.g.userWaypoint.position.x, 0.4)
+        self.assertEqual(self.g.userWaypoint.position.y, 0.6)
+        self.runlua('SlashCmdList.FOREVERSUITE("way 200 10")')
+        self.assertIn("Waypoint not set", self.g.prints[len(self.g.prints)])
+        self.runlua('SlashCmdList.FOREVERSUITE("way clear")')
+        self.assertIsNone(self.g.userWaypoint)
+        self.runlua('SlashCmdList.FOREVERSUITE("dungeon The Deadmines")')
+        self.assertIn("Westfall", self.g.prints[len(self.g.prints)])
+        self.assertIsNotNone(self.g.userWaypoint)
+        before = len(self.g.prints)
+        self.runlua('SlashCmdList.FOREVERSUITE("dungeon")')
+        listing = " ".join(self.g.prints[i] for i in range(before + 1, len(self.g.prints) + 1))
+        self.assertIn("Scarlet Monastery", listing)
+
+    def test_teleport_favorites_and_menu(self):
+        self.start()
+        self.runlua('F:SetEnabled("teleportFavorites", true); F:SetEnabled("teleportMenu", true)')
+        self.runlua('SlashCmdList.FOREVERSUITE("tele add Hearth 8690")')
+        self.assertIn("Saved teleport favorite Hearth", self.g.prints[len(self.g.prints)])
+        self.runlua('SlashCmdList.FOREVERSUITE("tele hearth")')
+        self.assertIn(8690, list(self.g.castSpells.values()))
+        self.runlua('SlashCmdList.FOREVERSUITE("tele menu")')
+        self.assertTrue(self.g.ForeverSuiteTeleportMenu.shown)
+        self.assertEqual(self.g.ForeverSuiteTeleportMenu.buttons[1].text.text, "Hearth")
+        self.runlua('combat = true; SlashCmdList.FOREVERSUITE("tele Hearth")')
+        self.assertIn("cannot cast during combat", self.g.prints[len(self.g.prints)])
+        self.runlua('combat = false; F:SetEnabled("teleportMenu", false)')
+        self.assertFalse(self.g.ForeverSuiteTeleportMenu.shown)
+        self.runlua('SlashCmdList.FOREVERSUITE("tele remove Hearth")')
+        self.assertIsNone(self.g.ForeverSuiteDB.teleports)
+
+    def test_taxi_shortcuts_and_flight_timer(self):
+        self.start()
+        self.runlua('F:SetEnabled("flightShortcuts", true); F:SetEnabled("flightTimer", true);'
+                    'taxiNodes = { "Goldshire", "Stormwind" }')
+        self.runlua('SlashCmdList.FOREVERSUITE("taxi list")')
+        self.assertIn("2. Stormwind", self.g.prints[len(self.g.prints) - 1])
+        self.runlua('SlashCmdList.FOREVERSUITE("taxi 2")')
+        self.assertEqual(list(self.g.takenTaxi.values()), [2])
+        self.runlua('unitOnTaxi = true; now = 100; fire("TAXIMAP_CLOSED"); now = 130')
+        self.runlua('SlashCmdList.FOREVERSUITE("flight")')
+        self.assertIn("30.0 seconds", self.g.prints[len(self.g.prints)])
+        self.runlua('fire("PLAYER_CONTROL_GAINED"); SlashCmdList.FOREVERSUITE("flight")')
+        self.assertIn("Not on a taxi flight", self.g.prints[len(self.g.prints)])
+
+    def test_teleport_db_sanitation(self):
+        self.runlua('ForeverSuiteDB={schema=1, teleports={ {name="Hearth", id=8690}, {name="", id=1},'
+                    ' {name="Bad", id="x"}, {name="Huge", id=2.5} }}')
+        self.start()
+        list_ = self.g.ForeverSuiteDB.teleports
+        self.assertEqual(len(list_), 1)
+        self.assertEqual(list_[1].name, "Hearth")
+
+
+    def test_quest_list_levels_and_distance_sorting(self):
+        self.start()
+        self.runlua('questLogEntries = { { title = "Far Quest", level = 20, id = 11 }, { title = "Near Quest", level = 25, id = 12 },'
+                    ' { title = "Header", header = true } }; questDistances = { [11] = 40000, [12] = 100 }')
+        self.runlua('F:SetEnabled("questList", true); F:SetEnabled("questDistance", true)')
+        self.runlua('SlashCmdList.FOREVERSUITE("quests")')
+        first = self.g.prints[len(self.g.prints) - 1]
+        self.assertIn("Near Quest", first)
+        self.assertIn("[25]", first)
+        self.assertIn("10 m", first)
+        self.runlua('SlashCmdList.FOREVERSUITE("quests")')
+        self.assertIn("Far Quest", self.g.prints[len(self.g.prints)])
+        self.assertNotIn("Header", " ".join(self.g.prints.values()))
+
+    def test_use_quest_item_and_target_macro(self):
+        self.start()
+        self.runlua('F:SetEnabled("questItemUse", true); F:SetEnabled("questTarget", true);'
+                    'containerLinks[0] = { [1] = "item:4001" }; containerSlots[0] = 1; sold = {}')
+        self.runlua('SlashCmdList.FOREVERSUITE("useq 4001")')
+        self.assertIn("Used", self.g.prints[len(self.g.prints)])
+        self.runlua('SlashCmdList.FOREVERSUITE("useq Missing")')
+        self.assertIn("no matching item found", self.g.prints[len(self.g.prints)])
+        self.runlua('SlashCmdList.FOREVERSUITE("qtarget Wolf")')
+        self.assertEqual(self.g.targetedName, "Wolf")
+        self.runlua('SlashCmdList.FOREVERSUITE("qtarget Nobody")')
+        self.assertIn("No creature with that name", self.g.prints[len(self.g.prints)])
+
+    def test_rested_report_and_full_notice(self):
+        self.start()
+        self.runlua('function GetXPExhaustion() return restedValue end; restedValue = 200;'
+                    'UnitXPValue = 0; UnitXPMaxValue = 1000;'
+                    'F:SetEnabled("restedInfo", true); F:SetEnabled("restedFull", true)')
+        self.runlua('SlashCmdList.FOREVERSUITE("rested")')
+        self.assertIn("Rested XP: 200", self.g.prints[len(self.g.prints)])
+        self.assertIn("20.0%", self.g.prints[len(self.g.prints)])
+        self.runlua('restedValue = 1600; F:RefreshRestedForTest()')
+        self.assertIn("Rested experience is full", self.g.prints[len(self.g.prints)])
+
+    def test_rare_alert_and_trade_and_craft_summaries(self):
+        self.start()
+        self.runlua('F:SetEnabled("rareAlerts", true); unitClassifications.target = "rare";'
+                    'guids.target = "Creature-0-1465-0-2105-9999-000043F59F";'
+                    'F:SetEnabled("tradeWarning", true); itemReady = true; itemMeta["item:5001"] = { quality = 3 };'
+                    'tradeLinks[1] = "item:5001"')
+        self.runlua('fire("PLAYER_TARGET_CHANGED")')
+        self.assertIn("9999", self.g.prints[len(self.g.prints)])
+        before = len(self.g.prints)
+        self.runlua('fire("PLAYER_TARGET_CHANGED")')
+        self.assertEqual(len(self.g.prints), before)
+        self.runlua('fire("TRADE_SHOW")')
+        self.assertIn("Trade window contains", self.g.prints[len(self.g.prints)])
+        self.runlua('F:SetEnabled("craftWarning", true); tsRecipes = { "Test Sword" }; tsSelection = 1;'
+                    'tsReagents = { { { "Iron Bar", 2 } } }')
+        self.runlua('fire("TRADE_SKILL_UPDATE")')
+        self.assertIn("Crafting Test Sword with Iron Bar x2", self.g.prints[len(self.g.prints)])
+
+    def test_typed_confirmation_guards_settings_resets(self):
+        self.start()
+        self.runlua('F:SetEnabled("typedConfirm", true); F:SetEnabled("chatLogStore", true)')
+        self.runlua('fire("CHAT_MSG_SAY", "keep me", "Tester")')
+        self.runlua('SlashCmdList.FOREVERSUITE("chatlog clear")')
+        self.assertIn("Type /fs chatlog clear confirm", self.g.prints[len(self.g.prints)])
+        self.assertIsNotNone(self.g.ForeverSuiteDB.chatLog)
+        self.runlua('SlashCmdList.FOREVERSUITE("chatlog clear confirm")')
+        self.assertIsNone(self.g.ForeverSuiteDB.chatLog)
 
 
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
 -- SPDX-License-Identifier: MIT
 local addonName, F = ...
 F.name = addonName
-F.version = "0.2.0-alpha.8"
+F.version = "0.2.0-alpha.9"
 F.features, F.order, F.listeners, F.errors = {}, {}, {}, {}
 F.frame = CreateFrame("Frame")
 F.paused = false
@@ -482,6 +482,55 @@ function F:Initialize()
         else
             db.sellWhitelist = nil
         end
+        if type(db.lastWhisper) ~= "string" or db.lastWhisper == "" or #db.lastWhisper > 120 then
+            db.lastWhisper = nil
+        end
+        if type(db.teleports) == "table" then
+            local kept = {}
+            for _, entry in ipairs(db.teleports) do
+                if type(entry) == "table" and type(entry.name) == "string" and entry.name ~= ""
+                    and #entry.name <= 30 and type(entry.id) == "number" and entry.id > 0
+                    and entry.id % 1 == 0 and #kept < 20 then
+                    kept[#kept + 1] = { name = entry.name, id = entry.id }
+                end
+            end
+            if #kept > 0 then db.teleports = kept else db.teleports = nil end
+        else
+            db.teleports = nil
+        end
+        if type(db.chatLog) == "table" then
+            local kept = {}
+            for _, entry in ipairs(db.chatLog) do
+                if type(entry) == "table" and type(entry.text) == "string" and entry.text ~= ""
+                    and #entry.text <= 400 then
+                    kept[#kept + 1] = { channel = type(entry.channel) == "string" and entry.channel:sub(1, 20) or "",
+                        name = type(entry.name) == "string" and entry.name:sub(1, 120) or "",
+                        text = entry.text }
+                end
+            end
+            while #kept > 200 do table.remove(kept, 1) end
+            if #kept > 0 then db.chatLog = kept else db.chatLog = nil end
+        else
+            db.chatLog = nil
+        end
+        if type(db.channels) == "table" then
+            local kept = {}
+            for _, value in ipairs(db.channels) do
+                if type(value) == "string" and value ~= "" and #value <= 40 and #kept < 10 then kept[#kept + 1] = value end
+            end
+            if #kept > 0 then db.channels = kept else db.channels = nil end
+        else
+            db.channels = nil
+        end
+        if type(db.chatFilters) == "table" then
+            local kept = {}
+            for _, value in ipairs(db.chatFilters) do
+                if type(value) == "string" and value ~= "" and #value <= 40 and #kept < 50 then kept[#kept + 1] = value end
+            end
+            if #kept > 0 then db.chatFilters = kept else db.chatFilters = nil end
+        else
+            db.chatFilters = nil
+        end
         for key, stored in pairs(db.options) do
             local feature = self.features[key]
             if not feature or type(stored) ~= "table" then
@@ -573,6 +622,12 @@ local function optionFromCommand(feature, key, raw)
     return value
 end
 
+local function confirmRequired(rest)
+    if not F:Active("typedConfirm") then return false end
+    local lower = tostring(rest or ""):lower()
+    return lower:match("confirm%s*$") == nil
+end
+
 local function helpText()
     F:Print("Commands:")
     F:Print("  /fs - open settings; /fs on <id> / /fs off <id> switch one feature")
@@ -585,6 +640,9 @@ local function helpText()
     F:Print("  /fs size <window> <width> <height>, /fs anchor <window> <target|clear> [x] [y], /fs layout [save|use|delete] <name>")
     F:Print("  /fs bugreport, /fs popups, /fs sockets")
     F:Print("  /fs quest [list|except <id|title>|allow <id|title>], /fs whitelist [list|add <itemID>|remove <itemID>], /fs gossip [list|prefer <1-9>|clear]")
+    F:Print("  /fs chatlog [lines|clear], /fs channels [list|add|remove], /fs filter [list|add|remove], /fs whisper <name>|close, /fs reply <text>")
+    F:Print("  /fs quests, /fs useq <name|itemID>, /fs qtarget <name>, /fs rested")
+    F:Print("  /fs where, /fs zone, /fs way <x> <y>|clear, /fs dungeon [name], /fs tele [list|add <name> <spellID>|remove <name>|menu|<name>], /fs taxi [list|<n>], /fs flight")
     F:Print("  Feature IDs appear in settings and in /fs report.")
 end
 
@@ -775,6 +833,181 @@ SlashCmdList.FOREVERSUITE = function(message)
         end
         F.db.watch[#F.db.watch + 1] = rest
         F:Print("Also watching button " .. rest .. " for the dialog key.")
+    elseif command == "quests" then
+        if not F:Active("questList") then F:Print("Enable Quest list with levels first."); return end
+        F:PrintQuestList(F:Active("questDistance"))
+    elseif command == "useq" then
+        if not F:Active("questItemUse") then F:Print("Enable Use quest items by name first."); return end
+        local ok, result = F:UseQuestItem(rest)
+        F:Print(ok and ("Used " .. tostring(result) .. ".") or ("Not used: " .. tostring(result)))
+    elseif command == "qtarget" then
+        if not F:Active("questTarget") then F:Print("Enable Target a quest mob by name first."); return end
+        if rest == "" then F:Print("Use /fs qtarget <creature name>."); return end
+        local ok = false
+        if TargetByName then
+            local called, found = pcall(TargetByName, rest, true)
+            ok = called and found ~= false
+        elseif TargetUnit then
+            local called = pcall(TargetUnit, rest)
+            ok = called
+        end
+        F:Print(ok and ("Targeting " .. rest .. ".") or "No creature with that name is nearby.")
+    elseif command == "rested" then
+        if not F:Active("restedInfo") then F:Print("Enable Rested experience report first."); return end
+        F:PrintRested()
+    elseif command == "where" then
+        if not F:Active("worldMapCoords") then F:Print("Enable World map cursor coordinates first."); return end
+        local x, y
+        if F.CursorMapPosition then x, y = F:CursorMapPosition() end
+        if x then
+            F:Print("Map coordinates: " .. x .. ", " .. y)
+        else
+            F:Print("Move the mouse over the open world map and try again.")
+        end
+    elseif command == "zone" then
+        local zone = GetRealZoneText and GetRealZoneText() or (GetZoneText and GetZoneText())
+        local range = F.ZoneLevelRange and F:ZoneLevelRange(zone) or nil
+        if not zone then F:Print("The client did not report a zone.")
+        elseif range then F:Print(zone .. ": levels " .. range .. ".")
+        else F:Print(zone .. ": no level range recorded for this zone.") end
+    elseif command == "way" then
+        if not F:Active("waypoints") then F:Print("Enable Waypoint commands first."); return end
+        if rest:lower() == "clear" then
+            F:Print(F:ClearWaypoint() and "Cleared the waypoint." or "This client has no waypoint to clear.")
+            return
+        end
+        local x, y, map = rest:match("^(%S+)%s+(%S+)%s*(%S*)$")
+        local ok, result = F:SetWaypoint(x, y, tonumber(map))
+        F:Print(ok and ("Set a waypoint at " .. x .. ", " .. y .. ".") or ("Waypoint not set: " .. tostring(result)))
+    elseif command == "dungeon" then
+        if not F:Active("dungeonMarkers") then F:Print("Enable Dungeon entrance notes first."); return end
+        if rest ~= "" then
+            local data = F:DungeonEntrance(rest)
+            if not data then F:Print("Unknown dungeon. Use /fs dungeon to list them."); return end
+            F:Print(rest .. ": entrance in " .. data.zone .. " at " .. data.x .. ", " .. data.y .. " (levels " .. data.level .. ").")
+            F:SetWaypoint(data.x, data.y)
+        else
+            local names = F:DungeonNames()
+            for index = 1, math.min(#names, 25) do
+                local data = F:DungeonEntrance(names[index])
+                F:Print(names[index] .. " - " .. data.zone .. " " .. data.x .. ", " .. data.y .. " (" .. data.level .. ")")
+            end
+        end
+    elseif command == "tele" then
+        local action, name, spell = rest:match("^(%S*)%s*(%S*)%s*(%S*)$")
+        action = action:lower()
+        if action == "" or action == "list" then
+            local list = F.TeleportList and F:TeleportList() or {}
+            local parts = {}
+            for _, entry in ipairs(list) do parts[#parts + 1] = entry.name .. " (" .. entry.id .. ")" end
+            F:Print(#parts .. " teleport favorite(s): " .. (#parts > 0 and table.concat(parts, ", ") or "none"))
+        elseif action == "add" then
+            if not F:Active("teleportFavorites") then F:Print("Enable Teleport favorites first."); return end
+            local ok, result, id = F:AddTeleport(name, spell)
+            if ok then F:Print("Saved teleport favorite " .. result .. " for spell " .. id .. ".")
+            else F:Print("Not saved: " .. tostring(result)) end
+        elseif action == "remove" then
+            F:Print(F:RemoveTeleport(name) and ("Removed teleport favorite " .. name .. ".") or "That favorite does not exist.")
+        elseif action == "menu" then
+            local ok, problem = F:ToggleTeleportMenu()
+            if not ok then F:Print(tostring(problem)) end
+        else
+            if not F:Active("teleportFavorites") then F:Print("Enable Teleport favorites first."); return end
+            local ok, result = F:CastTeleport(action)
+            if ok then
+                if F:GetOption("teleportFavorites", "confirm") ~= false then F:Print("Casting " .. tostring(result) .. ".") end
+            else F:Print("Not cast: " .. tostring(result)) end
+        end
+    elseif command == "taxi" then
+        if not F:Active("flightShortcuts") then F:Print("Enable Flight map shortcuts first."); return end
+        local number = tonumber(rest)
+        if rest == "" or rest:lower() == "list" then
+            local rows = F.TaxiNodes and F:TaxiNodes() or {}
+            if #rows == 0 then F:Print("No flight points are listed right now. Open the taxi map first.")
+            else
+                for _, row in ipairs(rows) do F:Print("  " .. row.index .. ". " .. row.name) end
+                F:Print("Use /fs taxi <number> to take a flight point.")
+            end
+        elseif number and TakeTaxiNode then
+            local ok = pcall(TakeTaxiNode, number)
+            F:Print(ok and ("Taking flight point " .. number .. ".") or "The client refused that flight point.")
+        else
+            F:Print("Use /fs taxi list or /fs taxi <number>.")
+        end
+    elseif command == "flight" then
+        if not F:Active("flightTimer") then F:Print("Enable Flight time display first."); return end
+        local elapsed = F.FlightElapsed and F:FlightElapsed() or 0
+        if elapsed > 0 then F:Print(string.format("This flight has taken %.1f seconds.", elapsed))
+        else F:Print("Not on a taxi flight right now.") end
+    elseif command == "chatlog" then
+        local action = rest:lower()
+        if action == "clear" or action == "clear confirm" then
+            if confirmRequired(rest) then
+                F:Print("This deletes stored chat lines. Type /fs chatlog clear confirm to continue.")
+                return
+            end
+            if F.db then F.db.chatLog = nil end
+            F:Print("Stored chat history cleared.")
+        else
+            local count = tonumber(action) or 40
+            local text = F.ChatLogText and F:ChatLogText(count) or ""
+            if text == "" then F:Print("No stored chat lines yet.")
+            else
+                if F.ShowReport then F:ShowReport(text) end
+                F:Print("Showing the last stored chat lines in the copy window.")
+            end
+        end
+    elseif command == "channels" then
+        local action, value = rest:match("^(%S*)%s*(.-)%s*$")
+        action = action:lower()
+        if action == "" or action == "list" then
+            local list = F.ChannelList and F:ChannelList() or {}
+            F:Print(#list .. " saved channel(s): " .. (#list > 0 and table.concat(list, ", ") or "none"))
+        elseif action == "add" then
+            if not F:Active("chatChannels") then F:Print("Enable Saved chat channels first."); return end
+            local ok, problem = F:AddChannel(value)
+            F:Print(ok and ("Saved channel " .. value .. ".") or ("Not saved: " .. tostring(problem)))
+        elseif action == "remove" then
+            local ok, problem = F:RemoveChannel(value)
+            F:Print(ok and ("Removed and left channel " .. value .. ".") or ("Not removed: " .. tostring(problem)))
+        else
+            F:Print("Use /fs channels list | add <name> | remove <name>.")
+        end
+    elseif command == "filter" then
+        local action, value = rest:match("^(%S*)%s*(.-)%s*$")
+        action = action:lower()
+        if action == "" or action == "list" then
+            local list = F.ChatFilterList and F:ChatFilterList() or {}
+            F:Print(#list .. " chat filter(s): " .. (#list > 0 and table.concat(list, ", ") or "none"))
+        elseif action == "add" then
+            if not F:Active("chatFilters") then F:Print("Enable Chat word filter first."); return end
+            local ok, problem = F:AddChatFilter(value)
+            F:Print(ok and ("Filtering lines containing " .. value .. ".") or ("Not added: " .. tostring(problem)))
+        elseif action == "remove" then
+            local ok = F:RemoveChatFilter(value)
+            F:Print(ok and "Removed the chat filter." or "That filter does not exist.")
+        else
+            F:Print("Use /fs filter list | add <word> | remove <word>.")
+        end
+    elseif command == "whisper" then
+        if rest:lower() == "close" or rest == "" then
+            if F.HideWhisper then F:HideWhisper() end
+            F:Print("Closed the whisper window.")
+        elseif not F:Active("whisperWindow") then
+            F:Print("Enable Whisper conversation window first.")
+        else
+            local ok, problem = F:ShowWhisper(rest)
+            F:Print(ok and ("Opened the whisper log for " .. rest .. ".") or ("Not opened: " .. tostring(problem)))
+        end
+    elseif command == "reply" then
+        if F.db and type(F.db.lastWhisper) == "string" and rest ~= "" and SendChatMessage then
+            pcall(SendChatMessage, rest, "WHISPER", nil, F.db.lastWhisper)
+            F:Print("Whispered " .. F.db.lastWhisper .. ".")
+        elseif F.db and type(F.db.lastWhisper) == "string" then
+            F:Print("Use /fs reply <text> to answer " .. F.db.lastWhisper .. ".")
+        else
+            F:Print("No whisper to reply to yet.")
+        end
     elseif command == "quest" then
         local action, value = rest:match("^(%S*)%s*(.-)%s*$")
         action = action:lower()
@@ -917,6 +1150,11 @@ SlashCmdList.FOREVERSUITE = function(message)
             F:SaveProfile(target)
             F:Print("Saved current settings into profile " .. target .. ".")
         elseif action == "delete" then
+            if confirmRequired(rest2) then
+                F:Print("This deletes saved settings. Type /fs profile delete " .. rest2 .. " confirm to continue.")
+                return
+            end
+            rest2 = rest2:gsub("%s*confirm%s*$", "")
             local ok, problem = F:DeleteProfile(rest2)
             F:Print(ok and ("Deleted profile " .. rest2 .. ".") or ("Profile not deleted: " .. tostring(problem)))
         elseif action == "scope" then
