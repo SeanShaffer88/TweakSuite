@@ -16,6 +16,12 @@ TweakSuite is the same addon under a new name, with a new settings store (`Tweak
 
 The chat command is now `/ts` (or `/tweaksuite`).
 
+### Opening TweakSuite
+
+- Click the **minimap button** (left-click opens or closes the window, right-click opens Options > AddOns > TweakSuite, drag to move it). Hide it with **Show minimap button** on that Options page or `/ts button`.
+- Type `/ts`, or use **Open TweakSuite** in Options > AddOns > TweakSuite.
+- The TweakSuite window is standalone: it stays open when you close Options. Escape closes it.
+
 ## Install and open
 
 Extract the release ZIP into the intended client's `Interface/AddOns` folder. The final path must end in `Interface/AddOns/TweakSuite/TweakSuite.toc`.

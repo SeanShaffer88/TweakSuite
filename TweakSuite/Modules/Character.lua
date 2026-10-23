@@ -487,7 +487,9 @@ function F:MinimapButtons()
     if not minimap or not minimap.GetChildren then return rows end
     local children = { minimap:GetChildren() }
     for _, button in ipairs(children) do
-        if button and button ~= _G.MiniMapTracking and button ~= _G.MiniMapWorldMapButton then
+        -- TweakSuite's own button has its own show/hide setting, so the collection leaves it alone.
+        if button and button ~= _G.MiniMapTracking and button ~= _G.MiniMapWorldMapButton
+            and button ~= _G.TweakSuiteMinimapButton then
             local kind = button.GetObjectType and button:GetObjectType() or nil
             local name = button.GetName and button:GetName() or nil
             if kind == "Button" or (not kind and name) then

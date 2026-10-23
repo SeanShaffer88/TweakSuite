@@ -2,7 +2,7 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 local addonName, F = ...
 F.name = addonName
-F.version = "0.3.0-alpha.1"
+F.version = "0.3.0-alpha.2"
 F.features, F.order, F.listeners, F.errors = {}, {}, {}, {}
 F.frame = CreateFrame("Frame")
 F.paused = false

@@ -15,6 +15,54 @@ local function button(parent, text, width, callback)
     control:SetSize(width, 24); control:SetText(text); control:SetScript("OnClick", callback)
     return control
 end
+-- TweakSuite windows are standalone: they are NOT in UISpecialFrames, because Blizzard closes
+-- every special frame when the Options panel closes (it returns to the game menu, which calls
+-- CloseSpecialWindows). Escape closes the topmost TweakSuite window through its own key handler.
+-- Keyboard propagation cannot be changed in combat, so during combat the windows join
+-- UISpecialFrames temporarily and Escape behaves like any other Blizzard panel.
+local standalone = {}
+local function setSpecial(name, special)
+    for index = #UISpecialFrames, 1, -1 do
+        if UISpecialFrames[index] == name then table.remove(UISpecialFrames, index) end
+    end
+    if special then UISpecialFrames[#UISpecialFrames + 1] = name end
+end
+local function makeStandalone(frame, name)
+    standalone[#standalone + 1] = name
+    if not frame.EnableKeyboard or not frame.SetPropagateKeyboardInput then
+        setSpecial(name, true) -- client without keyboard propagation: fall back to Blizzard's handling
+        return
+    end
+    frame:EnableKeyboard(true)
+    frame:SetPropagateKeyboardInput(true)
+    frame:SetScript("OnKeyDown", function(self, key)
+        if InCombatLockdown() then return end
+        if key == "ESCAPE" then
+            self:SetPropagateKeyboardInput(false)
+            self:Hide()
+        else
+            self:SetPropagateKeyboardInput(true)
+        end
+    end)
+    frame:HookScript("OnShow", function(self)
+        if not InCombatLockdown() then self:SetPropagateKeyboardInput(true) end
+    end)
+    if InCombatLockdown() then setSpecial(name, true) end
+end
+local combatWatch = CreateFrame("Frame")
+combatWatch.isStandaloneWatch = true
+combatWatch:RegisterEvent("PLAYER_REGEN_DISABLED")
+combatWatch:RegisterEvent("PLAYER_REGEN_ENABLED")
+combatWatch:SetScript("OnEvent", function(_, event)
+    local inCombat = event == "PLAYER_REGEN_DISABLED"
+    for _, name in ipairs(standalone) do
+        local frame = _G[name]
+        if inCombat and frame and frame.SetPropagateKeyboardInput then pcall(frame.SetPropagateKeyboardInput, frame, true) end
+        setSpecial(name, inCombat)
+    end
+end)
+F.StandaloneWindows = standalone
+
 local function window(name, title, width, height)
     local frame = CreateFrame("Frame", name, UIParent, "BackdropTemplate")
     frame:SetSize(width, height); frame:SetPoint("CENTER"); frame:SetFrameStrata("DIALOG")
@@ -36,7 +84,7 @@ local function window(name, title, width, height)
     drag:SetScript("OnDragStop", function() frame:StopMovingOrSizing() end)
     local close = CreateFrame("Button", nil, frame, "UIPanelCloseButton")
     close:SetPoint("TOPRIGHT", -3, -3); close:SetScript("OnClick", function() frame:Hide() end)
-    UISpecialFrames[#UISpecialFrames + 1] = name
+    makeStandalone(frame, name)
     frame:Hide()
     return frame
 end
@@ -442,12 +490,46 @@ function F:SetupSettings()
     local report = button(frame, "Diagnostic report", 145, function() F:ShowReport(F:Report()) end)
     report:SetPoint("BOTTOMRIGHT", -24, 18)
     frame:SetScript("OnShow", function() F:RefreshSettings() end)
-    if Settings and Settings.RegisterCanvasLayoutCategory and Settings.RegisterAddOnCategory then
-        local panel = CreateFrame("Frame")
-        local title = label(panel, "TweakSuite", "GameFontNormalLarge"); title:SetPoint("TOPLEFT", 16, -16)
-        local open = button(panel, "Open TweakSuite", 180, function() F:OpenSettings() end); open:SetPoint("TOPLEFT", 16, -55)
-        Settings.RegisterAddOnCategory(Settings.RegisterCanvasLayoutCategory(panel, "TweakSuite"))
-    end
+    F:SetupAddonPanel()
+end
+
+-- Options > AddOns > TweakSuite: opens the standalone window and controls the minimap button.
+function F:SetupAddonPanel()
+    if self.addonPanel or not (Settings and Settings.RegisterCanvasLayoutCategory and Settings.RegisterAddOnCategory) then return end
+    local panel = CreateFrame("Frame")
+    self.addonPanel = panel
+    local icon = panel:CreateTexture(nil, "ARTWORK")
+    icon:SetSize(32, 32); icon:SetPoint("TOPLEFT", 16, -12)
+    icon:SetTexture("Interface\\AddOns\\TweakSuite\\Media\\Icon")
+    local title = label(panel, "TweakSuite", "GameFontNormalLarge"); title:SetPoint("TOPLEFT", 56, -16)
+    local version = label(panel, "Version " .. self.version .. " by Malikor", "GameFontHighlightSmall"); version:SetPoint("TOPLEFT", 56, -36)
+    local about = label(panel, "TweakSuite opens in its own window, which stays open when you close Options.", "GameFontHighlight")
+    about:SetPoint("TOPLEFT", 16, -64); about:SetWidth(560)
+    local open = button(panel, "Open TweakSuite", 180, function() F:OpenSettings() end); open:SetPoint("TOPLEFT", 16, -92)
+    local check = CreateFrame("CheckButton", nil, panel, "UICheckButtonTemplate")
+    check:SetSize(26, 26); check:SetPoint("TOPLEFT", 14, -132)
+    local checkLabel = label(panel, "Show minimap button", "GameFontNormal"); checkLabel:SetPoint("LEFT", check, "RIGHT", 4, 0)
+    local checkHelp = label(panel, "Left-click the button to open or close TweakSuite, right-click for this page, drag to move it around the minimap. /ts button also toggles it.", "GameFontHighlightSmall")
+    checkHelp:SetPoint("TOPLEFT", 44, -160); checkHelp:SetWidth(540)
+    check:SetScript("OnClick", function(self) F:SetMinimapButtonShown(self:GetChecked() == true) end)
+    panel:SetScript("OnShow", function()
+        local m = F.MinimapSettings and F.MinimapSettings()
+        check:SetChecked(not (m and m.hide))
+        check:SetEnabled(not F.readOnly)
+    end)
+    panel.minimapCheck = check
+    self.addonCategory = Settings.RegisterCanvasLayoutCategory(panel, "TweakSuite")
+    Settings.RegisterAddOnCategory(self.addonCategory)
+end
+
+function F:OpenAddonOptions()
+    self:Initialize()
+    if not self.addonCategory then self:SetupAddonPanel() end
+    local category = self.addonCategory
+    if not category or not Settings or not Settings.OpenToCategory then self:OpenSettings(); return end
+    local id = category.GetID and category:GetID() or category.ID
+    local ok = pcall(Settings.OpenToCategory, id)
+    if not ok then self:OpenSettings() end
 end
 
 function F:ApplyWindowScale()

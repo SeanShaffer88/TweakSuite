@@ -1,6 +1,6 @@
-# Engineering audit — TweakSuite 0.3.0-alpha.1
+# Engineering audit — TweakSuite 0.3.0-alpha.2
 
-Date: October 22, 2026. Scope: the whole addon (28 Lua files, ~12,000 lines, 227 features) after the rename from ForeverSuite, plus the changes made in this release.
+Date: October 22, 2026. Scope: the whole addon (29 Lua files, ~12,200 lines, 227 features plus the minimap button) after the rename from ForeverSuite, plus the changes made in this release.
 
 Evidence labels: **Verified** = exercised under the stated conditions. **Partially verified** = exercised under some conditions (named). **Unverified** = inferred from code, documentation or analogy.
 
@@ -8,12 +8,12 @@ Evidence labels: **Verified** = exercised under the stated conditions. **Partial
 
 | Check | Result | Evidence |
 |---|---|---|
-| Lua 5.1 syntax of every shipped file | Pass | **Verified** — `tools/loadcheck.py`, 28 files, 0 errors |
-| Behaviour tests | 190 / 190 pass | **Partially verified** — real Lua 5.1 (Lupa 2.8) against a mock WoW host; not the game client |
+| Lua 5.1 syntax of every shipped file | Pass | **Verified** — `tools/loadcheck.py`, 29 files, 0 errors |
+| Behaviour tests | 196 / 196 pass | **Partially verified** — real Lua 5.1 (Lupa 2.8) against a mock WoW host; not the game client |
 | Backlog coverage | 267 rows: 260 implemented, 7 scoped out with reasons, 0 planned; 227 features, none without a row | **Verified** — `tools/coverage.py` |
 | Licence headers | All Lua and tool sources carry `GPL-3.0-or-later` | **Verified** — `tools/provenance.py` |
 | Bundled assets | Only TweakSuite's own credited artwork | **Verified** — `tools/provenance.py` with the CREDITS.md rule |
-| TOC consistency | 3 TOC files agree on version 0.3.0-alpha.1, Interface 16001, file list | **Verified** — `tools/release_check.py` |
+| TOC consistency | 3 TOC files agree on version 0.3.0-alpha.2, Interface 16001, file list | **Verified** — `tools/release_check.py` |
 | Icon file | 64×64, 32-bit, uncompressed TGA (type 2) | **Verified** — header inspected; in-game display **Unverified** |
 | Global API use | See next section | **Partially verified** — static audit against an older dump |
 | In-game behaviour on beta and launch clients | Not yet run | **Unverified** — needs the VALIDATION.md checklist |
@@ -22,7 +22,8 @@ Evidence labels: **Verified** = exercised under the stated conditions. **Partial
 
 1. **Compatibility shims polluted the global table (high impact on other addons).** `Compat.lua` installed Classic-era globals such as `GetContainerItemInfo`, `UnitAura`, `GetQuestLogTitle` and `GetGossipOptions` when Forever lacked them. Other addons commonly test for those globals to choose an older code path, and `GetContainerItemInfo` returned a table where older callers expect positional values, so this could break unrelated bag, quest and aura addons. Fix: shims are private (`F.compat`); modules alias only what they use via `F.Compat(name)`. A test fails if any shim reaches `_G` (mutation-checked).
 2. **Free quest turn-in could ignore a money requirement.** The `GetQuestRequiredMoney` shim read the quest *log* selection rather than the quest open at the NPC, so the "no money requirement" guard could pass for a quest that needs gold. Fix: use `GetQuestMoneyToGet`, which the Forever API dump lists. Covered by a new test.
-3. **Running ForeverSuite and TweakSuite together would apply every tweak twice.** Fix: a previous-name guard blocks every TweakSuite feature while ForeverSuite is loaded. Covered by a new test.
+3. **TweakSuite's window closed whenever Options closed.** Closing Options returns to the game menu, which closes every frame in `UISpecialFrames`. Fix: TweakSuite windows handle Escape themselves and join `UISpecialFrames` only during combat (when keyboard propagation cannot be changed). Covered by new tests; in-game behaviour **Unverified**.
+4. **Running ForeverSuite and TweakSuite together would apply every tweak twice.** Fix: a previous-name guard blocks every TweakSuite feature while ForeverSuite is loaded. Covered by a new test.
 
 ## Static API audit
 

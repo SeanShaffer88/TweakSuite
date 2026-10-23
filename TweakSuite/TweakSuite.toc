@@ -2,7 +2,7 @@
 ## Title: TweakSuite
 ## Notes: Modular quality-of-life tweaks for WoW Forever. Every feature starts off; /ts opens settings.
 ## Author: Malikor
-## Version: 0.3.0-alpha.1
+## Version: 0.3.0-alpha.2
 ## IconTexture: Interface\AddOns\TweakSuite\Media\Icon
 ## SavedVariables: TweakSuiteDB
 ## X-License: GPL-3.0-or-later
@@ -34,4 +34,5 @@ Modules\Tools.lua
 Modules\Migration.lua
 Modules\ClientUI.lua
 Modules\Popups.lua
+Modules\MinimapButton.lua
 Settings.lua

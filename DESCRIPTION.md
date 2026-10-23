@@ -22,10 +22,10 @@
 - `/ts report` gives a copyable status and error report. `/ts pause` stops everything for the session.
 - No network access, no external code, no always-running polling loop.
 
-**Getting started:** install, enable TweakSuite on the AddOns screen, type `/ts`, and switch on only what you want.
+**Getting started:** install, enable TweakSuite on the AddOns screen, click the minimap button or type `/ts`, and switch on only what you want.
 
 **Upgrading from ForeverSuite:** TweakSuite is the same project under a new name. Run `/fs reset` in ForeverSuite before removing it; settings start fresh.
 
-Preview release: the tweaks are covered by 190 automated tests, but in-game verification on Forever is still in progress. Keep any addon you depend on until its TweakSuite replacement has been tested in your setup.
+Preview release: the tweaks are covered by 196 automated tests, but in-game verification on Forever is still in progress. Keep any addon you depend on until its TweakSuite replacement has been tested in your setup.
 
 Author: Malikor · License: GNU GPL v3.0 or later

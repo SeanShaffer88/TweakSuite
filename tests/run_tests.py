@@ -106,6 +106,9 @@ function methods:CreateTexture()
  self.textures = self.textures or {}; table.insert(self.textures, tex); return tex
 end
 function methods:SetTexture(path) self.texture = path end
+function methods:RegisterForClicks(...) self.clickButtons = {...} end
+function methods:SetFrameLevel(level) self.level = level end
+function methods:GetCenter() return 500, 400 end
 function methods:GetStringHeight() return 450 end
 UIParent = CreateFrame("Frame")
 ChatFrame1 = CreateFrame("Frame", "ChatFrame1"); ChatFrame1.fading = true; ChatFrame1.clamped = true
@@ -739,6 +742,77 @@ function GetQuestMoneyToGet() return 0 end
         self.start()
         self.runlua('F:OpenSettings()')
         self.assertEqual(self.g.F.window.icon.texture, "Interface\\AddOns\\TweakSuite\\Media\\Icon")
+
+    def test_minimap_button_default_toggle_and_position(self):
+        self.start()
+        self.runlua('Minimap.width = 140; Minimap.height = 140; F:UpdateMinimapButton()')
+        button = self.g.TweakSuiteMinimapButton
+        self.assertTrue(button.shown)
+        self.assertEqual(button.icon.texture, "Interface\\AddOns\\TweakSuite\\Media\\Icon")
+        self.assertFalse(self.g.TweakSuiteDB.minimap.hide)
+        self.assertEqual(self.g.TweakSuiteDB.minimap.angle, 225)
+        self.assertTrue(self.lua.eval('TweakSuiteMinimapButton.points[2] == Minimap'))
+        self.runlua('SlashCmdList.TWEAKSUITE("button")')
+        self.assertFalse(button.shown)
+        self.assertTrue(self.g.TweakSuiteDB.minimap.hide)
+        self.runlua('SlashCmdList.TWEAKSUITE("button")')
+        self.assertTrue(button.shown)
+        self.runlua('local b = TweakSuiteMinimapButton; b.scripts.OnClick(b, "LeftButton")')
+        self.assertTrue(self.g.F.window.shown)
+        self.runlua('local b = TweakSuiteMinimapButton; b.scripts.OnClick(b, "LeftButton")')
+        self.assertFalse(self.g.F.window.shown)
+
+    def test_minimap_button_saved_data_sanitised(self):
+        self.runlua('TweakSuiteDB = {schema=1, minimap={hide="no", angle=999}}')
+        self.start()
+        self.runlua('F:UpdateMinimapButton()')
+        self.assertFalse(self.g.TweakSuiteDB.minimap.hide)
+        self.assertEqual(self.g.TweakSuiteDB.minimap.angle, 225)
+        self.runlua('TweakSuiteDB.minimap.hide = true; F:UpdateMinimapButton()')
+        self.assertFalse(self.g.TweakSuiteMinimapButton.shown)
+
+    def test_minimap_collection_leaves_tweaksuite_button(self):
+        self.start()
+        self.runlua('F:UpdateMinimapButton(); F:SetEnabled("minimapButtons", true); SlashCmdList.TWEAKSUITE("minimap collect")')
+        self.assertTrue(self.g.TweakSuiteMinimapButton.shown)
+
+    def test_addon_panel_minimap_checkbox(self):
+        self.start()
+        self.runlua('F:UpdateMinimapButton(); F:SetupAddonPanel(); F.addonPanel:Show()')
+        self.assertTrue(self.g.F.addonPanel.minimapCheck.checked)
+        self.runlua('local c = F.addonPanel.minimapCheck; c.checked = false; c.scripts.OnClick(c)')
+        self.assertFalse(self.g.TweakSuiteMinimapButton.shown)
+        self.assertTrue(self.g.TweakSuiteDB.minimap.hide)
+
+    def special_names(self):
+        return [self.g.UISpecialFrames[i] for i in range(1, len(self.g.UISpecialFrames) + 1)]
+
+    def test_settings_window_is_standalone(self):
+        self.start()
+        self.runlua('F:OpenSettings()')
+        self.assertNotIn("TweakSuiteOptions", self.special_names())
+        frame = self.g.F.window
+        self.assertTrue(frame.keyboard)
+        self.assertTrue(frame.propagate)
+        self.runlua('F.window.scripts.OnKeyDown(F.window, "W")')
+        self.assertTrue(frame.shown)
+        self.assertTrue(frame.propagate)
+        self.runlua('F.window.scripts.OnKeyDown(F.window, "ESCAPE")')
+        self.assertFalse(frame.shown)
+        self.assertFalse(frame.propagate)
+        self.runlua('F:OpenSettings()')
+        self.assertTrue(frame.propagate)
+
+    def test_standalone_windows_use_blizzard_escape_in_combat(self):
+        self.start()
+        self.runlua('F:OpenSettings()')
+        self.runlua('for _, f in ipairs(frames) do if f.events and f.events.PLAYER_REGEN_DISABLED and f.events.PLAYER_REGEN_ENABLED and f.scripts.OnEvent and not f.keyboard and f.isStandaloneWatch then f.scripts.OnEvent(f, "%s") end end' % "PLAYER_REGEN_DISABLED")
+        self.assertIn("TweakSuiteOptions", self.special_names())
+        self.runlua('combat = true; F.window.scripts.OnKeyDown(F.window, "ESCAPE")')
+        self.assertTrue(self.g.F.window.shown)
+        self.runlua('combat = false')
+        self.runlua('for _, f in ipairs(frames) do if f.events and f.events.PLAYER_REGEN_DISABLED and f.events.PLAYER_REGEN_ENABLED and f.scripts.OnEvent and not f.keyboard and f.isStandaloneWatch then f.scripts.OnEvent(f, "%s") end end' % "PLAYER_REGEN_ENABLED")
+        self.assertNotIn("TweakSuiteOptions", self.special_names())
 
     def test_accept_and_pause(self):
         self.start()

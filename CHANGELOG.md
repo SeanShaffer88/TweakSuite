@@ -2,6 +2,16 @@
 
 All notable changes to TweakSuite (formerly ForeverSuite). Versions follow semantic versioning; `alpha` builds have passed the automated checks but not in-game verification.
 
+## 0.3.0-alpha.2 — 2026-10-22
+
+### Added
+- **Minimap button** with the TweakSuite icon: left-click opens or closes TweakSuite, right-click opens its Options page, drag moves it around the minimap edge (round or square minimaps). Shown by default; hide it with **Show minimap button** in Options > AddOns > TweakSuite or `/ts button`. The minimap button collection feature leaves it alone.
+- Options > AddOns > TweakSuite page now shows the icon, version and author, the minimap button checkbox and the Open TweakSuite button.
+- Six tests (196 total) for the minimap button, its saved settings, the Options checkbox and standalone window behaviour.
+
+### Changed
+- **TweakSuite windows are standalone.** Closing the game Options panel no longer closes them. Escape closes the topmost TweakSuite window on its own; during combat, when keyboard handling is restricted, Escape falls back to Blizzard's normal panel handling.
+
 ## 0.3.0-alpha.1 — 2026-10-22
 
 ### Changed
