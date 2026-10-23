@@ -1,5 +1,5 @@
 -- TweakSuite - Copyright (C) 2026 Malikor
--- SPDX-License-Identifier: GPL-3.0-or-later
+-- SPDX-License-Identifier: MIT
 -- Cooldown panel, cooldown pulse, swing timer and nameplate cast indicator.
 -- Timers use the client's own cooldown and cast data; a value the client marks secret
 -- is shown as "hidden" instead of being compared.

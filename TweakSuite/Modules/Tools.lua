@@ -1,5 +1,5 @@
 -- TweakSuite - Copyright (C) 2026 Malikor
--- SPDX-License-Identifier: GPL-3.0-or-later
+-- SPDX-License-Identifier: MIT
 -- Small utilities that do not belong to a gameplay module: a macro drawer, a sound
 -- browser and keyboard/gamepad navigation for the settings list.
 local _, F = ...

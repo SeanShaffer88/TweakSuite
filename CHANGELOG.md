@@ -10,6 +10,7 @@ All notable changes to TweakSuite (formerly ForeverSuite). Versions follow seman
 - Six tests (196 total) for the minimap button, its saved settings, the Options checkbox and standalone window behaviour.
 
 ### Changed
+- **License changed to MIT** (copyright Malikor). All TweakSuite code is original; no third-party code is included, so the permissive licence fits and lets other addon authors reuse pieces freely.
 - GitHub repository renamed from `ForeverSuite` to `TweakSuite` (old URLs redirect).
 - **TweakSuite windows are standalone.** Closing the game Options panel no longer closes them. Escape closes the topmost TweakSuite window on its own; during combat, when keyboard handling is restricted, Escape falls back to Blizzard's normal panel handling.
 

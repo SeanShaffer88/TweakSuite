@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # TweakSuite - Copyright (C) 2026 Malikor
-# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-License-Identifier: MIT
 """Launch-client regression suite: the checks to run before packaging a release.
 
 1. Every Lua file parses and the whole addon loads in the mock client.

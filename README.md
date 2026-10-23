@@ -10,7 +10,7 @@ A comprehensive, modular quality-of-life addon for **World of Warcraft: Forever*
 
 Extract the ZIP into your client's `Interface/AddOns` folder (`_classic_beta_` for the beta, `_forever_` for launch), restart the game, enable **TweakSuite** on the AddOns screen, then click the minimap button or type `/ts`.
 
-**0.3.0-alpha.2** ships 227 opt-in features under the GNU GPL v3 (or later), with an addon icon, a minimap button and a standalone settings window. The capability backlog has no planned rows left: every row is implemented in preview or scoped out with a written reason. Original code; no other addons or their assets are bundled. Beta and launch client executables were both observed at 1.60.1.70532 on October 22, 2026. **In-game gameplay and visual verification are still pending**, so treat this as a preview and keep the addons you rely on until each replacement is tested.
+**0.3.0-alpha.2** ships 227 opt-in features under the MIT License, with an addon icon, a minimap button and a standalone settings window. The capability backlog has no planned rows left: every row is implemented in preview or scoped out with a written reason. Original code; no other addons or their assets are bundled. Beta and launch client executables were both observed at 1.60.1.70532 on October 22, 2026. **In-game gameplay and visual verification are still pending**, so treat this as a preview and keep the addons you rely on until each replacement is tested.
 
 ## Opening TweakSuite
 
@@ -134,7 +134,7 @@ No Lua runtime or Python dependency is required by players. WoW supplies Lua. Lu
 
 ## License, credits and project files
 
-TweakSuite is free software under the [GNU General Public License v3.0 or later](LICENSE). Copyright (C) 2026 Malikor. Any later upstream integration must retain provenance and compatible terms; a source addon having a public repository does not grant permission to relicense it. See [SOURCES.md](SOURCES.md) and [CREDITS.md](CREDITS.md).
+TweakSuite is released under the [MIT License](LICENSE). Copyright (c) 2026 Malikor. Any later upstream integration must retain provenance and compatible terms; a source addon having a public repository does not grant permission to relicense it. See [SOURCES.md](SOURCES.md) and [CREDITS.md](CREDITS.md).
 
 | File | Contents |
 |---|---|

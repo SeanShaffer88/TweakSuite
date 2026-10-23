@@ -1,5 +1,5 @@
 -- TweakSuite - Copyright (C) 2026 Malikor
--- SPDX-License-Identifier: GPL-3.0-or-later
+-- SPDX-License-Identifier: MIT
 -- Loot notices, a tracked item bar and merchant cost details.
 local _, F = ...
 

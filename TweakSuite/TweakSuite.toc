@@ -5,7 +5,7 @@
 ## Version: 0.3.0-alpha.2
 ## IconTexture: Interface\AddOns\TweakSuite\Media\Icon
 ## SavedVariables: TweakSuiteDB
-## X-License: GPL-3.0-or-later
+## X-License: MIT
 ## X-Category: Quality of Life
 Core.lua
 Modules\Compat.lua

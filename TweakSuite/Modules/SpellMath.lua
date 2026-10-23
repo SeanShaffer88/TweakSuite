@@ -1,5 +1,5 @@
 -- TweakSuite - Copyright (C) 2026 Malikor
--- SPDX-License-Identifier: GPL-3.0-or-later
+-- SPDX-License-Identifier: MIT
 -- Spell calculation tooltips: damage per second, per minute, per mana and DoT share.
 -- Every number comes from the client: the spell's own tooltip text (C_TooltipInfo),
 -- its cast time (C_Spell.GetSpellInfo) and its power cost (C_Spell.GetSpellPowerCost).

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # TweakSuite - Copyright (C) 2026 Malikor
-# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-License-Identifier: MIT
 """License and asset provenance audit.
 
 Checks that every Lua and Python source carries the project's SPDX header, that the only
@@ -12,7 +12,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-SPDX = "SPDX-License-Identifier: GPL-3.0-or-later"
+SPDX = "SPDX-License-Identifier: MIT"
 BINARY_SUFFIXES = {".blp", ".tga", ".m2", ".wav", ".mp3", ".ogg", ".ttf", ".otf", ".dll", ".exe", ".psd"}
 TEXT_SUFFIXES = {".lua", ".py", ".md", ".toc", ".json", ".txt", ".yml", ".yaml", ".ps1", ".sha256"}
 SKIP_DIRS = {".git", ".venv", "dist", "__pycache__", "node_modules"}

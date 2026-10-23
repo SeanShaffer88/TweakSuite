@@ -1,5 +1,5 @@
 -- TweakSuite - Copyright (C) 2026 Malikor
--- SPDX-License-Identifier: GPL-3.0-or-later
+-- SPDX-License-Identifier: MIT
 local _, F = ...
 local function cvarFeature(id, title, name, desired, description, options)
     if type(desired) ~= "function" then

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # TweakSuite - Copyright (C) 2026 Malikor
-# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-License-Identifier: MIT
 """Cross-check bare Lua global calls against the Forever client's API dump.
 
 The dump is published by the Forever Addon Kit

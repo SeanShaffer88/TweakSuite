@@ -1,5 +1,5 @@
 -- TweakSuite - Copyright (C) 2026 Malikor
--- SPDX-License-Identifier: GPL-3.0-or-later
+-- SPDX-License-Identifier: MIT
 -- Invite, duel, summon, resurrection, release and whisper rules.
 -- Every rule is opt-in, skips combat and Shift, and never accepts money or items.
 local _, F = ...

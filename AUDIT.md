@@ -11,7 +11,7 @@ Evidence labels: **Verified** = exercised under the stated conditions. **Partial
 | Lua 5.1 syntax of every shipped file | Pass | **Verified** — `tools/loadcheck.py`, 29 files, 0 errors |
 | Behaviour tests | 196 / 196 pass | **Partially verified** — real Lua 5.1 (Lupa 2.8) against a mock WoW host; not the game client |
 | Backlog coverage | 267 rows: 260 implemented, 7 scoped out with reasons, 0 planned; 227 features, none without a row | **Verified** — `tools/coverage.py` |
-| Licence headers | All Lua and tool sources carry `GPL-3.0-or-later` | **Verified** — `tools/provenance.py` |
+| Licence headers | All Lua and tool sources carry the `MIT` SPDX header | **Verified** — `tools/provenance.py` |
 | Bundled assets | Only TweakSuite's own credited artwork | **Verified** — `tools/provenance.py` with the CREDITS.md rule |
 | TOC consistency | 3 TOC files agree on version 0.3.0-alpha.2, Interface 16001, file list | **Verified** — `tools/release_check.py` |
 | Icon file | 64×64, 32-bit, uncompressed TGA (type 2) | **Verified** — header inspected; in-game display **Unverified** |

@@ -1,5 +1,5 @@
 -- TweakSuite - Copyright (C) 2026 Malikor
--- SPDX-License-Identifier: GPL-3.0-or-later
+-- SPDX-License-Identifier: MIT
 -- Movable Blizzard windows with saved positions. Original implementation.
 local _, F = ...
 local WINDOWS = {

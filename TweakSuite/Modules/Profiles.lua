@@ -1,5 +1,5 @@
 -- TweakSuite - Copyright (C) 2026 Malikor
--- SPDX-License-Identifier: GPL-3.0-or-later
+-- SPDX-License-Identifier: MIT
 -- Named profiles, import/export and a small CVar browser. Original implementation.
 local _, F = ...
 local MAX_PROFILE_NAME = 24

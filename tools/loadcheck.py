@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # TweakSuite - Copyright (C) 2026 Malikor
-# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-License-Identifier: MIT
 """Parse every addon Lua file with the Lua 5.1 loader the client uses.
 
 This catches syntax errors and typos that the behavioural tests only find when a

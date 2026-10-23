@@ -1,5 +1,5 @@
 -- TweakSuite - Copyright (C) 2026 Malikor
--- SPDX-License-Identifier: GPL-3.0-or-later
+-- SPDX-License-Identifier: MIT
 -- Moving settings in from older TweakSuite builds or from a reference addon, plus the
 -- small translation layer every user-facing string can go through.
 local _, F = ...

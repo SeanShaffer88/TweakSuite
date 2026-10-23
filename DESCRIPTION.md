@@ -28,4 +28,4 @@
 
 Preview release: the tweaks are covered by 196 automated tests, but in-game verification on Forever is still in progress. Keep any addon you depend on until its TweakSuite replacement has been tested in your setup.
 
-Author: Malikor · License: GNU GPL v3.0 or later
+Author: Malikor · License: MIT

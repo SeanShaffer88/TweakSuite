@@ -1,5 +1,5 @@
 -- TweakSuite - Copyright (C) 2026 Malikor
--- SPDX-License-Identifier: GPL-3.0-or-later
+-- SPDX-License-Identifier: MIT
 -- Minimap button for opening TweakSuite. Part of TweakSuite's own interface rather than a
 -- tweak, so it is shown by default; hide it in Options > AddOns > TweakSuite or with
 -- /ts button. (/ts minimap belongs to the minimap button collection feature.) Drag it around the minimap edge; the position is saved with TweakSuite settings.

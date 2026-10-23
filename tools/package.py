@@ -1,5 +1,5 @@
 # TweakSuite - Copyright (C) 2026 Malikor
-# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-License-Identifier: MIT
 """Build a deterministic install ZIP with the addon directory at its root."""
 import argparse
 import hashlib

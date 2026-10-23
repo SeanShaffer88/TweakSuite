@@ -1,5 +1,5 @@
 -- TweakSuite - Copyright (C) 2026 Malikor
--- SPDX-License-Identifier: GPL-3.0-or-later
+-- SPDX-License-Identifier: MIT
 -- Compatibility shims for client functions that moved into namespaces.
 --
 -- The Forever beta client exposes C_Container, C_GossipInfo, C_UnitAuras and C_QuestLog but

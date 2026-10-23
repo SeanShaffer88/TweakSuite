@@ -1,5 +1,5 @@
 -- TweakSuite - Copyright (C) 2026 Malikor
--- SPDX-License-Identifier: GPL-3.0-or-later
+-- SPDX-License-Identifier: MIT
 -- Quiet client popups: beta surveys, feedback prompts and the beta reporting button.
 -- Everything is name based and guarded so a missing frame on either client is harmless.
 local _, F = ...

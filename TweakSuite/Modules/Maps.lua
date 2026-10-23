@@ -1,5 +1,5 @@
 -- TweakSuite - Copyright (C) 2026 Malikor
--- SPDX-License-Identifier: GPL-3.0-or-later
+-- SPDX-License-Identifier: MIT
 -- Map coordinates, waypoints, taxi shortcuts and travel helpers.
 local _, F = ...
 -- Older client functions: the client's own global when present, else a private shim (Compat.lua).

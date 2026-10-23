@@ -1,7 +1,7 @@
 # Credits
 
 ## Author
-- **Malikor** — TweakSuite design, implementation and maintenance. Copyright (C) 2026 Malikor, released under the GNU GPL v3.0 or later.
+- **Malikor** — TweakSuite design, implementation and maintenance. Copyright (C) 2026 Malikor, released under the MIT License.
 
 ## Contributors
 - Development assistance: Claude (Anthropic), including the arena-agent build sessions that produced the 0.2.0 series.

@@ -1,5 +1,5 @@
 -- TweakSuite - Copyright (C) 2026 Malikor
--- SPDX-License-Identifier: GPL-3.0-or-later
+-- SPDX-License-Identifier: MIT
 -- Shared tooltip augmentations. Each data type is hooked at most once.
 local _, F = ...
 local seen = setmetatable({}, { __mode = "k" })

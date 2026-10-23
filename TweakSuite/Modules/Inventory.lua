@@ -1,5 +1,5 @@
 -- TweakSuite - Copyright (C) 2026 Malikor
--- SPDX-License-Identifier: GPL-3.0-or-later
+-- SPDX-License-Identifier: MIT
 -- Original item-level overlay service for the character and inspect panels.
 local _, F = ...
 -- Older client functions: the client's own global when present, else a private shim (Compat.lua).

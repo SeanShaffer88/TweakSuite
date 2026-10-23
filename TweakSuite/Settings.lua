@@ -1,5 +1,5 @@
 -- TweakSuite - Copyright (C) 2026 Malikor
--- SPDX-License-Identifier: GPL-3.0-or-later
+-- SPDX-License-Identifier: MIT
 -- Original UI. Leatrix Plus's published gallery informs the visual direction only.
 local _, F = ...
 local categories = { "Home", "All tweaks", "Automation", "Dialogs", "Windows", "Tooltips", "Inventory",

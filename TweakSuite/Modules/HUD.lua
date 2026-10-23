@@ -1,5 +1,5 @@
 -- TweakSuite - Copyright (C) 2026 Malikor
--- SPDX-License-Identifier: GPL-3.0-or-later
+-- SPDX-License-Identifier: MIT
 -- Action button helpers and cursor effects.
 local _, F = ...
 local common = { "Leatrix_Plus", "Leatrix_Plus_Forever", "EnhanceQoL", "Bartender4", "Dominos" }

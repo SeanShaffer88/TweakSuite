@@ -1,5 +1,5 @@
 # TweakSuite - Copyright (C) 2026 Malikor
-# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-License-Identifier: MIT
 """Regenerate TweakSuite artwork: python tools/make_art.py TweakSuite/Media/Icon.tga media/icon-256.png media/logo.png
 Needs Pillow and the DejaVu fonts (development only)."""
 from PIL import Image, ImageDraw, ImageFilter, ImageFont

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # TweakSuite - Copyright (C) 2026 Malikor
-# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-License-Identifier: MIT
 """Reconcile the capability backlog with the features registered in the Lua sources.
 
 Every registered feature must be named by at least one backlog row, and every row

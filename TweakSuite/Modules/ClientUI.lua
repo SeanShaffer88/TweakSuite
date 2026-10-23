@@ -1,5 +1,5 @@
 -- TweakSuite - Copyright (C) 2026 Malikor
--- SPDX-License-Identifier: GPL-3.0-or-later
+-- SPDX-License-Identifier: MIT
 -- Client UI surfaces that TweakSuite only lightly touches: talking heads, event
 -- toasts, sound channels and the minimap mask. Each feature restores what it changed.
 local _, F = ...

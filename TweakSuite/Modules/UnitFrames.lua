@@ -1,5 +1,5 @@
 -- TweakSuite - Copyright (C) 2026 Malikor
--- SPDX-License-Identifier: GPL-3.0-or-later
+-- SPDX-License-Identifier: MIT
 -- Default unit frames: layout and readouts that stay out of the tainted path. Every
 -- feature here only scales, moves or reads; none of them replace Blizzard's unit frames.
 local _, F = ...

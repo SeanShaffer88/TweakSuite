@@ -1,5 +1,5 @@
 -- TweakSuite - Copyright (C) 2026 Malikor
--- SPDX-License-Identifier: GPL-3.0-or-later
+-- SPDX-License-Identifier: MIT
 -- Group, difficulty and availability tools. Everything here only reads the client's
 -- own group data and prints it; nothing invites, kicks, promotes or starts anything
 -- without an explicit command from the player.

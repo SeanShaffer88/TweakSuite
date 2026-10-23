@@ -1,5 +1,5 @@
 -- TweakSuite - Copyright (C) 2026 Malikor
--- SPDX-License-Identifier: GPL-3.0-or-later
+-- SPDX-License-Identifier: MIT
 -- Audio warnings for hazards, failures and environmental timers.
 -- Every list is user maintained: nothing is hardcoded from another addon, and a spell
 -- that the client marks as a secret aura is skipped instead of being read.
