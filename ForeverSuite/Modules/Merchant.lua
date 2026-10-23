@@ -114,10 +114,14 @@ function F:SaleCandidates()
     local qualityLimit = QUALITY[F:GetOption("merchantRules", "quality")] or 0
     local maxLevel = F:GetOption("merchantRules", "maxItemLevel") or 0
     local bindMode = F:GetOption("merchantRules", "bindMode")
+    local protectedBag
+    if F:Active("reagentBag") then protectedBag = F:GetOption("reagentBag", "bag") end
     for bag = 0, BAG_SLOTS do
+        local skipBag = protectedBag ~= nil and bag == protectedBag
         local slots = containerSlots(bag)
         for slot = 1, slots do
-            local link = containerLink(bag, slot)
+            local link
+            if not skipBag then link = containerLink(bag, slot) end
             if type(link) == "string" then
                 local info = itemInfo(link)
                 if info and info.sellPrice and info.sellPrice > 0 then

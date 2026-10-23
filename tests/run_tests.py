@@ -87,10 +87,14 @@ function methods:GetItem() return "Item", self.link end
 function methods:GetUnit() return "Unit", self.unit end
 function methods:GetID() return self.bag or 0 end
 function methods:AddLine(text) table.insert(self.lines, text) end
-function CreateFrame(_, name)
- local frame = setmetatable({scripts={}, hooks={}, events={}, lines={}, name=name}, {__index=methods})
+function CreateFrame(kind, name, parent)
+ local frame = setmetatable({scripts={}, hooks={}, events={}, lines={}, name=name, kind=kind}, {__index=methods})
+ if parent then parent.children = parent.children or {}; table.insert(parent.children, frame) end
  if name then _G[name] = frame end; frames[#frames+1] = frame; return frame
 end
+function methods:GetObjectType() return self.kind or "Frame" end
+function methods:GetChildren() return unpack(self.children or {}) end
+function methods:SetParent(parent) self.parent = parent; if parent then parent.children = parent.children or {}; table.insert(parent.children, self) end end
 function methods:CreateFontString()
  local font = CreateFrame("FontString")
  self.fontstrings = self.fontstrings or {}; table.insert(self.fontstrings, font); return font
@@ -274,6 +278,8 @@ function GetTaxiNodeName(index) return taxiNodes[index] end
 takenTaxi, castSpells = {}, {}
 function TakeTaxiNode(index) table.insert(takenTaxi, index) end
 function CastSpellByID(id) table.insert(castSpells, id) end
+equippedByCalls = {}
+function EquipItemByName(link) table.insert(equippedByCalls, link) end
 userWaypoint = nil
 function SetUserWaypoint(point) userWaypoint = point end
 function ClearUserWaypoint() userWaypoint = nil end
@@ -336,8 +342,8 @@ local function metaFor(link)
  local meta = itemMeta[link]
  if meta then
   return meta.name or "Test Item", link, meta.quality or 1, meta.itemLevel or 1, 1,
-   "Armor", "Plate", meta.stack or 1, meta.equipLoc or "", nil, meta.sellPrice or 0,
-   meta.classID or 4, 0, meta.bindType or 2, 0, 0, false
+   "Armor", meta.subType or "Plate", meta.stack or 1, meta.equipLoc or "", nil, meta.sellPrice or 0,
+   meta.classID == nil and 4 or meta.classID, 0, meta.bindType or 2, 0, 0, false
  end
  return "Item", "item:123", 2, 45, 1, "Armor", "Plate", itemStack, itemEquip, "", itemSellPrice
 end
@@ -421,7 +427,7 @@ class SuiteTests(unittest.TestCase):
     def test_default_is_inert_and_ui_loads(self):
         self.start()
         self.runlua('fire("MERCHANT_SHOW"); fire("QUEST_DETAIL"); F:OpenSettings()')
-        self.assertEqual(len(self.g.F.order), 162)
+        self.assertEqual(len(self.g.F.order), 172)
         self.assertEqual(self.g.calls.repair, 0)
         self.assertEqual(self.g.calls.sell, 0)
         self.assertEqual(self.g.calls.accept, 0)
@@ -1207,7 +1213,7 @@ class SuiteTests(unittest.TestCase):
 
     def test_category_counts_and_layout_sanitation(self):
         self.start()
-        self.assertEqual(self.g.F.categoryButtons.Interface.label.text, "Interface (45)")
+        self.assertEqual(self.g.F.categoryButtons.Interface.label.text, "Interface (46)")
         self.assertEqual(self.g.F.categoryButtons.Home.label.text, "Home")
         self.assertEqual(self.g.F.categoryButtons.Windows.label.text, "Windows (7)")
         self.assertEqual(self.g.F.categoryButtons.Dialogs.label.text, "Dialogs (7)")
@@ -1215,6 +1221,7 @@ class SuiteTests(unittest.TestCase):
         self.assertEqual(self.g.F.categoryButtons.Chat.label.text, "Chat (19)")
         self.assertEqual(self.g.F.categoryButtons.Maps.label.text, "Maps (9)")
         self.assertEqual(self.g.F.categoryButtons.Quests.label.text, "Quests (9)")
+        self.assertEqual(self.g.F.categoryButtons.Inventory.label.text, "Inventory (18)")
         self.runlua('F:SetEnabled("moveWindows", true); shift=true;'
                     'MerchantFrame:Trigger("OnDragStart");'
                     'MerchantFrame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 10, -10);'
@@ -2184,6 +2191,101 @@ class SuiteTests(unittest.TestCase):
         self.assertIsNotNone(self.g.ForeverSuiteDB.chatLog)
         self.runlua('SlashCmdList.FOREVERSUITE("chatlog clear confirm")')
         self.assertIsNone(self.g.ForeverSuiteDB.chatLog)
+
+
+    def test_gear_groups_and_bag_marks(self):
+        self.start()
+        self.runlua('itemReady = true; itemMeta["item:6001"] = { quality = 4 }; itemMeta["item:6002"] = { quality = 3 };'
+                    'containerLinks[0] = { [1] = "item:6001", [2] = "item:6002" }; containerSlots[0] = 2;'
+                    'CreateFrame("Button", "ContainerFrame1Item1"); CreateFrame("Button", "ContainerFrame1Item2");'
+                    'F:SetEnabled("gearGroups", true); F:SetEnabled("gearBagMarks", true)')
+        self.runlua('SlashCmdList.FOREVERSUITE("gear add Tank 6001")')
+        self.assertIn("Added item 6001", self.g.prints[len(self.g.prints)])
+        self.runlua('SlashCmdList.FOREVERSUITE("gear add Tank 6002"); SlashCmdList.FOREVERSUITE("gear add Tank 9999")')
+        self.runlua('SlashCmdList.FOREVERSUITE("gear show Tank")')
+        self.assertIn("Marked 2 bag slot(s)", self.g.prints[len(self.g.prints)])
+        self.assertEqual(self.g.ContainerFrame1Item1.border[1], 1)
+        self.runlua('SlashCmdList.FOREVERSUITE("gear show clear")')
+        self.assertIn("Cleared gear group marks", self.g.prints[len(self.g.prints)])
+        self.runlua('SlashCmdList.FOREVERSUITE("gear list")')
+        self.assertIn("Tank", self.g.prints[len(self.g.prints)])
+        self.runlua('SlashCmdList.FOREVERSUITE("gear remove Tank 6001")')
+        self.assertIn("Removed the item from the gear group", self.g.prints[len(self.g.prints)])
+
+    def test_bag_search_filters(self):
+        self.start()
+        self.runlua('itemReady = true; itemMeta["item:6101"] = { quality = 4, classID = 4 }; itemMeta["item:6102"] = { quality = 1 };'
+                    'containerLinks[0] = { [1] = "item:6101", [2] = "item:6102" }; containerSlots[0] = 2;'
+                    'containerLinks[1] = {};'
+                    'F:SetEnabled("bagSearch", true); F:SetEnabled("bagFilters", true); F:SetEnabled("gearGroups", true)')
+        self.runlua('SlashCmdList.FOREVERSUITE("gear add Fancy 6101")')
+        before = len(self.g.prints)
+        self.runlua('SlashCmdList.FOREVERSUITE("bag #gear")')
+        listing = " ".join(self.g.prints[i] for i in range(before + 1, len(self.g.prints) + 1))
+        self.assertIn("1 matching item(s)", listing)
+        self.assertIn("slot 1", listing)
+
+    def test_fishing_restore_and_lure(self):
+        self.start()
+        self.runlua('itemReady = true; itemMeta["item:7001"] = { name = "Fishing Pole", equipLoc = "INVTYPE_2HWEAPON", subType = "Fishing Pole" };'
+                    'itemMeta["item:7002"] = { equipLoc = "INVTYPE_WEAPON", subType = "One-Handed Swords" };'
+                    'itemMeta["item:7100"] = { classID = 0 };'
+                    'inventoryLinks.player[16] = "item:7002"; containerLinks[0] = { [1] = "item:7100" }; containerSlots[0] = 1;'
+                    'F:SetEnabled("fishingSet", true); F:SetEnabled("fishingLure", true); F:SetEnabled("fishingCast", true)')
+        self.runlua('inventoryLinks.player[16] = "item:7001"; fire("PLAYER_EQUIPMENT_CHANGED", 16)')
+        self.runlua('SlashCmdList.FOREVERSUITE("fish restore")')
+        self.assertIn("Restored 1 weapon(s)", self.g.prints[len(self.g.prints)])
+        self.runlua('SlashCmdList.FOREVERSUITE("lure add Shiny 7100")')
+        self.assertIn("Saved lure Shiny", self.g.prints[len(self.g.prints)])
+        self.runlua('SlashCmdList.FOREVERSUITE("lure Shiny")')
+        self.assertIn("Applied lure Shiny", self.g.prints[len(self.g.prints)])
+
+    def test_eat_drink_and_pet_food(self):
+        self.start()
+        self.runlua('itemReady = true; itemMeta["item:7201"] = { name = "Bread", classID = 0, subType = "Food & Drink" };'
+                    'itemMeta["item:7202"] = { name = "Spring Water", classID = 0, subType = "Food & Drink" };'
+                    'containerLinks[0] = { [1] = "item:7201", [2] = "item:7202" }; containerSlots[0] = 2;'
+                    'F:SetEnabled("foodDrink", true); F:SetEnabled("petFood", true)')
+        self.runlua('SlashCmdList.FOREVERSUITE("eat")')
+        self.assertIn("Bread", self.g.prints[len(self.g.prints)])
+        self.runlua('SlashCmdList.FOREVERSUITE("drink")')
+        self.assertIn("Spring Water", self.g.prints[len(self.g.prints)])
+        self.runlua('containerLinks[0] = { [1] = "item:7201", [2] = "item:7202" }')
+        before = len(self.g.prints)
+        self.runlua('SlashCmdList.FOREVERSUITE("petfood")')
+        listing = " ".join(self.g.prints[i] for i in range(before + 1, len(self.g.prints) + 1))
+        self.assertIn("Bread", listing)
+
+    def test_reagent_bag_protection_skips_bag(self):
+        self.start()
+        self.runlua('itemReady = true; itemMeta["item:7301"] = { quality = 0, sellPrice = 100 };'
+                    'itemMeta["item:7302"] = { quality = 0, sellPrice = 100 };'
+                    'containerLinks[4] = { [1] = "item:7301" }; containerSlots[4] = 1;'
+                    'containerLinks[0] = { [1] = "item:7302" }; containerSlots[0] = 1;'
+                    'F:SetEnabled("merchantRules", true); F:SetEnabled("reagentBag", true)')
+        self.runlua('candidates = #F:SaleCandidates()')
+        self.assertEqual(self.g.candidates, 1)
+        self.runlua('F:SetEnabled("reagentBag", false); candidates = #F:SaleCandidates()')
+        self.assertEqual(self.g.candidates, 2)
+
+    def test_minimap_button_collection(self):
+        self.start()
+        self.runlua('local button = CreateFrame("Button", "SomeAddonMinimapButton", Minimap); button.shown = true;'
+                    'F:SetEnabled("minimapButtons", true)')
+        self.runlua('SlashCmdList.FOREVERSUITE("minimap collect")')
+        self.assertIn("Hid 1 minimap button", self.g.prints[len(self.g.prints)])
+        self.assertFalse(self.g.SomeAddonMinimapButton.shown)
+        self.runlua('SlashCmdList.FOREVERSUITE("minimap restore")')
+        self.assertTrue(self.g.SomeAddonMinimapButton.shown)
+
+    def test_character_db_sanitation(self):
+        self.runlua('ForeverSuiteDB={schema=1, gearGroups={Tank={6001, 0, "x"}, Bad=5},'
+                    'lures={ {name="Shiny", id=7100}, {name="", id=1}, {name="Bad", id=0} }}')
+        self.start()
+        groups = self.g.ForeverSuiteDB.gearGroups
+        self.assertEqual([groups['Tank'][i] for i in (1,)], [6001])
+        self.assertIsNone(groups.Bad)
+        self.assertEqual(len(self.g.ForeverSuiteDB.lures), 1)
 
 
 if __name__ == "__main__":

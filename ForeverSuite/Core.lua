@@ -1,7 +1,7 @@
 -- SPDX-License-Identifier: MIT
 local addonName, F = ...
 F.name = addonName
-F.version = "0.2.0-alpha.9"
+F.version = "0.2.0-alpha.10"
 F.features, F.order, F.listeners, F.errors = {}, {}, {}, {}
 F.frame = CreateFrame("Frame")
 F.paused = false
@@ -485,6 +485,37 @@ function F:Initialize()
         if type(db.lastWhisper) ~= "string" or db.lastWhisper == "" or #db.lastWhisper > 120 then
             db.lastWhisper = nil
         end
+        if type(db.gearGroups) == "table" then
+            local groups, keptNames = db.gearGroups, 0
+            for name, list in pairs(groups) do
+                if type(name) ~= "string" or name == "" or #name > 20 or type(list) ~= "table" or keptNames >= 10 then
+                    groups[name] = nil
+                else
+                    local kept = {}
+                    for _, value in ipairs(list) do
+                        if type(value) == "number" and value > 0 and value % 1 == 0 and #kept < 40 then kept[#kept + 1] = value end
+                    end
+                    groups[name] = kept
+                    if #kept == 0 then groups[name] = nil else keptNames = keptNames + 1 end
+                end
+            end
+            if next(db.gearGroups) == nil then db.gearGroups = nil end
+        else
+            db.gearGroups = nil
+        end
+        if type(db.lures) == "table" then
+            local kept = {}
+            for _, entry in ipairs(db.lures) do
+                if type(entry) == "table" and type(entry.name) == "string" and entry.name ~= ""
+                    and #entry.name <= 30 and type(entry.id) == "number" and entry.id > 0
+                    and entry.id % 1 == 0 and #kept < 10 then
+                    kept[#kept + 1] = { name = entry.name, id = entry.id }
+                end
+            end
+            if #kept > 0 then db.lures = kept else db.lures = nil end
+        else
+            db.lures = nil
+        end
         if type(db.teleports) == "table" then
             local kept = {}
             for _, entry in ipairs(db.teleports) do
@@ -642,6 +673,7 @@ local function helpText()
     F:Print("  /fs quest [list|except <id|title>|allow <id|title>], /fs whitelist [list|add <itemID>|remove <itemID>], /fs gossip [list|prefer <1-9>|clear]")
     F:Print("  /fs chatlog [lines|clear], /fs channels [list|add|remove], /fs filter [list|add|remove], /fs whisper <name>|close, /fs reply <text>")
     F:Print("  /fs quests, /fs useq <name|itemID>, /fs qtarget <name>, /fs rested")
+    F:Print("  /fs gear [list|add|remove|show], /fs fish [restore], /fs lure [list|add|remove|<name>], /fs eat, /fs drink, /fs petfood, /fs reagentbag <0-4|off>, /fs minimap [collect|restore|list]")
     F:Print("  /fs where, /fs zone, /fs way <x> <y>|clear, /fs dungeon [name], /fs tele [list|add <name> <spellID>|remove <name>|menu|<name>], /fs taxi [list|<n>], /fs flight")
     F:Print("  Feature IDs appear in settings and in /fs report.")
 end
@@ -793,7 +825,14 @@ SlashCmdList.FOREVERSUITE = function(message)
             F:Print("Enable Bag item search first."); return
         end
         if rest == "" then F:Print("Use /fs bag <text> to search your bags."); return end
+        local filters = {}
         local needle = rest:lower()
+        if F.Active and F:Active("bagFilters") and F.ParseBagSearch then
+            local parsedFilters, words = F:ParseBagSearch(rest)
+            filters = parsedFilters
+            needle = words
+            if #filters > 0 and needle == "" then needle = "" end
+        end
         local found = {}
         local function scan(bag)
             local slots = 0
@@ -805,7 +844,12 @@ SlashCmdList.FOREVERSUITE = function(message)
                 elseif GetContainerItemLink then link = GetContainerItemLink(bag, slot) end
                 if type(link) == "string" then
                     local name = C_Item and C_Item.GetItemInfo and C_Item.GetItemInfo(link)
-                    if type(name) == "string" and name:lower():find(needle, 1, true) then
+                    local values = { C_Item and C_Item.GetItemInfo and C_Item.GetItemInfo(link) }
+                    local info = { classID = values[12], quality = values[3] }
+                    local nameOK = (needle == "" or (type(name) == "string" and name:lower():find(needle, 1, true)))
+                    local filterOK = true
+                    if F.BagFilterMatch then filterOK = F:BagFilterMatch(link, info, filters) end
+                    if type(name) == "string" and nameOK and filterOK then
                         found[#found + 1] = name .. " (bag " .. bag .. ", slot " .. slot .. ")"
                     end
                 end
@@ -833,6 +877,121 @@ SlashCmdList.FOREVERSUITE = function(message)
         end
         F.db.watch[#F.db.watch + 1] = rest
         F:Print("Also watching button " .. rest .. " for the dialog key.")
+    elseif command == "gear" then
+        if not F:Active("gearGroups") then F:Print("Enable Gear groups first."); return end
+        local action, group, item = rest:match("^(%S*)%s*(%S*)%s*(%S*)$")
+        action = action:lower()
+        if action == "" or action == "list" then
+            local lines = F:GearGroupReport()
+            if #lines == 0 then F:Print("No gear groups yet. Use /fs gear add <group> <itemID>.")
+            else for _, line in ipairs(lines) do F:Print(line) end end
+        elseif action == "add" then
+            local ok, result = F:GearAdd(group, item)
+            F:Print(ok and ("Added item " .. result .. " to gear group " .. group .. ".") or ("Not added: " .. tostring(result)))
+        elseif action == "remove" then
+            local ok, problem = F:GearRemove(group, item)
+            F:Print(ok and "Removed the item from the gear group." or ("Not removed: " .. tostring(problem)))
+        elseif action == "show" then
+            if not F:Active("gearBagMarks") then F:Print("Enable Gear group bag markers first."); return end
+            if group == "clear" or group == "" then
+                F.markedGearGroup = nil
+                F:MarkGearInBags(nil)
+                F:Print("Cleared gear group marks.")
+            else
+                F.markedGearGroup = group
+                local count = F:MarkGearInBags(group)
+                F:Print("Marked " .. count .. " bag slot(s) for gear group " .. group .. ".")
+            end
+        else
+            F:Print("Use /fs gear list | add <group> <itemID> | remove <group> <itemID> | show <group>|clear.")
+        end
+    elseif command == "fish" then
+        if not F:Active("fishingSet") and not F:Active("fishingCast") then
+            F:Print("Enable Fishing gear restoration or Fishing cast shortcut first."); return
+        end
+        if rest:lower() == "restore" then
+            local ok, result = F:RestoreFishingSet()
+            F:Print(ok and ("Restored " .. tostring(result) .. " weapon(s).") or ("Not restored: " .. tostring(result)))
+            return
+        end
+        local ok, problem = F:Fish()
+        if ok then
+            if F:GetOption("fishingLure", "remind") and F:Active("fishingLure") and F:HasLure() == false then
+                F:Print("No lure is active. Use /fs lure <name> to apply a saved lure.")
+            end
+            F:Print("Casting Fishing.")
+        else
+            F:Print("Not cast: " .. tostring(problem))
+        end
+    elseif command == "lure" then
+        local action, name, item = rest:match("^(%S*)%s*(%S*)%s*(%S*)$")
+        action = action:lower()
+        if action == "" then
+            if not F:Active("fishingLure") then F:Print("Enable Fishing lure selection first."); return end
+            local ok, result = F:ApplyLure()
+            F:Print(ok and ("Applied lure " .. tostring(result) .. ".") or ("Not applied: " .. tostring(result)))
+        elseif action == "list" then
+            local list = F.LureList and F:LureList() or {}
+            local parts = {}
+            for _, entry in ipairs(list) do parts[#parts + 1] = entry.name .. " (" .. entry.id .. ")" end
+            F:Print(#parts .. " saved lure(s): " .. (#parts > 0 and table.concat(parts, ", ") or "none"))
+        elseif action == "add" then
+            if not F:Active("fishingLure") then F:Print("Enable Fishing lure selection first."); return end
+            local ok, result, id = F:SetLure(name, item)
+            F:Print(ok and ("Saved lure " .. result .. " for item " .. id .. ".") or ("Not saved: " .. tostring(result)))
+        elseif action == "remove" then
+            local removed = false
+            local list = F.LureList and F:LureList() or {}
+            for index = #list, 1, -1 do
+                if list[index].name:lower() == name:lower() then table.remove(list, index); removed = true end
+            end
+            F:Print(removed and ("Removed lure " .. name .. ".") or "That lure does not exist.")
+        else
+            if not F:Active("fishingLure") then F:Print("Enable Fishing lure selection first."); return end
+            local ok, result = F:ApplyLure(action)
+            F:Print(ok and ("Applied lure " .. tostring(result) .. ".") or ("Not applied: " .. tostring(result)))
+        end
+    elseif command == "eat" or command == "drink" then
+        if not F:Active("foodDrink") then F:Print("Enable Eat and drink shortcuts first."); return end
+        local ok, result = F:UseFoodOrDrink(command)
+        F:Print(ok and ("Used " .. tostring(result) .. ".") or ("Not used: " .. tostring(result)))
+    elseif command == "petfood" then
+        if not F:Active("petFood") then F:Print("Enable Pet food highlights first."); return end
+        local rows = F.PetFoodList and F:PetFoodList() or {}
+        if #rows == 0 then F:Print("No pet food found in your bags.")
+        else
+            for index = 1, math.min(#rows, 20) do
+                F:Print("  " .. rows[index].name .. " (bag " .. rows[index].bag .. ", slot " .. rows[index].slot .. ")")
+            end
+        end
+    elseif command == "reagentbag" then
+        if not F:Active("reagentBag") then F:Print("Enable Protect the reagent bag first."); return end
+        if rest:lower() == "off" then
+            F:SetOption("reagentBag", "bag", 0)
+            F:Print("Bag 0 (the backpack) is now the protected bag. Use /fs reagentbag <0-4> to change it.")
+            return
+        end
+        local number = tonumber(rest)
+        if not number then F:Print("Use /fs reagentbag <0-4> or /fs reagentbag off."); return end
+        local ok = F:SetOption("reagentBag", "bag", number)
+        F:Print(ok and ("Protected bag " .. number .. " from selling.") or "Bag number must be between 0 and 4.")
+    elseif command == "minimap" then
+        if not F:Active("minimapButtons") then F:Print("Enable Minimap button collection first."); return end
+        local action = rest:lower()
+        if action == "" or action == "collect" then
+            F:Print("Hid " .. F:CollectMinimapButtons() .. " minimap button(s).")
+        elseif action == "restore" then
+            F:Print("Showed " .. F:RestoreMinimapButtons() .. " minimap button(s).")
+        elseif action == "list" then
+            local rows = F.MinimapButtons and F:MinimapButtons() or {}
+            local names = {}
+            for _, button in ipairs(rows) do
+                names[#names + 1] = (button.GetName and button:GetName()) or "unnamed"
+            end
+            F:Print(#names .. " button(s): " .. (#names > 0 and table.concat(names, ", ") or "none"))
+        else
+            F:Print("Use /fs minimap collect | restore | list.")
+        end
     elseif command == "quests" then
         if not F:Active("questList") then F:Print("Enable Quest list with levels first."); return end
         F:PrintQuestList(F:Active("questDistance"))

@@ -2,7 +2,7 @@
 
 This is the initial capability backlog, not a complete parity claim. Distinct behaviors remain in scope; an implemented preview still requires in-game acceptance. Source options are separately indexed to catch omitted parameters and smaller features.
 
-249 tracked capabilities: 169 implemented, 5 scoped out with a reason and 75 planned. The shipped preview has 162 independently configurable features; several features and feature options share one capability row, and features added ahead of the index were recorded as FS-230 to FS-249. IDs remain stable as work continues.
+249 tracked capabilities: 169 implemented, 5 scoped out with a reason and 75 planned. The shipped preview has 172 independently configurable features; several features and feature options share one capability row, and features added ahead of the index were recorded as FS-230 to FS-249. IDs remain stable as work continues.
 
 | ID | Capability | Stage | Status |
 |---|---|---|---|
@@ -171,23 +171,23 @@ This is the initial capability backlog, not a complete parity claim. Distinct be
 | FS-143 | Camp benefit notifications | 3 | Preview; game test pending |
 | FS-144 | Rare alerts | 3 | Preview; game test pending |
 | FS-145 | XP-per-hour and level estimates | 3 | Preview; game test pending |
-| FS-146 | Equipment groups | 3 | Planned |
-| FS-147 | Equipment group bag markers | 3 | Planned |
-| FS-148 | Fishing equipment restoration | 3 | Planned |
-| FS-149 | Double-click fishing | 3 | Planned |
-| FS-150 | Fishing lure selection | 3 | Planned |
-| FS-151 | Missing lure reminder | 3 | Planned |
+| FS-146 | Equipment groups | 3 | Preview; game test pending |
+| FS-147 | Equipment group bag markers | 3 | Preview; game test pending |
+| FS-148 | Fishing equipment restoration | 3 | Preview; game test pending |
+| FS-149 | Double-click fishing | 3 | Preview; game test pending |
+| FS-150 | Fishing lure selection | 3 | Preview; game test pending |
+| FS-151 | Missing lure reminder | 3 | Preview; game test pending |
 | FS-152 | Unlearned spellbook entries | 3 | Planned |
 | FS-153 | Class trainer bulk purchase | 3 | Planned |
 | FS-154 | Spell rank upgrades | 3 | Planned |
-| FS-155 | Food and drink macro | 3 | Planned |
-| FS-156 | Pet food highlights | 3 | Planned |
+| FS-155 | Food and drink macro | 3 | Preview; game test pending |
+| FS-156 | Pet food highlights | 3 | Preview; game test pending |
 | FS-157 | Mana regeneration timing | 3 | Planned |
-| FS-158 | Reagent bag integration | 3 | Planned |
-| FS-159 | Bag filters | 3 | Planned |
+| FS-158 | Reagent bag integration | 3 | Preview; game test pending |
+| FS-159 | Bag filters | 3 | Preview; game test pending |
 | FS-160 | Search by item properties | 3 | Preview; game test pending |
 | FS-161 | Account gold tracker | 3 | Preview; game test pending |
-| FS-162 | Minimap button collection | 3 | Planned |
+| FS-162 | Minimap button collection | 3 | Preview; game test pending |
 | FS-163 | Minimap shape and sizing | 3 | Preview (size only); shape planned |
 | FS-164 | Micro menu visibility | 3 | Preview; game test pending |
 | FS-165 | Action bar mouseover visibility | 3 | Preview; game test pending |
