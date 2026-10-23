@@ -1,7 +1,7 @@
 -- SPDX-License-Identifier: MIT
 local addonName, F = ...
 F.name = addonName
-F.version = "0.2.0-alpha.7"
+F.version = "0.2.0-alpha.8"
 F.features, F.order, F.listeners, F.errors = {}, {}, {}, {}
 F.frame = CreateFrame("Frame")
 F.paused = false
@@ -444,6 +444,44 @@ function F:Initialize()
         else
             db.windowLayouts = nil
         end
+        if type(db.questExceptions) == "table" then
+            local store = db.questExceptions
+            local ids, titles = {}, {}
+            if type(store.ids) == "table" then
+                for _, value in ipairs(store.ids) do
+                    if type(value) == "number" and value > 0 and value % 1 == 0 and #ids < 200 then ids[#ids + 1] = value end
+                end
+            end
+            if type(store.titles) == "table" then
+                for _, value in ipairs(store.titles) do
+                    if type(value) == "string" and value ~= "" and #value <= 120 and #titles < 200 then titles[#titles + 1] = value end
+                end
+            end
+            if #ids == 0 and #titles == 0 then db.questExceptions = nil
+            else db.questExceptions = { ids = ids, titles = titles } end
+        else
+            db.questExceptions = nil
+        end
+        if type(db.gossipPrefs) == "table" then
+            for key, value in pairs(db.gossipPrefs) do
+                if type(key) ~= "string" or not key:match("^%d+$") or #key > 12
+                    or type(value) ~= "number" or value < 1 or value > 9 or value % 1 ~= 0 then
+                    db.gossipPrefs[key] = nil
+                end
+            end
+            if next(db.gossipPrefs) == nil then db.gossipPrefs = nil end
+        else
+            db.gossipPrefs = nil
+        end
+        if type(db.sellWhitelist) == "table" then
+            local kept = {}
+            for _, value in ipairs(db.sellWhitelist) do
+                if type(value) == "number" and value > 0 and value % 1 == 0 and #kept < 500 then kept[#kept + 1] = value end
+            end
+            if #kept > 0 then db.sellWhitelist = kept else db.sellWhitelist = nil end
+        else
+            db.sellWhitelist = nil
+        end
         for key, stored in pairs(db.options) do
             local feature = self.features[key]
             if not feature or type(stored) ~= "table" then
@@ -546,6 +584,7 @@ local function helpText()
     F:Print("  /fs profile [list|new|use|save|delete|scope|export|import], /fs cvar [name] [value] | list | history")
     F:Print("  /fs size <window> <width> <height>, /fs anchor <window> <target|clear> [x] [y], /fs layout [save|use|delete] <name>")
     F:Print("  /fs bugreport, /fs popups, /fs sockets")
+    F:Print("  /fs quest [list|except <id|title>|allow <id|title>], /fs whitelist [list|add <itemID>|remove <itemID>], /fs gossip [list|prefer <1-9>|clear]")
     F:Print("  Feature IDs appear in settings and in /fs report.")
 end
 
@@ -736,6 +775,65 @@ SlashCmdList.FOREVERSUITE = function(message)
         end
         F.db.watch[#F.db.watch + 1] = rest
         F:Print("Also watching button " .. rest .. " for the dialog key.")
+    elseif command == "quest" then
+        local action, value = rest:match("^(%S*)%s*(.-)%s*$")
+        action = action:lower()
+        if action == "" or action == "list" then
+            local store = F.QuestExceptionList and F:QuestExceptionList() or { ids = {}, titles = {} }
+            local parts = {}
+            for _, id in ipairs(store.ids or {}) do parts[#parts + 1] = tostring(id) end
+            for _, title in ipairs(store.titles or {}) do parts[#parts + 1] = title end
+            F:Print(#parts .. " quest exception(s): " .. (#parts > 0 and table.concat(parts, ", ") or "none"))
+        elseif action == "except" then
+            if not F:Active("questExceptions") then F:Print("Enable Quest acceptance exceptions first."); return end
+            local ok, what = F:AddQuestException(value)
+            F:Print(ok and ("Added quest exception " .. tostring(what) .. ".") or "Use /fs quest except <questID|title>.")
+        elseif action == "allow" then
+            local ok = F:RemoveQuestException(value)
+            F:Print(ok and "Removed the quest exception." or "That quest is not in the exception list.")
+        else
+            F:Print("Use /fs quest list | except <questID|title> | allow <questID|title>.")
+        end
+    elseif command == "whitelist" then
+        local action, value = rest:match("^(%S*)%s*(.-)%s*$")
+        action = action:lower()
+        if action == "" or action == "list" then
+            local list = F.SellWhitelist and F:SellWhitelist() or {}
+            local parts = {}
+            for _, id in ipairs(list) do parts[#parts + 1] = tostring(id) end
+            F:Print(#parts .. " whitelisted item(s): " .. (#parts > 0 and table.concat(parts, ", ") or "none"))
+        elseif action == "add" then
+            if not F:Active("sellWhitelist") then F:Print("Enable Sell whitelist first."); return end
+            local ok, id = F:AddSellWhitelist(value)
+            F:Print(ok and ("Whitelisted item " .. id .. ".") or "Use /fs whitelist add <itemID>.")
+        elseif action == "remove" then
+            local ok = F:RemoveSellWhitelist(value)
+            F:Print(ok and "Removed the item from the whitelist." or "That item is not whitelisted.")
+        else
+            F:Print("Use /fs whitelist list | add <itemID> | remove <itemID>.")
+        end
+    elseif command == "gossip" then
+        local action, value = rest:match("^(%S*)%s*(.-)%s*$")
+        action = action:lower()
+        if action == "" or action == "list" then
+            local rows = F.GossipPreferenceList and F:GossipPreferenceList() or {}
+            if #rows == 0 then F:Print("No NPC gossip preferences yet.")
+            else
+                for _, row in ipairs(rows) do
+                    F:Print("NPC " .. tostring(row.npc) .. " -> option " .. tostring(row.index))
+                end
+            end
+        elseif action == "prefer" then
+            if not F:Active("gossipPreferences") then F:Print("Enable Per-NPC gossip preferences first."); return end
+            local ok, key, index = F:SetGossipPreference(value)
+            F:Print(ok and ("NPC " .. tostring(key) .. " now chooses gossip option " .. index .. ".")
+                or ("Not saved: " .. tostring(key)))
+        elseif action == "clear" then
+            local ok, key = F:ClearGossipPreference()
+            F:Print(ok and ("Cleared the preference for NPC " .. tostring(key) .. ".") or ("Nothing cleared: " .. tostring(key)))
+        else
+            F:Print("Use /fs gossip list | prefer <1-9> | clear.")
+        end
     elseif command == "bugreport" then
         if F.OpenBugReporter and F:OpenBugReporter() then
             F:Print("Opened the client bug reporter.")

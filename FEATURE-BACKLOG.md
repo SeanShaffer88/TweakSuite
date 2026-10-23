@@ -2,7 +2,7 @@
 
 This is the initial capability backlog, not a complete parity claim. Distinct behaviors remain in scope; an implemented preview still requires in-game acceptance. Source options are separately indexed to catch omitted parameters and smaller features.
 
-249 tracked capabilities: 140 implemented and 109 planned. The shipped preview has 128 independently configurable features; several features and feature options share one capability row, and features added ahead of the index were recorded as FS-230 to FS-249. IDs remain stable as work continues.
+249 tracked capabilities: 150 implemented and 99 planned. The shipped preview has 138 independently configurable features; several features and feature options share one capability row, and features added ahead of the index were recorded as FS-230 to FS-249. IDs remain stable as work continues.
 
 | ID | Capability | Stage | Status |
 |---|---|---|---|
@@ -111,28 +111,28 @@ This is the initial capability backlog, not a complete parity claim. Distinct be
 | FS-083 | Guild repair funds policy | 3 | Preview (option of FS-001) |
 | FS-084 | Repair feedback and totals | 3 | Preview (option of FS-001) |
 | FS-085 | Never-sell item list | 3 | Planned |
-| FS-086 | Sell whitelist | 3 | Planned |
+| FS-086 | Sell whitelist | 3 | Preview; game test pending |
 | FS-087 | Sell by quality and item level | 3 | Planned |
 | FS-088 | Sell by binding and expansion | 3 | Planned |
 | FS-089 | Custom junk marking | 3 | Planned |
 | FS-090 | Buyback-aware sale batches | 3 | Planned |
 | FS-091 | Sale preview and cancellation | 3 | Planned |
-| FS-092 | Quest acceptance exceptions | 3 | Planned |
+| FS-092 | Quest acceptance exceptions | 3 | Preview; game test pending |
 | FS-093 | Quest completion exceptions | 3 | Planned |
 | FS-094 | Daily/weekly quest filters | 3 | Preview (options of FS-004) |
-| FS-095 | Trivial quest filters | 3 | Planned |
+| FS-095 | Trivial quest filters | 3 | Preview; game test pending |
 | FS-096 | Already-completed quest filters | 3 | Planned |
 | FS-097 | Single-option gossip rules | 3 | Planned |
-| FS-098 | NPC-specific gossip preferences | 3 | Planned |
+| FS-098 | NPC-specific gossip preferences | 3 | Preview; game test pending |
 | FS-099 | Paid gossip exclusions | 3 | Planned |
 | FS-100 | Flight map shortcuts | 3 | Planned |
-| FS-101 | Friend and guild invite acceptance | 3 | Planned |
+| FS-101 | Friend and guild invite acceptance | 3 | Preview; game test pending |
 | FS-102 | Block stranger invites | 3 | Preview; game test pending |
-| FS-103 | Duel decline rules | 3 | Planned |
-| FS-104 | Summon acceptance rules | 3 | Planned |
-| FS-105 | Resurrection acceptance rules | 3 | Planned |
-| FS-106 | Battleground release rules | 3 | Planned |
-| FS-107 | Whisper invite rules | 3 | Planned |
+| FS-103 | Duel decline rules | 3 | Preview; game test pending |
+| FS-104 | Summon acceptance rules | 3 | Preview; game test pending |
+| FS-105 | Resurrection acceptance rules | 3 | Preview; game test pending |
+| FS-106 | Battleground release rules | 3 | Preview; game test pending |
+| FS-107 | Whisper invite rules | 3 | Preview; game test pending |
 | FS-108 | Opt-in loot trade confirmation | 3 | Planned |
 | FS-109 | Opt-in crafting confirmation | 3 | Planned |
 | FS-110 | Opt-in destruction text helper | 3 | Planned |

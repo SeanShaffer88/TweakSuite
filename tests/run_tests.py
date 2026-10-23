@@ -24,7 +24,8 @@ clientVersion, clientBuild, clientInterface = "1.60.1", "70532", 16001
 SlashCmdList, UISpecialFrames, CHAT_FRAMES = {}, {}, {"ChatFrame1"}
 ChatFontNormal, GameFontNormalSmall = {}, {}
 STANDARD_TEXT_FONT = "Fonts/FRIZQT__.TTF"
-guids = { target = "Creature-0-1465-0-2105-448-000043F59F", player = "Player-970-0002FD64" }
+guids = { target = "Creature-0-1465-0-2105-448-000043F59F", player = "Player-970-0002FD64",
+ npc = "Creature-0-1465-0-2105-12345-000043F59F" }
 inventoryLinks = { player = { [1] = "item:1001", [16] = "item:1002" }, target = { [1] = "item:2001" } }
 inventoryLevels = { ["item:1001"] = 82, ["item:1002"] = 90, ["item:2001"] = 75 }
 tips = {}
@@ -202,6 +203,25 @@ friends, guildmates = {}, {}
 function UnitIsFriend(_, name) return friends[name] == true end
 function UnitIsInMyGuild(name) return guildmates[name] == true end
 function DeclineGroup() calls.declines = (calls.declines or 0) + 1 end
+socialLog = { acceptGroup = 0, duel = 0, acceptRes = 0, repop = 0, invite = 0, summon = 0, knocked = 0 }
+function AcceptGroup() socialLog.acceptGroup = socialLog.acceptGroup + 1 end
+function DeclineDuel() socialLog.duel = socialLog.duel + 1 end
+function AcceptResurrect() socialLog.acceptRes = socialLog.acceptRes + 1 end
+function RepopMe() socialLog.repop = socialLog.repop + 1 end
+function InviteUnit(name) socialLog.invite = socialLog.invite + 1; socialLog.invitedName = name end
+function knockout(name) socialLog.knocked = socialLog.knocked + 1 end
+summonLeft, summonSummoner = 0, nil
+C_SummonInfo = { ConfirmSummon = function() socialLog.summon = socialLog.summon + 1 end,
+ GetSummonConfirmTimeLeft = function() return summonLeft end,
+ GetSummonConfirmSummoner = function() return summonSummoner end }
+deadUnits, unitLevels = {}, { player = 40, target = 30 }
+function UnitIsDeadOrGhost(unit) return deadUnits[unit] == true end
+function UnitLevel(unit) return unitLevels[unit] or 0 end
+instanceKind = "none"
+function IsInInstance() return true, instanceKind end
+questLevelValue, questGreenRange = 10, 5
+function GetQuestLevel() return questLevelValue end
+function GetQuestGreenRange() return questGreenRange end
 function UnitName(unit) if unit == "player" then return "Tester" end return unit end
 unitClasses, unitHealths = {}, {}
 RAID_CLASS_COLORS = { WARRIOR = { r = 0.78, g = 0.61, b = 0.43 }, MAGE = { r = 0.25, g = 0.78, b = 0.92 } }
@@ -338,7 +358,7 @@ class SuiteTests(unittest.TestCase):
     def test_default_is_inert_and_ui_loads(self):
         self.start()
         self.runlua('fire("MERCHANT_SHOW"); fire("QUEST_DETAIL"); F:OpenSettings()')
-        self.assertEqual(len(self.g.F.order), 128)
+        self.assertEqual(len(self.g.F.order), 138)
         self.assertEqual(self.g.calls.repair, 0)
         self.assertEqual(self.g.calls.sell, 0)
         self.assertEqual(self.g.calls.accept, 0)
@@ -1127,7 +1147,7 @@ class SuiteTests(unittest.TestCase):
         self.assertEqual(self.g.F.categoryButtons.Interface.label.text, "Interface (44)")
         self.assertEqual(self.g.F.categoryButtons.Home.label.text, "Home")
         self.assertEqual(self.g.F.categoryButtons.Windows.label.text, "Windows (7)")
-        self.assertEqual(self.g.F.categoryButtons.Dialogs.label.text, "Dialogs (4)")
+        self.assertEqual(self.g.F.categoryButtons.Dialogs.label.text, "Dialogs (7)")
         self.assertEqual(self.g.F.categoryButtons.Tooltips.label.text, "Tooltips (21)")
         self.runlua('F:SetEnabled("moveWindows", true); shift=true;'
                     'MerchantFrame:Trigger("OnDragStart");'
@@ -1760,6 +1780,125 @@ class SuiteTests(unittest.TestCase):
         self.assertEqual(point[4], -12)
         self.runlua('F:SetOption("tooltipAnchor", "position", "default")')
         self.assertEqual(self.g.ForeverSuiteDB.options.tooltipAnchor.position, "default")
+
+
+    def test_friendly_invite_and_duel_rules(self):
+        self.start()
+        self.runlua('friends["Buddy"] = true; F:SetEnabled("friendlyInvites", true); F:SetEnabled("duelRules", true)')
+        self.runlua('fire("PARTY_INVITE_REQUEST", "Buddy")')
+        self.assertEqual(self.g.socialLog.acceptGroup, 1)
+        self.runlua('fire("PARTY_INVITE_REQUEST", "Stranger")')
+        self.assertEqual(self.g.socialLog.acceptGroup, 1)
+        self.runlua('fire("DUEL_REQUESTED", "Stranger")')
+        self.assertEqual(self.g.socialLog.duel, 1)
+        self.runlua('fire("DUEL_REQUESTED", "Buddy")')
+        self.assertEqual(self.g.socialLog.duel, 1)
+
+    def test_duel_level_gap_rule(self):
+        self.start()
+        self.runlua('F:SetEnabled("duelRules", true); F:SetOption("duelRules", "strangers", false);'
+                    'F:SetOption("duelRules", "levelGap", 10); unitLevels.target = 20')
+        self.runlua('fire("DUEL_REQUESTED", "target")')
+        self.assertEqual(self.g.socialLog.duel, 1)
+        self.runlua('unitLevels.target = 38; fire("DUEL_REQUESTED", "target")')
+        self.assertEqual(self.g.socialLog.duel, 1)
+
+    def test_summon_and_resurrection_rules(self):
+        self.start()
+        self.runlua('F:SetEnabled("summonRules", true); F:SetEnabled("resurrectRules", true);'
+                    'summonLeft = 5; summonSummoner = "Buddy"; friends["Buddy"] = true; F:CheckSummonNow()')
+        self.assertEqual(self.g.socialLog.summon, 1)
+        self.runlua('F:SetOption("summonRules", "trust", "trusted"); summonLeft = 5; summonSummoner = "Stranger";'
+                    'F:CheckSummonNow()')
+        self.assertEqual(self.g.socialLog.summon, 1)
+        self.runlua('deadUnits.player = true; fire("RESURRECT_REQUEST", "Buddy")')
+        self.assertEqual(self.g.socialLog.acceptRes, 1)
+        self.runlua('combat = true; fire("RESURRECT_REQUEST", "Buddy")')
+        self.assertEqual(self.g.socialLog.acceptRes, 1)
+
+    def test_battleground_release_rules(self):
+        self.start()
+        self.runlua('F:SetEnabled("battlegroundRelease", true); F:SetOption("battlegroundRelease", "delay", 0);'
+                    'deadUnits.player = true; instanceKind = "none"; fire("PLAYER_DEAD")')
+        self.assertEqual(self.g.socialLog.repop, 0)
+        self.runlua('instanceKind = "pvp"; fire("PLAYER_DEAD")')
+        self.assertEqual(self.g.socialLog.repop, 1)
+        self.runlua('deadUnits.player = false; fire("PLAYER_DEAD")')
+        self.assertEqual(self.g.socialLog.repop, 1)
+
+    def test_whisper_invite_rules(self):
+        self.start()
+        self.runlua('F:SetEnabled("whisperInvites", true); guildmates["Guildie"] = true')
+        self.runlua('fire("CHAT_MSG_WHISPER", "inv", "Guildie")')
+        self.assertEqual(self.g.socialLog.invite, 1)
+        self.assertEqual(self.g.socialLog.invitedName, "Guildie")
+        self.runlua('fire("CHAT_MSG_WHISPER", "inv", "Stranger")')
+        self.assertEqual(self.g.socialLog.invite, 1)
+        self.runlua('fire("CHAT_MSG_WHISPER", "hello", "Guildie")')
+        self.assertEqual(self.g.socialLog.invite, 1)
+        self.runlua('F:SetOption("whisperInvites", "allowAnyone", true); fire("CHAT_MSG_WHISPER", "  INV  ", "Stranger")')
+        self.assertEqual(self.g.socialLog.invite, 2)
+
+    def test_quest_exceptions_block_keyboard_accept(self):
+        self.start()
+        self.runlua('F:SetEnabled("dialogAccept", true); F:SetEnabled("questExceptions", true);'
+                    'showButton("QuestFrameAcceptButton"); questTitle = "A Test Quest"')
+        self.runlua('SlashCmdList.FOREVERSUITE("quest except A Test Quest")')
+        self.assertIn("Added quest exception", self.g.prints[len(self.g.prints)])
+        self.runlua('pressKey("SPACE")')
+        self.assertEqual(self.g.QuestFrameAcceptButton.clicks, None)
+        self.runlua('SlashCmdList.FOREVERSUITE("quest allow A Test Quest"); pressKey("SPACE")')
+        self.assertEqual(self.g.QuestFrameAcceptButton.clicks, 1)
+
+    def test_trivial_quest_notice(self):
+        self.start()
+        self.runlua('questLevelValue = 10; unitLevels.player = 40; questTitle = "Green Quest";'
+                    'F:SetEnabled("trivialQuests", true)')
+        self.runlua('fire("QUEST_DETAIL")')
+        self.assertIn("trivial for you", self.g.prints[len(self.g.prints)])
+        before = len(self.g.prints)
+        self.runlua('questLevelValue = 38; fire("QUEST_DETAIL")')
+        self.assertEqual(len(self.g.prints), before)
+
+    def test_gossip_preference_and_money_protection(self):
+        self.start()
+        self.runlua('F:SetEnabled("gossipPreferences", true); gossipOptions = { { text = "Free option", kind = "gossip" },'
+                    ' { text = "Buy", kind = "gossip" } }; GossipFrame:Show()')
+        self.runlua('SlashCmdList.FOREVERSUITE("gossip prefer 1")')
+        self.assertIn("now chooses gossip option 1", self.g.prints[len(self.g.prints)])
+        self.runlua('fire("GOSSIP_SHOW")')
+        self.assertEqual(self.g.calls.gossipIndex, 1)
+        self.runlua('SlashCmdList.FOREVERSUITE("gossip list")')
+        self.assertIn("12345", self.g.prints[len(self.g.prints)])
+        self.runlua('SlashCmdList.FOREVERSUITE("gossip clear"); fire("GOSSIP_SHOW")')
+        self.assertEqual(self.g.calls.gossipIndex, 1)
+
+    def test_sell_whitelist_overrides_quality_rule(self):
+        self.start()
+        self.runlua('itemReady = true; itemMeta["item:3001"] = { quality = 2, sellPrice = 500, equipLoc = "INVTYPE_HEAD" };'
+                    'containerLinks[0] = { [1] = "item:3001" }; containerSlots[0] = 1;'
+                    'F:SetEnabled("sellWhitelist", true); F:SetEnabled("merchantRules", true)')
+        self.runlua('SlashCmdList.FOREVERSUITE("whitelist add 3001")')
+        self.assertIn("Whitelisted item 3001", self.g.prints[len(self.g.prints)])
+        self.runlua('candidateCount = #F:SaleCandidates()')
+        self.assertEqual(self.g.candidateCount, 1)
+        self.runlua('containerLinks[0] = {}')
+        self.runlua('SlashCmdList.FOREVERSUITE("whitelist list")')
+        self.assertIn("3001", self.g.prints[len(self.g.prints)])
+        self.runlua('SlashCmdList.FOREVERSUITE("whitelist remove 3001")')
+        self.assertIn("Removed the item from the whitelist", self.g.prints[len(self.g.prints)])
+
+    def test_social_sanitation(self):
+        self.runlua('ForeverSuiteDB={schema=1, questExceptions={ids={1001, -5, 2.5, 4455}, titles={"A Quest", "", 7}},'
+                    'gossipPrefs={["12345"]=3, Bad=4, ["9999999999999"]=5, ["777"]=12},'
+                    'sellWhitelist={3001, "x", 0, 3002}}')
+        self.start()
+        store = self.g.ForeverSuiteDB.questExceptions
+        self.assertEqual([store['ids'][i] for i in (1, 2)], [1001, 4455])
+        self.assertEqual([store['titles'][i] for i in (1,)], ["A Quest"])
+        self.assertIsNone(self.g.ForeverSuiteDB.gossipPrefs.Bad)
+        self.assertIsNone(self.g.ForeverSuiteDB.gossipPrefs["777"])
+        self.assertEqual([self.g.ForeverSuiteDB.sellWhitelist[i] for i in (1, 2)], [3001, 3002])
 
 
 if __name__ == "__main__":

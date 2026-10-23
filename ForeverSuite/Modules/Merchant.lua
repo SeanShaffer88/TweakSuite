@@ -74,6 +74,34 @@ function F:RemoveNeverSell(value)
     return false
 end
 
+function F:SellWhitelist()
+    if not self.db then return {} end
+    if type(self.db.sellWhitelist) ~= "table" then self.db.sellWhitelist = {} end
+    return self.db.sellWhitelist
+end
+
+function F:AddSellWhitelist(value)
+    local id = tonumber(tostring(value or ""):match("item:(%d+)") or value)
+    if not id or id <= 0 then return false end
+    local list = self:SellWhitelist()
+    if not listed(list, id) then list[#list + 1] = id end
+    return true, id
+end
+
+function F:RemoveSellWhitelist(value)
+    local id = tonumber(value)
+    local list = self:SellWhitelist()
+    for index = #list, 1, -1 do
+        if list[index] == id then table.remove(list, index); return true end
+    end
+    return false
+end
+
+function F:IsSellWhitelisted(link)
+    local id = itemIDFromLink(link)
+    return id ~= nil and listed(self:SellWhitelist(), id)
+end
+
 function F:IsProtectedFromSale(link)
     local id = itemIDFromLink(link)
     return id ~= nil and listed(self:NeverSellList(), id)
@@ -96,9 +124,12 @@ function F:SaleCandidates()
                     local skip = false
                     if info.classID == 12 then skip = true end                     -- quest items
                     if info.classID == 9 then skip = true end                      -- recipes are usually kept
-                    if (info.quality or 0) > qualityLimit then skip = true end
-                    if maxLevel > 0 and (info.itemLevel or 0) > maxLevel then skip = true end
-                    if bindMode == "boe" and info.bindType ~= 2 then skip = true end
+                    local whitelisted = F.IsSellWhitelisted and F:IsSellWhitelisted(link)
+                    if not whitelisted then
+                        if (info.quality or 0) > qualityLimit then skip = true end
+                        if maxLevel > 0 and (info.itemLevel or 0) > maxLevel then skip = true end
+                        if bindMode == "boe" and info.bindType ~= 2 then skip = true end
+                    end
                     if F:IsProtectedFromSale(link) then skip = true end
                     if not skip then
                         rows[#rows + 1] = { bag = bag, slot = slot, link = link, name = info.name,
@@ -244,6 +275,17 @@ F:Register("merchantRules", {
         F:Listen("merchantRules", "MERCHANT_CLOSED", hidePreview)
     end,
     disable = hidePreview,
+})
+
+F:Register("sellWhitelist", {
+    title = "Sell whitelist",
+    category = "Automation",
+    description = "Items you list by item ID are always sold, even when they are above your quality or item-level limit. Quest items, recipes and never-sell items are still protected, and the preview shows exactly what will go. Use /fs whitelist add <itemID>, remove and list.",
+    disableText = "Stops the whitelist from adding items. The list is kept and applies again when the feature is turned back on.",
+    conflicts = common,
+    available = function() return C_Item ~= nil and C_Item.GetItemInfo ~= nil end,
+    enable = function() end,
+    disable = function() end,
 })
 
 F:Register("junkMarking", {
