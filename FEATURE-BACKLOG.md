@@ -2,7 +2,7 @@
 
 This is the initial capability backlog, not a complete parity claim. Distinct behaviors remain in scope; an implemented preview still requires in-game acceptance. Source options are separately indexed to catch omitted parameters and smaller features.
 
-249 tracked capabilities: 169 implemented, 5 scoped out with a reason and 75 planned. The shipped preview has 172 independently configurable features; several features and feature options share one capability row, and features added ahead of the index were recorded as FS-230 to FS-249. IDs remain stable as work continues.
+249 tracked capabilities: 169 implemented, 5 scoped out with a reason and 75 planned. The shipped preview has 179 independently configurable features; several features and feature options share one capability row, and features added ahead of the index were recorded as FS-230 to FS-249. IDs remain stable as work continues.
 
 | ID | Capability | Stage | Status |
 |---|---|---|---|
@@ -142,13 +142,13 @@ This is the initial capability backlog, not a complete parity claim. Distinct be
 | FS-114 | Sticky chat controls | 3 | Preview; game test pending |
 | FS-115 | Chat history length | 3 | Preview; game test pending |
 | FS-116 | Copy chat text | 3 | Preview; game test pending |
-| FS-117 | Whisper notification sounds | 3 | Planned |
-| FS-118 | Persistent chat history | 3 | Planned |
-| FS-119 | Chat channel management | 3 | Planned |
-| FS-120 | Whisper conversation window | 3 | Planned |
-| FS-121 | Class-colored chat names | 3 | Planned |
-| FS-122 | Chat message filtering | 3 | Planned |
-| FS-123 | Context-menu website links | 3 | Planned |
+| FS-117 | Whisper notification sounds | 3 | Preview; game test pending |
+| FS-118 | Persistent chat history | 3 | Preview; game test pending |
+| FS-119 | Chat channel management | 3 | Preview; game test pending |
+| FS-120 | Whisper conversation window | 3 | Preview; game test pending |
+| FS-121 | Class-colored chat names | 3 | Preview; game test pending |
+| FS-122 | Chat message filtering | 3 | Preview; game test pending |
+| FS-123 | Context-menu website links | 3 | Scoped out; see note |
 | FS-124 | Chat frame unclamping | 3 | Preview; game test pending |
 | FS-125 | World-map coordinates | 3 | Preview; game test pending |
 | FS-126 | Cursor map coordinates | 3 | Preview; game test pending |
@@ -177,12 +177,12 @@ This is the initial capability backlog, not a complete parity claim. Distinct be
 | FS-149 | Double-click fishing | 3 | Preview; game test pending |
 | FS-150 | Fishing lure selection | 3 | Preview; game test pending |
 | FS-151 | Missing lure reminder | 3 | Preview; game test pending |
-| FS-152 | Unlearned spellbook entries | 3 | Planned |
-| FS-153 | Class trainer bulk purchase | 3 | Planned |
-| FS-154 | Spell rank upgrades | 3 | Planned |
+| FS-152 | Unlearned spellbook entries | 3 | Preview; game test pending |
+| FS-153 | Class trainer bulk purchase | 3 | Preview; game test pending |
+| FS-154 | Spell rank upgrades | 3 | Preview; game test pending |
 | FS-155 | Food and drink macro | 3 | Preview; game test pending |
 | FS-156 | Pet food highlights | 3 | Preview; game test pending |
-| FS-157 | Mana regeneration timing | 3 | Planned |
+| FS-157 | Mana regeneration timing | 3 | Preview; game test pending |
 | FS-158 | Reagent bag integration | 3 | Preview; game test pending |
 | FS-159 | Bag filters | 3 | Preview; game test pending |
 | FS-160 | Search by item properties | 3 | Preview; game test pending |
@@ -191,10 +191,10 @@ This is the initial capability backlog, not a complete parity claim. Distinct be
 | FS-163 | Minimap shape and sizing | 3 | Preview (size only); shape planned |
 | FS-164 | Micro menu visibility | 3 | Preview; game test pending |
 | FS-165 | Action bar mouseover visibility | 3 | Preview; game test pending |
-| FS-166 | Action button range coloring | 3 | Planned |
-| FS-167 | Action bar text customization | 3 | Planned |
-| FS-168 | Cursor ring | 3 | Planned |
-| FS-169 | Cursor trail | 3 | Planned |
+| FS-166 | Action button range coloring | 3 | Preview; game test pending |
+| FS-167 | Action bar text customization | 3 | Preview; game test pending |
+| FS-168 | Cursor ring | 3 | Preview; game test pending |
+| FS-169 | Cursor trail | 3 | Preview; game test pending |
 | FS-170 | Spell damage-per-second tooltips | 4 | Planned |
 | FS-171 | Spell damage-per-minute tooltips | 4 | Planned |
 | FS-172 | Damage-per-mana tooltips | 4 | Planned |

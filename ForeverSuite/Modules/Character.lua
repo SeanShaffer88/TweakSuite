@@ -520,3 +520,128 @@ F:Register("minimapButtons", {
     enable = function() end,
     disable = function() F:RestoreMinimapButtons() end,
 })
+
+-- ---------------------------------------------------------------------------
+-- Trainer helper: listings, rank upgrades and capped bulk learning.
+
+local function trainerService(index)
+    if not GetTrainerServiceInfo then return nil end
+    local name, rank, category, expanded = GetTrainerServiceInfo(index)
+    if type(name) ~= "string" or name == "" then return nil end
+    local cost = GetTrainerServiceCost and GetTrainerServiceCost(index) or nil
+    return { index = index, name = name, rank = rank, category = category,
+        expanded = expanded, cost = type(cost) == "number" and cost or nil }
+end
+
+function F:TrainerServices()
+    local rows = {}
+    if not GetNumTrainerServices then return rows end
+    local count = GetNumTrainerServices()
+    if type(count) ~= "number" then return rows end
+    for index = 1, count do
+        local service = trainerService(index)
+        if service then rows[#rows + 1] = service end
+    end
+    return rows
+end
+
+function F:TrainerReport(mode)
+    local rows = self:TrainerServices()
+    if #rows == 0 then self:Print("No trainer window is open (or the client reports no services)."); return 0 end
+    local shown = 0
+    for _, service in ipairs(rows) do
+        local available = service.category == "available"
+        local upgrade = type(service.rank) == "string" and service.rank ~= "" and service.rank ~= "Rank 1"
+        local include = true
+        if mode == "missing" then include = available
+        elseif mode == "ranks" then include = available and upgrade end
+        if include then
+            local text = service.name .. (type(service.rank) == "string" and (" " .. service.rank) or "")
+            text = text .. (available and " - available" or (" - " .. tostring(service.category or "unknown")))
+            if service.cost then text = text .. " - " .. (GetMoneyString and GetMoneyString(service.cost) or (service.cost .. "c")) end
+            self:Print(text)
+            shown = shown + 1
+        end
+    end
+    if shown == 0 then self:Print("Nothing matches that trainer filter.") end
+    return shown
+end
+
+function F:TrainAll(cap)
+    if InCombatLockdown() then return false, "cannot train during combat" end
+    if not BuyTrainerService then return false, "this client cannot buy trainer services" end
+    local budget = tonumber(cap) or (self.db and self.db.repairCap) or 100000
+    if budget <= 0 then return false, "the cap must be positive" end
+    local spent, learned = 0, 0
+    for _, service in ipairs(self:TrainerServices()) do
+        if service.category == "available" and service.cost and spent + service.cost <= budget then
+            local ok = pcall(BuyTrainerService, service.index)
+            if ok then
+                spent = spent + service.cost
+                learned = learned + 1
+            end
+        end
+    end
+    return true, learned, spent
+end
+
+F:Register("trainerHelper", {
+    title = "Trainer list and rank upgrades",
+    category = "Character",
+    description = "Lists every trainer service with its cost and marks rank upgrades, using /fs trainer, /fs trainer missing and /fs trainer ranks. It only reads the open trainer window; nothing is learned until you use /fs train.",
+    disableText = "Stops the trainer listings. The trainer window itself is unchanged.",
+    conflicts = { "Leatrix_Plus", "Leatrix_Plus_Forever", "EnhanceQoL" },
+    available = function() return GetNumTrainerServices ~= nil and GetTrainerServiceInfo ~= nil end,
+    enable = function() end,
+})
+
+F:Register("trainerBulk", {
+    title = "Bulk trainer purchases",
+    category = "Character",
+    description = "Learns every available trainer service that fits inside a gold cap with /fs train [cap] and prints what was learned. It never trains during combat, never spends past the cap and never buys a service the client marks unavailable.",
+    disableText = "Stops the bulk purchase command. Spells already learned stay learned.",
+    conflicts = { "Leatrix_Plus", "Leatrix_Plus_Forever", "EnhanceQoL" },
+    options = {
+        { key = "cap", type = "number", title = "Spend cap", default = 10, min = 1, max = 500, step = 1, unit = " g",
+          description = "Maximum gold spent by one /fs train run. The default keeps an accidental run inexpensive." },
+    },
+    available = function() return BuyTrainerService ~= nil and GetNumTrainerServices ~= nil end,
+    enable = function() end,
+})
+
+-- ---------------------------------------------------------------------------
+-- Mana regeneration timing
+
+local lastManaSpend, lastManaValue
+local function watchMana()
+    if not F:Active("manaRegen") then return end
+    local mana = UnitPower and UnitPower("player") or nil
+    if type(mana) ~= "number" then return end
+    if lastManaValue and mana < lastManaValue then lastManaSpend = GetTime and GetTime() or nil end
+    lastManaValue = mana
+end
+
+function F:ManaReport()
+    local mana, maximum = UnitPower and UnitPower("player") or nil, UnitPowerMax and UnitPowerMax("player") or nil
+    if type(mana) ~= "number" or type(maximum) ~= "number" then return nil end
+    local now = GetTime and GetTime() or 0
+    local since = lastManaSpend and (now - lastManaSpend) or nil
+    return { mana = mana, max = maximum, percent = maximum > 0 and mana / maximum * 100 or 0,
+        sinceSpend = since, ruleActive = since ~= nil and since < 5 }
+end
+
+F:Register("manaRegen", {
+    title = "Mana regeneration timing",
+    category = "Character",
+    description = "Tracks when you last spent mana and prints your mana, its percentage and whether the five-second regeneration rule is still running with /fs regen. It only reads power values.",
+    disableText = "Stops tracking mana spending and the /fs regen report.",
+    conflicts = { "Leatrix_Plus", "Leatrix_Plus_Forever", "EnhanceQoL" },
+    available = function() return UnitPower ~= nil and UnitPowerMax ~= nil end,
+    enable = function()
+        F:Listen("manaRegen", "UNIT_POWER_FREQUENT", function(_, unit)
+            if unit == "player" then watchMana() end
+        end)
+        F:Listen("manaRegen", "PLAYER_ENTERING_WORLD", function() lastManaValue = nil; watchMana() end)
+        watchMana()
+    end,
+})

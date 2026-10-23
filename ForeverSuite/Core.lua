@@ -1,7 +1,7 @@
 -- SPDX-License-Identifier: MIT
 local addonName, F = ...
 F.name = addonName
-F.version = "0.2.0-alpha.10"
+F.version = "0.2.0-alpha.11"
 F.features, F.order, F.listeners, F.errors = {}, {}, {}, {}
 F.frame = CreateFrame("Frame")
 F.paused = false
@@ -674,6 +674,7 @@ local function helpText()
     F:Print("  /fs chatlog [lines|clear], /fs channels [list|add|remove], /fs filter [list|add|remove], /fs whisper <name>|close, /fs reply <text>")
     F:Print("  /fs quests, /fs useq <name|itemID>, /fs qtarget <name>, /fs rested")
     F:Print("  /fs gear [list|add|remove|show], /fs fish [restore], /fs lure [list|add|remove|<name>], /fs eat, /fs drink, /fs petfood, /fs reagentbag <0-4|off>, /fs minimap [collect|restore|list]")
+    F:Print("  /fs trainer [missing|ranks], /fs train [cap], /fs regen, /fs bartext [hotkeys|macros|show], /fs range")
     F:Print("  /fs where, /fs zone, /fs way <x> <y>|clear, /fs dungeon [name], /fs tele [list|add <name> <spellID>|remove <name>|menu|<name>], /fs taxi [list|<n>], /fs flight")
     F:Print("  Feature IDs appear in settings and in /fs report.")
 end
@@ -877,6 +878,67 @@ SlashCmdList.FOREVERSUITE = function(message)
         end
         F.db.watch[#F.db.watch + 1] = rest
         F:Print("Also watching button " .. rest .. " for the dialog key.")
+    elseif command == "trainer" then
+        if not F:Active("trainerHelper") then F:Print("Enable Trainer list and rank upgrades first."); return end
+        local mode = rest:lower()
+        if mode ~= "" and mode ~= "missing" and mode ~= "ranks" then
+            F:Print("Use /fs trainer, /fs trainer missing or /fs trainer ranks."); return
+        end
+        F:TrainerReport(mode)
+    elseif command == "train" then
+        if not F:Active("trainerBulk") then F:Print("Enable Bulk trainer purchases first."); return end
+        if rest ~= "" and confirmRequired(rest) then
+            F:Print("This spends gold. Type /fs train confirm to continue.")
+            return
+        end
+        local cap = tonumber(rest) or F:GetOption("trainerBulk", "cap")
+        local ok, learned, spent = F:TrainAll(cap and cap * 10000)
+        if ok then
+            F:Print("Learned " .. learned .. " trainer service(s) for "
+                .. (GetMoneyString and GetMoneyString(spent) or (spent .. "c")) .. ".")
+        else
+            F:Print("Not trained: " .. tostring(learned))
+        end
+    elseif command == "regen" then
+        if not F:Active("manaRegen") then F:Print("Enable Mana regeneration timing first."); return end
+        local report = F:ManaReport()
+        if not report then F:Print("This client does not report mana for your character."); return end
+        F:Print(string.format("Mana %d/%d (%.0f%%).", report.mana, report.max, report.percent))
+        if report.sinceSpend then
+            F:Print(string.format("Last mana spent %.1f s ago; five-second rule %s.",
+                report.sinceSpend, report.ruleActive and "is running" or "has ended"))
+        else
+            F:Print("No mana spent since the feature started tracking.")
+        end
+    elseif command == "bartext" then
+        if not F:Active("actionBarText") then F:Print("Enable Action bar text first."); return end
+        local action = rest:lower()
+        if action == "hotkeys" then
+            local on = not F:GetOption("actionBarText", "hideHotkeys")
+            F:SetOption("actionBarText", "hideHotkeys", on); F:SetOption("actionBarText", "hideMacroNames", false)
+            F:Print(on and "Keybind letters hidden." or "Keybind letters shown.")
+        elseif action == "macros" then
+            local on = not F:GetOption("actionBarText", "hideMacroNames")
+            F:SetOption("actionBarText", "hideMacroNames", on); F:SetOption("actionBarText", "hideHotkeys", false)
+            F:Print(on and "Macro names hidden." or "Macro names shown.")
+        elseif action == "show" or action == "" then
+            F:SetOption("actionBarText", "hideHotkeys", false); F:SetOption("actionBarText", "hideMacroNames", false)
+            F:Print("Both keybind letters and macro names are shown.")
+        else
+            F:Print("Use /fs bartext hotkeys | macros | show.")
+        end
+    elseif command == "range" then
+        if not F:Active("actionRange") then F:Print("Enable Action button range colouring first."); return end
+        local counts = { inRange = 0, outOfRange = 0, unusable = 0, unknown = 0 }
+        for index = 1, 120 do
+            if _G["ActionButton" .. index] or index == 1 then
+                local state = F:ActionRangeState(index)
+                counts[state] = (counts[state] or 0) + 1
+                if index <= 12 then
+                    F:Print("Action " .. index .. ": " .. state)
+                end
+            end
+        end
     elseif command == "gear" then
         if not F:Active("gearGroups") then F:Print("Enable Gear groups first."); return end
         local action, group, item = rest:match("^(%S*)%s*(%S*)%s*(%S*)$")

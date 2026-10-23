@@ -47,6 +47,7 @@ function methods:IsClampedToScreen() return self.clamped ~= false end
 function methods:GetPoint() if self.points then return unpack(self.points) end end
 function methods:SetScale(value) self.scale = value end
 function methods:SetAlpha(value) self.alpha = value end
+function methods:GetAlpha() return self.alpha or 1 end
 function methods:GetScale() return self.scale or 1 end
 function methods:SetScript(name, fn) self.scripts[name] = fn end
 function methods:HookScript(name, fn)
@@ -99,7 +100,10 @@ function methods:CreateFontString()
  local font = CreateFrame("FontString")
  self.fontstrings = self.fontstrings or {}; table.insert(self.fontstrings, font); return font
 end
-function methods:CreateTexture() return CreateFrame("Texture") end
+function methods:CreateTexture()
+ local tex = CreateFrame("Texture")
+ self.textures = self.textures or {}; table.insert(self.textures, tex); return tex
+end
 function methods:GetStringHeight() return 450 end
 UIParent = CreateFrame("Frame")
 ChatFrame1 = CreateFrame("Frame", "ChatFrame1"); ChatFrame1.fading = true; ChatFrame1.clamped = true
@@ -289,6 +293,30 @@ C_Map = { GetBestMapForUnit = function() return 1429 end,
  SetUserWaypoint = function(point) userWaypoint = point end,
  GetUserWaypoint = function() return userWaypoint end,
  ClearUserWaypoint = function() userWaypoint = nil end }
+for index = 1, 12 do
+ local button = CreateFrame("Button", "ActionButton" .. index)
+ button.HotKey = button:CreateFontString(); button.HotKey:SetAlpha(1); button.HotKey.text = "1"
+ button.Name = button:CreateFontString(); button.Name:SetAlpha(1)
+end
+actionInRange, actionUsable = true, true
+function IsActionInRange(slot) return actionInRange end
+function IsUsableAction(slot) return actionUsable end
+trainerServices = {}
+function GetNumTrainerServices() return #trainerServices end
+function GetTrainerServiceInfo(index)
+ local entry = trainerServices[index]
+ if not entry then return nil end
+ return entry.name, entry.rank, entry.category, true
+end
+function GetTrainerServiceCost(index)
+ local entry = trainerServices[index]
+ return entry and entry.cost or 0
+end
+boughtServices = {}
+function BuyTrainerService(index) table.insert(boughtServices, index) end
+manaValue, manaMaxValue = 1000, 1000
+function UnitPower(unit, kind) if unit == "player" then return manaValue end return 0 end
+function UnitPowerMax(unit, kind) if unit == "player" then return manaMaxValue end return 0 end
 MicroMenuContainer = CreateFrame("Frame", "MicroMenuContainer"); MicroMenuContainer.shown = true
 MainMenuBar = CreateFrame("Frame", "MainMenuBar"); MainMenuBar.alpha = 1
 function methods:IsMouseOver() return self.mouseOver == true end
@@ -427,7 +455,7 @@ class SuiteTests(unittest.TestCase):
     def test_default_is_inert_and_ui_loads(self):
         self.start()
         self.runlua('fire("MERCHANT_SHOW"); fire("QUEST_DETAIL"); F:OpenSettings()')
-        self.assertEqual(len(self.g.F.order), 172)
+        self.assertEqual(len(self.g.F.order), 179)
         self.assertEqual(self.g.calls.repair, 0)
         self.assertEqual(self.g.calls.sell, 0)
         self.assertEqual(self.g.calls.accept, 0)
@@ -1213,7 +1241,7 @@ class SuiteTests(unittest.TestCase):
 
     def test_category_counts_and_layout_sanitation(self):
         self.start()
-        self.assertEqual(self.g.F.categoryButtons.Interface.label.text, "Interface (46)")
+        self.assertEqual(self.g.F.categoryButtons.Interface.label.text, "Interface (50)")
         self.assertEqual(self.g.F.categoryButtons.Home.label.text, "Home")
         self.assertEqual(self.g.F.categoryButtons.Windows.label.text, "Windows (7)")
         self.assertEqual(self.g.F.categoryButtons.Dialogs.label.text, "Dialogs (7)")
@@ -2286,6 +2314,61 @@ class SuiteTests(unittest.TestCase):
         self.assertEqual([groups['Tank'][i] for i in (1,)], [6001])
         self.assertIsNone(groups.Bad)
         self.assertEqual(len(self.g.ForeverSuiteDB.lures), 1)
+
+
+    def test_trainer_listing_ranks_and_bulk_purchase(self):
+        self.start()
+        self.runlua('trainerServices = { { name = "Fireball", rank = "Rank 2", category = "available", cost = 1000 },'
+                    ' { name = "Frostbolt", rank = "Rank 1", category = "available", cost = 500 },'
+                    ' { name = "Blizzard", rank = "Rank 3", category = "used", cost = 2000 } };'
+                    'F:SetEnabled("trainerHelper", true); F:SetEnabled("trainerBulk", true)')
+        self.runlua('SlashCmdList.FOREVERSUITE("trainer")')
+        self.assertIn("Fireball Rank 2", self.g.prints[len(self.g.prints) - 2])
+        before = len(self.g.prints)
+        self.runlua('SlashCmdList.FOREVERSUITE("trainer ranks")')
+        window = " ".join(self.g.prints[i] for i in range(before + 1, len(self.g.prints) + 1))
+        self.assertIn("Fireball", window)
+        self.assertNotIn("Frostbolt", window)
+        self.runlua('SlashCmdList.FOREVERSUITE("train")')
+        self.assertIn("Learned 2 trainer service(s)", self.g.prints[len(self.g.prints)])
+        self.assertEqual(list(self.g.boughtServices.values()), [1, 2])
+
+    def test_mana_regeneration_tracking(self):
+        self.start()
+        self.runlua('F:SetEnabled("manaRegen", true); manaValue = 1000; fire("PLAYER_ENTERING_WORLD");'
+                    'manaValue = 700; fire("UNIT_POWER_FREQUENT", "player"); now = 2')
+        self.runlua('SlashCmdList.FOREVERSUITE("regen")')
+        self.assertIn("Mana 700/1000", self.g.prints[len(self.g.prints) - 1])
+        self.assertIn("five-second rule is running", self.g.prints[len(self.g.prints)])
+
+    def test_action_bar_text_and_range_overlay(self):
+        self.start()
+        self.runlua('F:SetEnabled("actionBarText", true); F:SetOption("actionBarText", "hideHotkeys", true)')
+        self.assertEqual(self.g.ActionButton1.HotKey.alpha, 0)
+        self.runlua('F:SetEnabled("actionBarText", false)')
+        self.assertEqual(self.g.ActionButton1.HotKey.alpha, 1)
+        self.runlua('F:SetEnabled("actionRange", true); actionInRange = false')
+        self.runlua('F:SetOption("actionRange", "showUnusable", false)')
+        self.runlua('F:Refresh(); F:SetOption("actionRange", "showUnusable", true); actionUsable = false')
+        self.runlua('F:Refresh()')
+        self.assertTrue(self.g.ActionButton2.textures[1].shown)
+        self.runlua('actionInRange = true; actionUsable = true; F:Refresh()')
+        self.assertTrue(self.g.ActionButton2.textures[1].shown)
+        self.runlua('F:SetEnabled("actionRange", false)')
+        self.assertFalse(self.g.ActionButton2.textures[1].shown)
+
+    def test_cursor_ring_and_trail(self):
+        self.start()
+        self.runlua('F:SetEnabled("cursorRing", true); F:SetOption("cursorRing", "size", 64)')
+        self.runlua('ForeverSuiteCursorRing:Trigger("OnUpdate", 0.1)')
+        ring = self.g.ForeverSuiteCursorRing
+        self.assertTrue(ring.shown)
+        self.assertEqual(ring.width, 64)
+        self.runlua('F:SetEnabled("cursorTrail", true); ForeverSuiteCursorTrail:Trigger("OnUpdate", 0.1)')
+        self.assertTrue(self.g.ForeverSuiteCursorTrail.shown)
+        self.assertIsNotNone(self.g.ForeverSuiteCursorTrail.textures)
+        self.runlua('F:SetEnabled("cursorTrail", false)')
+        self.assertFalse(self.g.ForeverSuiteCursorTrail.shown)
 
 
 if __name__ == "__main__":

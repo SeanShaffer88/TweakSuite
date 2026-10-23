@@ -2,7 +2,7 @@
 ## Title: ForeverSuite
 ## Notes: Modular quality-of-life tools for WoW Forever. Stage 2 preview; /fs opens settings.
 ## Author: Sean Shaffer
-## Version: 0.2.0-alpha.10
+## Version: 0.2.0-alpha.11
 ## SavedVariables: ForeverSuiteDB
 ## X-License: MIT
 Core.lua
@@ -20,5 +20,6 @@ Modules\Chat.lua
 Modules\Maps.lua
 Modules\Activities.lua
 Modules\Character.lua
+Modules\HUD.lua
 Modules\Popups.lua
 Settings.lua

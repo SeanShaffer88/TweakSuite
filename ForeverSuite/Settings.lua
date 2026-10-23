@@ -2,7 +2,7 @@
 -- Original UI. Leatrix Plus's published gallery informs the visual direction only.
 local _, F = ...
 local categories = { "Home", "All tweaks", "Automation", "Dialogs", "Windows", "Tooltips", "Inventory",
-    "Interface", "Nameplates", "Overhead names", "Camera", "Chat", "Maps", "Quests" }
+    "Interface", "Nameplates", "Overhead names", "Camera", "Chat", "Maps", "Quests", "Character" }
 F.categories = categories
 local function label(parent, text, size)
     local font = parent:CreateFontString(nil, "OVERLAY", size or "GameFontNormal")
