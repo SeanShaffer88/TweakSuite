@@ -1,7 +1,7 @@
 -- SPDX-License-Identifier: MIT
 local addonName, F = ...
 F.name = addonName
-F.version = "0.2.0-alpha.11"
+F.version = "0.2.0-alpha.12"
 F.features, F.order, F.listeners, F.errors = {}, {}, {}, {}
 F.frame = CreateFrame("Frame")
 F.paused = false
@@ -516,6 +516,33 @@ function F:Initialize()
         else
             db.lures = nil
         end
+        if type(db.hazards) == "table" then
+            local kept, seenHazards = {}, {}
+            for _, entry in ipairs(db.hazards) do
+                local id = type(entry) == "table" and tonumber(entry.id) or nil
+                if id and id > 0 and id <= 1000000 and id % 1 == 0 and not seenHazards[id] and #kept < 80 then
+                    seenHazards[id] = true
+                    local name = type(entry.name) == "string" and entry.name ~= "" and entry.name:sub(1, 80) or nil
+                    kept[#kept + 1] = { id = id, name = name, kind = entry.kind == "cast" and "cast" or "debuff" }
+                end
+            end
+            if #kept > 0 then db.hazards = kept else db.hazards = nil end
+        else
+            db.hazards = nil
+        end
+        if type(db.hazardExempt) == "table" then
+            local kept, seenExempt = {}, {}
+            for _, value in ipairs(db.hazardExempt) do
+                local id = tonumber(value)
+                if id and id > 0 and id <= 1000000 and id % 1 == 0 and not seenExempt[id] and #kept < 80 then
+                    seenExempt[id] = true
+                    kept[#kept + 1] = id
+                end
+            end
+            if #kept > 0 then db.hazardExempt = kept else db.hazardExempt = nil end
+        else
+            db.hazardExempt = nil
+        end
         if type(db.teleports) == "table" then
             local kept = {}
             for _, entry in ipairs(db.teleports) do
@@ -675,6 +702,8 @@ local function helpText()
     F:Print("  /fs quests, /fs useq <name|itemID>, /fs qtarget <name>, /fs rested")
     F:Print("  /fs gear [list|add|remove|show], /fs fish [restore], /fs lure [list|add|remove|<name>], /fs eat, /fs drink, /fs petfood, /fs reagentbag <0-4|off>, /fs minimap [collect|restore|list]")
     F:Print("  /fs trainer [missing|ranks], /fs train [cap], /fs regen, /fs bartext [hotkeys|macros|show], /fs range")
+    F:Print("  /fs spellcalc <min> <max> <cast> [mana] [cooldown] [duration], /fs spelllabels")
+    F:Print("  /fs hazard [list|add <id> [name]|remove <id>|import <ids>|export|check], /fs hazard exempt|allow <id>")
     F:Print("  /fs where, /fs zone, /fs way <x> <y>|clear, /fs dungeon [name], /fs tele [list|add <name> <spellID>|remove <name>|menu|<name>], /fs taxi [list|<n>], /fs flight")
     F:Print("  Feature IDs appear in settings and in /fs report.")
 end
@@ -878,6 +907,90 @@ SlashCmdList.FOREVERSUITE = function(message)
         end
         F.db.watch[#F.db.watch + 1] = rest
         F:Print("Also watching button " .. rest .. " for the dialog key.")
+    elseif command == "hazard" then
+        local action, argument = rest:match("^(%S*)%s*(.-)$")
+        action = (action or ""):lower()
+        if action == "" or action == "list" then
+            if not F:Active("hazardData") then F:Print("Enable Hazard list maintenance first."); return end
+            local rows = F:HazardNames()
+            if #rows == 0 then F:Print("The hazard list is empty. Add a spell with /fs hazard add <id> [name]."); return end
+            for _, row in ipairs(rows) do
+                F:Print(row.id .. " - " .. row.name .. " (" .. row.kind .. ")")
+            end
+        elseif action == "add" then
+            if not F:Active("hazardData") then F:Print("Enable Hazard list maintenance first."); return end
+            local id, name = argument:match("^(%d+)%s*(.-)$")
+            local ok, reason = F:AddHazard(id, name ~= "" and name or nil)
+            F:Print(ok and ("Added spell " .. id .. " to the hazard list.") or ("Not added: " .. tostring(reason)))
+        elseif action == "remove" then
+            if not F:Active("hazardData") then F:Print("Enable Hazard list maintenance first."); return end
+            local ok, reason = F:RemoveHazard(argument)
+            F:Print(ok and "Removed the spell from the hazard list." or ("Not removed: " .. tostring(reason)))
+        elseif action == "import" then
+            if not F:Active("hazardData") then F:Print("Enable Hazard list maintenance first."); return end
+            local ok, added, skipped = F:ImportHazards(argument)
+            if ok then F:Print("Imported " .. added .. " spell(s); " .. skipped .. " skipped.") end
+        elseif action == "export" then
+            if not F:Active("hazardData") then F:Print("Enable Hazard list maintenance first."); return end
+            local text = F:ExportHazards()
+            F:Print(text == "" and "The hazard list is empty." or ("Hazard list: " .. text))
+        elseif action == "check" then
+            if not F:Active("hazardData") then F:Print("Enable Hazard list maintenance first."); return end
+            if not (C_Spell and C_Spell.DoesSpellExist) then F:Print("This client cannot check spell IDs."); return end
+            local unknown = {}
+            for _, row in ipairs(F:HazardNames()) do
+                if C_Spell.DoesSpellExist(row.id) ~= true then unknown[#unknown + 1] = tostring(row.id) end
+            end
+            F:Print(#unknown == 0 and "Every hazard spell exists on this client."
+                or ("Not on this client: " .. table.concat(unknown, ", ")))
+        elseif action == "exempt" or action == "allow" then
+            if not F:Active("alertExemptions") then F:Print("Enable Alert exemptions first."); return end
+            local id = tonumber(argument)
+            if not id or id <= 0 then F:Print("Use /fs hazard " .. action .. " <spellID>."); return end
+            if type(F.db.hazardExempt) ~= "table" then F.db.hazardExempt = {} end
+            if action == "exempt" then
+                local exists = false
+                for _, value in ipairs(F.db.hazardExempt) do if value == id then exists = true end end
+                if not exists then F.db.hazardExempt[#F.db.hazardExempt + 1] = id end
+                F:Print("Spell " .. id .. " no longer warns.")
+            else
+                for index = #F.db.hazardExempt, 1, -1 do
+                    if F.db.hazardExempt[index] == id then table.remove(F.db.hazardExempt, index) end
+                end
+                if next(F.db.hazardExempt) == nil then F.db.hazardExempt = nil end
+                F:Print("Spell " .. id .. " warns again.")
+            end
+        else
+            F:Print("Use /fs hazard list|add|remove|import|export|check|exempt|allow.")
+        end
+    elseif command == "spellcalc" then
+        if not F:Active("spellCalcPreview") then F:Print("Enable Spell calculation preview first."); return end
+        local numbers = {}
+        for word in rest:gmatch("%S+") do numbers[#numbers + 1] = tonumber(word) end
+        local min, max, cast = numbers[1], numbers[2], numbers[3]
+        if not min or not max or not cast then
+            F:Print("Use /fs spellcalc <min> <max> <cast> [mana] [cooldown] [duration]."); return
+        end
+        if min < 0 or max < 0 or max < min or max > 10000000 then
+            F:Print("Damage must be between 0 and 10000000, with max not below min."); return
+        end
+        if cast < 0 or cast > 60 then F:Print("Cast time must be between 0 and 60 seconds."); return end
+        local mana, cooldown, duration = numbers[4], numbers[5], numbers[6]
+        if mana and (mana < 0 or mana > 1000000) then F:Print("Mana cost must be between 0 and 1000000."); return end
+        if cooldown and (cooldown < 0 or cooldown > 600) then F:Print("Cooldown must be between 0 and 600 seconds."); return end
+        if duration and (duration <= 0 or duration > 3600) then F:Print("Duration must be between 0 and 3600 seconds."); return end
+        local result = F:SpellMath({ minDamage = min, maxDamage = max, castTime = cast, manaCost = mana,
+            cooldown = cooldown, duration = duration, isDot = duration ~= nil, tickInterval = duration and 2 or nil })
+        local lines = F:SpellMathLines(result)
+        if #lines == 0 then
+            F:Print("Enable at least one spell calculation feature to see a result."); return
+        end
+        F:Print("Spell calculation preview (average " .. F:FormatSpellNumber(result.average) .. "):")
+        for _, line in ipairs(lines) do F:Print("  " .. line) end
+    elseif command == "spelllabels" then
+        local locale, missing, fallback = F:SpellLabelReport()
+        F:Print("Spell calculation labels: " .. locale .. (fallback and "" or " (English fallback)"))
+        F:Print(missing == 0 and "No labels are missing." or (missing .. " label(s) fall back to English."))
     elseif command == "trainer" then
         if not F:Active("trainerHelper") then F:Print("Enable Trainer list and rank upgrades first."); return end
         local mode = rest:lower()

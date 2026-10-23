@@ -309,3 +309,52 @@ F:Register("whisperWindow", {
     enable = function() end,
     disable = function() F:HideWhisper() end,
 })
+
+-- Whispers can arrive while the window is in the background, so this is a small,
+-- separate feature: a sound and, optionally, the client's own tab flash.
+local WHISPER_SOUNDS = {
+    tell = { kit = 3081, file = "Sound\\Interface\\iTellMessage.wav" },
+    bell = { kit = 3157, file = "Sound\\DingSmall.wav" },
+}
+local flashing = false
+
+F:Register("whisperAlert", {
+    title = "Whisper notification sound",
+    category = "Chat",
+    description = "Plays a quiet sound and, optionally, flashes the chat tab when a whisper arrives. The sound is chosen from two built-in client sounds and the tab flash uses the client's own alert, so nothing is drawn by ForeverSuite.",
+    disableText = "Stops the sound and asks the client to stop flashing the chat tab.",
+    conflicts = { "Prat-3.0", "Chatter", "Leatrix_Plus", "Leatrix_Plus_Forever" },
+    options = {
+        { key = "sound", type = "choice", title = "Whisper sound", default = "tell",
+          choices = { { value = "tell", label = "Tell message" }, { value = "bell", label = "Small bell" }, { value = "none", label = "No sound" } },
+          description = "Which built-in sound to play for an incoming whisper. No sound keeps the feature silent but still leaves the tab flash available." },
+        { key = "flash", type = "boolean", title = "Flash the chat tab", default = true,
+          description = "Uses the client's chat tab alert for a whisper that arrives while the chat window is not focused." },
+    },
+    available = function() return PlaySound ~= nil or PlaySoundFile ~= nil end,
+    enable = function()
+        F:Listen("whisperAlert", "CHAT_MSG_WHISPER", function()
+            local choice = F:GetOption("whisperAlert", "sound") or "tell"
+            local kit = WHISPER_SOUNDS[choice]
+            if kit then
+                local played = false
+                if PlaySoundFile then played = pcall(PlaySoundFile, kit.file, "Master") end
+                if not played and PlaySound then pcall(PlaySound, kit.kit, "Master") end
+            end
+            if F:GetOption("whisperAlert", "flash") ~= false and FCF_StartAlertFlash and ChatFrame1 then
+                pcall(FCF_StartAlertFlash, ChatFrame1)
+                flashing = true
+            end
+        end)
+        F:Listen("whisperAlert", "CHAT_MSG_WHISPER_INFORM", function()
+            if flashing and FCF_StopAlertFlash and ChatFrame1 then
+                pcall(FCF_StopAlertFlash, ChatFrame1)
+                flashing = false
+            end
+        end)
+    end,
+    disable = function()
+        if flashing and FCF_StopAlertFlash and ChatFrame1 then pcall(FCF_StopAlertFlash, ChatFrame1) end
+        flashing = false
+    end,
+})

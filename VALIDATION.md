@@ -1,12 +1,12 @@
 # Validation record — October 22, 2026
 
-Status: development preview, `0.2.0-alpha.11`, Stage 2 in progress. Not a completed replacement or a gameplay-validated release.
+Status: development preview, `0.2.0-alpha.12`, Stage 2 in progress. Not a completed replacement or a gameplay-validated release.
 
 ## Performed
 
 - Both installed client build metadata rows: 1.60.1.70532. Beta and launch are separate installation targets.
 - All shipped Lua source parsed and executed in Lua 5.1 via Lupa 2.8 on Windows x64 / CPython 3.12.
-- 149 behavioral test methods passed, including a subtest for each of the 26 CVar-backed features.
+- 161 behavioral test methods passed, including a subtest for each of the 26 CVar-backed features.
 - Covered: inert defaults; settings schema validation and preservation; unsupported-client guard; repair budget and personal funds; Shift/combat suppression; loaded and late-loaded addon conflicts; opt-in junk sale; auto-loot mode; reward choice/money preservation; pause/resume; CVar restoration and external edits; saved ownership after restart; unavailable/refused APIs; event error isolation; tooltip duplicate control/cache readiness/secret-value guard; chat restoration/new windows; search and diagnostic report UI construction.
 - Stage 2 coverage: typed boolean/choice/number options with range and finite-number validation; unknown or out-of-range saved options dropped on load; option changes persisted in SavedVariables; single-feature reset; read-only future schema refusing option writes; options panel choice cycling, numeric stepping and boolean toggling; option values in Details and `/fs report`; slash-command feedback for invalid options, option listings and features without options; deferred option refresh across combat.
 - Dialog coverage: key consumption only when a visible Accept/Continue button is actionable; propagation when no button is available; never completing a quest with reward choices; custom key; Shift and combat suppression; keyboard catcher hidden on combat entry with no restricted `SetPropagateKeyboardInput` call in combat; keyboard catcher restored after combat; reward digits selecting icons without calling `GetQuestReward`; hint option and disable behavior.

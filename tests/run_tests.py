@@ -384,6 +384,45 @@ end,
  return "Item", "item:123", 2, 45, 1, "Armor", "Plate", itemStack, itemEquip, "", itemSellPrice
  end, GetDetailedItemLevelInfo=function(link) return inventoryLevels[link] or itemLevel end,
  GetItemCount=function(_, includeBank) return includeBank and bankCountValue or itemCountValue end}
+spellTooltipLines = {}
+spellInfo = {}
+spellCosts = {}
+C_Spell = C_Spell or {}
+function C_Spell.GetSpellInfo(id)
+ local entry = spellInfo[id]
+ if not entry then return { name = "Spell " .. tostring(id), castTime = 0 } end
+ return entry
+end
+function C_Spell.GetSpellPowerCost(id) return spellCosts[id] or {} end
+hazardAuras = {}
+auraSounds, removedSounds = {}, {}
+C_UnitAuras = C_UnitAuras or {}
+function C_UnitAuras.GetPlayerAuraBySpellID(id) return hazardAuras[id] end
+function C_UnitAuras.AddAuraSound(id, kit) table.insert(auraSounds, { id = id, kit = kit }) end
+function C_UnitAuras.RemoveAuraSound(id) table.insert(removedSounds, id) end
+secretAuras = {}
+C_Secrets = C_Secrets or {}
+function C_Secrets.ShouldSpellAuraBeSecret(id) return secretAuras[id] == true end
+playedSounds = {}
+function PlaySoundFile(file) table.insert(playedSounds, file) end
+function PlaySound(kit) table.insert(playedSounds, kit) end
+C_Spell.DoesSpellExist = function(id) return id ~= 999999 end
+tooltipInfoLines = {}
+C_TooltipInfo = {}
+function C_TooltipInfo.GetSpellByID(id)
+ local lines = spellTooltipLines[id]
+ if not lines then return nil end
+ local out = {}
+ for _, text in ipairs(lines) do table.insert(out, { leftText = text }) end
+ return { lines = out }
+end
+function C_TooltipInfo.GetHyperlink(link)
+ local lines = tooltipInfoLines[link]
+ if not lines then return nil end
+ local out = {}
+ for _, text in ipairs(lines) do table.insert(out, { leftText = text }) end
+ return { lines = out }
+end
 Settings={RegisterCanvasLayoutCategory=function() return {} end, RegisterAddOnCategory=function() end}
 function fire(event, ...) F.frame:Trigger("OnEvent", event, ...) end
 chatFilters = {}
@@ -397,6 +436,9 @@ end
 classForGUID = {}
 function GetPlayerInfoByGUID(guid) return nil, classForGUID[guid] end
 joinedChannels, leftChannels, sentMessages = {}, {}, {}
+flashed, flashStopped = 0, 0
+function FCF_StartAlertFlash() flashed = flashed + 1 end
+function FCF_StopAlertFlash() flashStopped = flashStopped + 1 end
 function JoinChannelByName(name) table.insert(joinedChannels, name) end
 function LeaveChannelByName(name) table.insert(leftChannels, name) end
 function SendChatMessage(text, chatType, language, target)
@@ -455,7 +497,7 @@ class SuiteTests(unittest.TestCase):
     def test_default_is_inert_and_ui_loads(self):
         self.start()
         self.runlua('fire("MERCHANT_SHOW"); fire("QUEST_DETAIL"); F:OpenSettings()')
-        self.assertEqual(len(self.g.F.order), 179)
+        self.assertEqual(len(self.g.F.order), 196)
         self.assertEqual(self.g.calls.repair, 0)
         self.assertEqual(self.g.calls.sell, 0)
         self.assertEqual(self.g.calls.accept, 0)
@@ -1241,12 +1283,12 @@ class SuiteTests(unittest.TestCase):
 
     def test_category_counts_and_layout_sanitation(self):
         self.start()
-        self.assertEqual(self.g.F.categoryButtons.Interface.label.text, "Interface (50)")
+        self.assertEqual(self.g.F.categoryButtons.Interface.label.text, "Interface (57)")
         self.assertEqual(self.g.F.categoryButtons.Home.label.text, "Home")
         self.assertEqual(self.g.F.categoryButtons.Windows.label.text, "Windows (7)")
         self.assertEqual(self.g.F.categoryButtons.Dialogs.label.text, "Dialogs (7)")
-        self.assertEqual(self.g.F.categoryButtons.Tooltips.label.text, "Tooltips (21)")
-        self.assertEqual(self.g.F.categoryButtons.Chat.label.text, "Chat (19)")
+        self.assertEqual(self.g.F.categoryButtons.Tooltips.label.text, "Tooltips (30)")
+        self.assertEqual(self.g.F.categoryButtons.Chat.label.text, "Chat (20)")
         self.assertEqual(self.g.F.categoryButtons.Maps.label.text, "Maps (9)")
         self.assertEqual(self.g.F.categoryButtons.Quests.label.text, "Quests (9)")
         self.assertEqual(self.g.F.categoryButtons.Inventory.label.text, "Inventory (18)")
@@ -2369,6 +2411,155 @@ class SuiteTests(unittest.TestCase):
         self.assertIsNotNone(self.g.ForeverSuiteCursorTrail.textures)
         self.runlua('F:SetEnabled("cursorTrail", false)')
         self.assertFalse(self.g.ForeverSuiteCursorTrail.shown)
+
+
+    def test_reputation_and_quest_item_tooltips(self):
+        self.start()
+        self.runlua(
+            "tooltipInfoLines['item:8101'] = { 'Use: Increases your reputation with Argent Dawn by 350.' };"
+            "tooltipInfoLines['item:8102'] = { 'Use: Begins a quest: ' .. string.char(34) .. 'The Fallen Star' .. string.char(34) };"
+            "F:SetEnabled('repToken', true); F:SetEnabled('questItem', true)")
+        self.runlua("local frame = tipFor('rep'); frame.link = 'item:8101';"
+                    "tooltipCallbacks[Enum.TooltipDataType.Item](frame, { id = 123 }); repLines = frame.lines")
+        self.assertEqual(self.g.repLines[1], "Reputation token: Argent Dawn (+350)")
+        self.runlua("local frame = tipFor('quest'); frame.link = 'item:8102';"
+                    "tooltipCallbacks[Enum.TooltipDataType.Item](frame, { id = 123 }); questLines = frame.lines")
+        self.assertEqual(self.g.questLines[1], "Starts a quest: The Fallen Star")
+        self.runlua("F:SetEnabled('repToken', false)")
+        self.runlua("local frame = tipFor('off'); frame.link = 'item:8101';"
+                    "tooltipCallbacks[Enum.TooltipDataType.Item](frame, { id = 123 }); offLines = frame.lines")
+        self.assertIsNone(self.g.offLines[1])
+
+    def test_tooltip_extras_parser(self):
+        self.start()
+        self.runlua("e = F:ScanTooltipExtras({ \"Increases your reputation with The Sha'tar by 500.\","
+                    " \"Begins a quest: 'A Shady Business'.\" })")
+        self.runlua('rFaction = e.reputation.faction; rAmount = e.reputation.amount; qName = e.quest.name')
+        self.assertEqual(self.g.rFaction, "The Sha'tar")
+        self.assertEqual(self.g.rAmount, 500)
+        self.assertEqual(self.g.qName, "'A Shady Business'")
+
+    def test_spell_math_core(self):
+        self.start()
+        self.runlua("r = F:SpellMath({ minDamage = 100, maxDamage = 200, castTime = 2, manaCost = 300, manaMax = 5000 })")
+        self.assertEqual(self.g.r.average, 150)
+        self.assertEqual(self.g.r.dps, 75)
+        self.assertEqual(self.g.r.dpm, 4500)
+        self.assertEqual(self.g.r.perMana, 0.5)
+        self.assertEqual(self.g.r.manaPercent, 6)
+
+    def test_spell_math_dot_share(self):
+        self.start()
+        self.runlua("r = F:SpellMath({ minDamage = 100, maxDamage = 100, castTime = 0, duration = 12, tickInterval = 3, isDot = true })")
+        self.assertEqual(self.g.r.ticks, 4)
+        self.assertEqual(self.g.r.total, 400)
+        self.assertEqual(self.g.r.dotShare, 100)
+        self.assertEqual(self.g.r.dps, 400 / 12)
+
+    def test_spell_math_rejects_junk_input(self):
+        self.start()
+        self.runlua("a = F:SpellMath({ castTime = 2 }); b = F:SpellMath(nil)")
+        self.assertIsNone(self.g.a)
+        self.assertIsNone(self.g.b)
+
+    def test_spell_calculation_tooltip_lines(self):
+        self.start()
+        self.runlua("spellTooltipLines[5001] = { 'Deals 100 to 200 Fire damage.' };"
+                    "spellInfo[5001] = { name = 'Fireball', castTime = 2000 };"
+                    "spellCosts[5001] = { { cost = 300 } }; manaMaxValue = 5000;"
+                    "F:SetEnabled('spellDps', true); F:SetEnabled('spellPerMana', true);"
+                    "F:SetEnabled('spellManaPercent', true); F:SetEnabled('spellDpm', true)")
+        self.runlua("local frame = tipFor('spellmath');"
+                    "tooltipCallbacks[Enum.TooltipDataType.Spell](frame, { id = 5001 }); mathLines = frame.lines")
+        self.assertEqual(self.g.mathLines[1], "Damage per second: 75.0 /s")
+        self.assertEqual(self.g.mathLines[2], "Damage per minute: 4500.0 /min")
+        self.assertEqual(self.g.mathLines[3], "Damage per mana: 0.5")
+        self.assertEqual(self.g.mathLines[4], "Mana cost: 6.0%")
+        self.assertIsNone(self.g.mathLines[5])
+
+    def test_spell_calculation_preview_and_labels(self):
+        self.start()
+        self.runlua("F:SetEnabled('spellCalcPreview', true); F:SetEnabled('spellDps', true);"
+                    "F:SetEnabled('spellLabels', true)")
+        self.runlua("SlashCmdList.FOREVERSUITE('spellcalc 100 200 2')")
+        self.assertIn("Spell calculation preview (average 150.0)", self.g.prints[len(self.g.prints) - 1])
+        self.assertIn("Damage per second: 75.0", self.g.prints[len(self.g.prints)])
+        before = len(self.g.prints)
+        self.runlua("SlashCmdList.FOREVERSUITE('spellcalc 300 100 2')")
+        self.assertIn("max not below min", self.g.prints[before + 1])
+        self.runlua("F:SetOption('spellLabels', 'locale', 'enUS'); SlashCmdList.FOREVERSUITE('spelllabels')")
+        self.assertIn("enUS", self.g.prints[len(self.g.prints) - 1])
+        self.assertIn("No labels are missing", self.g.prints[len(self.g.prints)])
+
+
+    def test_hazard_list_import_export_and_sounds(self):
+        self.start()
+        self.runlua("F:SetEnabled('hazardAlerts', true); F:SetEnabled('hazardData', true);"
+                    "F:SetEnabled('alertSounds', true); F:SetEnabled('auraSoundApi', true)")
+        self.runlua("ok, added, skipped = F:ImportHazards('7001, 7002, 0, abc')")
+        self.assertTrue(self.g.ok)
+        self.assertEqual(self.g.added, 2)
+        self.assertEqual(self.g.skipped, 1)
+        self.assertEqual(self.lua.eval("F:ExportHazards()"), "7001,7002")
+        self.runlua("hazardAuras[7001] = { name = 'Standing in Fire' }; fire('UNIT_AURA', 'player')")
+        self.assertIn("Warning: spell 7001 is affecting you.", self.g.prints[len(self.g.prints)])
+        self.assertTrue(len(self.g.playedSounds) > 0)
+        self.assertEqual(len(self.g.auraSounds), 2)
+        before = len(self.g.prints)
+        self.runlua("fire('UNIT_AURA', 'player')")
+        self.assertEqual(len(self.g.prints), before)
+        self.runlua("hazardAuras[7001] = nil; fire('UNIT_AURA', 'player'); hazardAuras[7001] = {}; fire('UNIT_AURA', 'player')")
+        self.assertIn("Warning: spell 7001 is affecting you.", self.g.prints[len(self.g.prints)])
+
+    def test_hazard_exemptions_and_secret_auras(self):
+        self.start()
+        self.runlua("F:SetEnabled('hazardAlerts', true); F:SetEnabled('hazardData', true);"
+                    "F:SetEnabled('alertExemptions', true); F:ImportHazards('7003,7004')")
+        self.runlua("SlashCmdList.FOREVERSUITE('hazard exempt 7003')")
+        self.runlua("hazardAuras[7003] = {}; hazardAuras[7004] = {}; fire('UNIT_AURA', 'player')")
+        self.assertIn("Warning: spell 7004 is affecting you.", self.g.prints[len(self.g.prints)])
+        before = len(self.g.prints)
+        self.runlua("F:AddHazard(7005); secretAuras[7005] = true; hazardAuras[7005] = {}; fire('UNIT_AURA', 'player')")
+        self.assertEqual(len(self.g.prints), before)
+
+    def test_failure_and_environment_warnings(self):
+        self.start()
+        self.runlua("F:SetEnabled('failureWarnings', true); F:SetEnabled('environmentWarnings', true);"
+                    "F:SetEnabled('alertSounds', true)")
+        self.runlua("fire('UI_ERROR_MESSAGE', 66, 'Not enough mana')")
+        self.assertIn("Action failed: Not enough mana", self.g.prints[len(self.g.prints)])
+        before = len(self.g.prints)
+        self.runlua("fire('UI_ERROR_MESSAGE', 1, 'Something unrelated')")
+        self.assertEqual(len(self.g.prints), before)
+        self.runlua("fire('MIRROR_TIMER_START', 'BREATH', 20, 100, 1, false, 'Breath')")
+        self.assertIn("Environment warning: Breath at 20%", self.g.prints[len(self.g.prints)])
+        before = len(self.g.prints)
+        self.runlua("fire('MIRROR_TIMER_START', 'BREATH', 18, 100, 1, false, 'Breath')")
+        self.assertEqual(len(self.g.prints), before)
+
+    def test_warning_db_sanitation(self):
+        self.runlua("ForeverSuiteDB = { schema = 1, hazards = { { id = 7001, name = 'Fire', kind = 'cast' },"
+                    " { id = 7001 }, { id = 0 }, { id = 'x' }, 5 },"
+                    " hazardExempt = { 7002, 7002, -1, 'x', 7003 } }")
+        self.start()
+        self.assertEqual(self.lua.eval("#ForeverSuiteDB.hazards"), 1)
+        self.assertEqual(self.lua.eval("ForeverSuiteDB.hazards[1].id"), 7001)
+        self.assertEqual(self.lua.eval("ForeverSuiteDB.hazards[1].kind"), "cast")
+        self.assertEqual(self.lua.eval("#ForeverSuiteDB.hazardExempt"), 2)
+
+
+    def test_whisper_notification_sound_and_flash(self):
+        self.start()
+        self.runlua("F:SetEnabled('whisperAlert', true)")
+        self.runlua("fire('CHAT_MSG_WHISPER', 'hello', 'Buddy')")
+        self.assertEqual(self.g.flashed, 1)
+        self.assertTrue(len(self.g.playedSounds) > 0)
+        self.runlua("F:SetOption('whisperAlert', 'sound', 'none'); F:SetOption('whisperAlert', 'flash', false)")
+        before = len(self.g.playedSounds)
+        self.runlua("fire('CHAT_MSG_WHISPER', 'second', 'Buddy')")
+        self.assertEqual(len(self.g.playedSounds), before)
+        self.runlua("F:SetEnabled('whisperAlert', false)")
+        self.assertGreaterEqual(self.g.flashStopped, 1)
 
 
 if __name__ == "__main__":

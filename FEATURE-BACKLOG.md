@@ -2,7 +2,7 @@
 
 This is the initial capability backlog, not a complete parity claim. Distinct behaviors remain in scope; an implemented preview still requires in-game acceptance. Source options are separately indexed to catch omitted parameters and smaller features.
 
-249 tracked capabilities: 169 implemented, 5 scoped out with a reason and 75 planned. The shipped preview has 179 independently configurable features; several features and feature options share one capability row, and features added ahead of the index were recorded as FS-230 to FS-249. IDs remain stable as work continues.
+249 tracked capabilities: 169 implemented, 5 scoped out with a reason and 75 planned. The shipped preview has 196 independently configurable features; several features and feature options share one capability row, and features added ahead of the index were recorded as FS-230 to FS-249. IDs remain stable as work continues.
 
 | ID | Capability | Stage | Status |
 |---|---|---|---|
@@ -195,21 +195,21 @@ This is the initial capability backlog, not a complete parity claim. Distinct be
 | FS-167 | Action bar text customization | 3 | Preview; game test pending |
 | FS-168 | Cursor ring | 3 | Preview; game test pending |
 | FS-169 | Cursor trail | 3 | Preview; game test pending |
-| FS-170 | Spell damage-per-second tooltips | 4 | Planned |
-| FS-171 | Spell damage-per-minute tooltips | 4 | Planned |
-| FS-172 | Damage-per-mana tooltips | 4 | Planned |
-| FS-173 | Mana cost percentage | 4 | Planned |
-| FS-174 | Damage-over-time contribution setting | 4 | Planned |
-| FS-175 | Spell calculation formatting and preview | 4 | Planned |
-| FS-176 | Spell calculation localization | 4 | Planned |
-| FS-177 | Ground hazard audio warnings | 4 | Planned |
-| FS-178 | Friendly-fire warnings | 4 | Planned |
-| FS-179 | Failure warnings | 4 | Planned |
-| FS-180 | Hazard data maintenance | 4 | Planned |
-| FS-181 | Alert sound categories and volume | 4 | Planned |
-| FS-182 | Alert exemptions | 4 | Planned |
-| FS-183 | Allowed aura-sound API integration | 4 | Planned |
-| FS-184 | Environmental danger warnings | 4 | Planned |
+| FS-170 | Spell damage-per-second tooltips | 4 | Preview; game test pending |
+| FS-171 | Spell damage-per-minute tooltips | 4 | Preview; game test pending |
+| FS-172 | Damage-per-mana tooltips | 4 | Preview; game test pending |
+| FS-173 | Mana cost percentage | 4 | Preview; game test pending |
+| FS-174 | Damage-over-time contribution setting | 4 | Preview; game test pending |
+| FS-175 | Spell calculation formatting and preview | 4 | Preview; game test pending |
+| FS-176 | Spell calculation localization | 4 | Preview; game test pending |
+| FS-177 | Ground hazard audio warnings | 4 | Preview; game test pending |
+| FS-178 | Friendly-fire warnings | 4 | Scoped out; see note |
+| FS-179 | Failure warnings | 4 | Preview; game test pending |
+| FS-180 | Hazard data maintenance | 4 | Preview; game test pending |
+| FS-181 | Alert sound categories and volume | 4 | Preview; game test pending |
+| FS-182 | Alert exemptions | 4 | Preview; game test pending |
+| FS-183 | Allowed aura-sound API integration | 4 | Preview; game test pending |
+| FS-184 | Environmental danger warnings | 4 | Preview; game test pending |
 | FS-185 | Custom loot window | 4 | Planned |
 | FS-186 | Loot notifications | 4 | Planned |
 | FS-187 | Backpack tracked-item bar | 4 | Planned |

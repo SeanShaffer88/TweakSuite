@@ -44,7 +44,7 @@ local SLOT_FOR_EQUIP = {
 }
 
 local ITEM_TOOLTIP_FEATURES = { "maxStack", "itemLevel", "itemID", "itemCount", "sellPrice", "upgradeHint", "bindType",
-    "flyoutItemLevel", "missingEnchant", "missingGems", "socketInfo" }
+    "flyoutItemLevel", "missingEnchant", "missingGems", "socketInfo", "repToken", "questItem" }
 local UNIT_TOOLTIP_FEATURES = { "npcID", "tooltipClassColor", "unitHealth" }
 
 -- Item link fields: item:id:enchant:gem1:gem2:gem3:gem4:suffix:unique:...
@@ -124,6 +124,71 @@ local function upgradeComparison(link, equipLoc, hoveredLevel)
         end
     end
     return best
+end
+
+
+-- The client's own item tooltip text is read through C_TooltipInfo, which is the
+-- supported replacement for the removed GetItemInfo description fields. Lines that
+-- the client marks secret are skipped instead of being compared.
+local lineCache, lineCacheSize = {}, 0
+
+function F:ItemTooltipLines(link)
+    if type(link) ~= "string" then return nil end
+    if lineCache[link] then return lineCache[link] end
+    if not (C_TooltipInfo and C_TooltipInfo.GetHyperlink) then return nil end
+    local ok, data = pcall(C_TooltipInfo.GetHyperlink, link)
+    if not ok or type(data) ~= "table" or type(data.lines) ~= "table" then return nil end
+    local lines = {}
+    for _, line in ipairs(data.lines) do
+        local text
+        if type(line) == "table" then text = F:Plain(line.leftText) and line.leftText or nil end
+        if type(text) == "string" and text ~= "" then lines[#lines + 1] = text end
+    end
+    if lineCacheSize > 400 then lineCache, lineCacheSize = {}, 0 end
+    lineCache[link] = lines
+    lineCacheSize = lineCacheSize + 1
+    return lines
+end
+
+-- Pure parser so the rules can be tested without a client frame. It recognises the
+-- two patterns the client uses for reputation tokens and quest starting items.
+function F:ScanTooltipExtras(lines)
+    local extras = {}
+    if type(lines) ~= "table" then return extras end
+    for _, raw in ipairs(lines) do
+        if type(raw) == "string" then
+            local faction, amount = raw:match("[Ii]ncreases your reputation with ([%w%s'%-]+) by (%d+)")
+            if faction then
+                extras.reputation = { faction = (faction:gsub("%s+$", "")), amount = tonumber(amount) }
+            end
+            local quest = raw:match('[Bb]egins a quest:?%s*"(.-)"') or raw:match("[Bb]egins a quest:?%s*(.+)$")
+            if quest and quest ~= "" then extras.quest = { name = (quest:gsub("%.$", "")) } end
+            if not extras.quest then
+                local quoted = raw:match('quest "([^"]+)"')
+                if quoted then extras.quest = { name = quoted } end
+            end
+        end
+    end
+    return extras
+end
+
+local function tooltipExtras(tooltip, record, link)
+    if not (F:Active("repToken") or F:Active("questItem")) then return end
+    local extras = F:ScanTooltipExtras(F:ItemTooltipLines(link))
+    if F:Active("repToken") and extras.reputation then
+        local text = "Reputation token: " .. extras.reputation.faction
+        if F:GetOption("repToken", "showAmount") ~= false and extras.reputation.amount then
+            text = text .. " (+" .. extras.reputation.amount .. ")"
+        end
+        add(tooltip, record, "repToken", text)
+    end
+    if F:Active("questItem") and extras.quest then
+        local text = "Starts a quest"
+        if F:GetOption("questItem", "showName") ~= false and extras.quest.name then
+            text = text .. ": " .. extras.quest.name
+        end
+        add(tooltip, record, "questItem", text)
+    end
 end
 
 local function itemTooltip(tooltip, data)
@@ -213,6 +278,7 @@ local function itemTooltip(tooltip, data)
             add(tooltip, record, "flyout", text)
         end
     end
+    tooltipExtras(tooltip, record, link)
     if F:Active("missingEnchant") and type(equip) == "string" and ENCHANTABLE[equip] then
         local onCharacter = isEquipped(link, equip)
         local fields = linkFields(link)
@@ -534,6 +600,34 @@ F:Register("upgradeHint", {
         return tooltipAvailable() and Enum.TooltipDataType.Item and C_Item
             and C_Item.GetItemInfo and C_Item.GetDetailedItemLevelInfo and GetInventoryItemLink ~= nil
     end,
+})
+
+F:Register("repToken", {
+    title = "Reputation token details",
+    category = "Tooltips",
+    description = "Adds the faction and amount to reputation token tooltips, read from the client's own item tooltip text through C_TooltipInfo. Tokens whose text the client hides are left alone.",
+    disableText = "Removes the reputation line from item tooltips.",
+    conflicts = { "TinyTooltip", "Leatrix_Plus", "Leatrix_Plus_Forever" },
+    options = {
+        { key = "showAmount", type = "boolean", title = "Show the reputation amount", default = true,
+          description = "Adds the numeric amount the client reports, for example (+350). Turn off to show only the faction name." },
+    },
+    available = function() return C_TooltipInfo ~= nil and C_TooltipInfo.GetHyperlink ~= nil end,
+    enable = itemEnable,
+})
+
+F:Register("questItem", {
+    title = "Quest-starting item details",
+    category = "Tooltips",
+    description = "Marks items that begin a quest and shows the quest name when the client's tooltip text includes it. Useful to spot quest starters before selling a bag.",
+    disableText = "Removes the quest line from item tooltips.",
+    conflicts = { "TinyTooltip", "Leatrix_Plus", "Leatrix_Plus_Forever" },
+    options = {
+        { key = "showName", type = "boolean", title = "Show the quest name", default = true,
+          description = "Adds the quest name when the client's tooltip text contains it. Only the text the client already renders is used." },
+    },
+    available = function() return C_TooltipInfo ~= nil and C_TooltipInfo.GetHyperlink ~= nil end,
+    enable = itemEnable,
 })
 
 F:Register("bindType", {
