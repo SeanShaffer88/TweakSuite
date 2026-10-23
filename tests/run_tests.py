@@ -29,7 +29,7 @@ inventoryLinks = { player = { [1] = "item:1001", [16] = "item:1002" }, target = 
 inventoryLevels = { ["item:1001"] = 82, ["item:1002"] = 90, ["item:2001"] = 75 }
 tips = {}
 local methods = {}
-local noops = {"SetSize", "SetFrameStrata", "EnableMouse",
+local noops = {"SetFrameStrata", "EnableMouse",
  "SetMovable", "SetBackdrop", "SetJustifyH", "SetJustifyV", "RegisterForDrag", "StartMoving", "StopMovingOrSizing",
  "SetAutoFocus", "SetFontObject", "SetMaxLetters", "SetMultiLine", "SetScrollChild",
  "UpdateScrollChildRect", "SetFocus", "ClearFocus", "HighlightText", "ClearAllPoints", "SetTextColor", "SetVerticalScroll",
@@ -37,6 +37,7 @@ local noops = {"SetSize", "SetFrameStrata", "EnableMouse",
 for _, name in ipairs(noops) do methods[name] = function() end end
 function methods:SetPoint(...) self.points = {...} end
 function methods:SetHeight(h) self.height = h end
+function methods:SetSize(w, h) self.width = w; self.height = h end
 function methods:SetWidth(w) self.width = w end
 function methods:SetFont(_, size, flags) self.fontSize = size; self.fontFlags = flags end
 function methods:GetName() return self.name end
@@ -69,6 +70,8 @@ function methods:SetPropagateKeyboardInput(value)
 end
 function methods:SetText(text) self.text = text; self:Trigger("OnTextChanged") end
 function methods:GetText() return self.text or "" end
+function methods:GetWidth() return self.width or 0 end
+function methods:GetHeight() return self.height or 0 end
 function methods:SetChecked(value) self.checked = value end
 function methods:GetChecked() return self.checked end
 function methods:SetEnabled(value) self.enabled = value end
@@ -200,6 +203,17 @@ function UnitIsFriend(_, name) return friends[name] == true end
 function UnitIsInMyGuild(name) return guildmates[name] == true end
 function DeclineGroup() calls.declines = (calls.declines or 0) + 1 end
 function UnitName(unit) if unit == "player" then return "Tester" end return unit end
+unitClasses, unitHealths = {}, {}
+RAID_CLASS_COLORS = { WARRIOR = { r = 0.78, g = 0.61, b = 0.43 }, MAGE = { r = 0.25, g = 0.78, b = 0.92 } }
+function UnitClass(unit)
+ local entry = unitClasses[unit]
+ if entry then return entry[1], entry[2] end
+ return nil, nil
+end
+function UnitHealth(unit) local entry = unitHealths[unit]; return entry and entry[1] or 0 end
+function UnitHealthMax(unit) local entry = unitHealths[unit]; return entry and entry[2] or 0 end
+socketStats = {}
+function GetItemStats(link) return socketStats[link] end
 function GetRealmName() return "TestRealm" end
 GossipFrame = CreateFrame("Frame", "GossipFrame")
 MicroMenuContainer = CreateFrame("Frame", "MicroMenuContainer"); MicroMenuContainer.shown = true
@@ -216,6 +230,8 @@ function UnitXPMax() return UnitXPMaxValue end
 function GetTime() return now end
 ChatFrame1.text = ""
 function methods:GetText() return self.text or "" end
+function methods:GetWidth() return self.width or 0 end
+function methods:GetHeight() return self.height or 0 end
 function InCombatLockdown() return combat end
 function IsShiftKeyDown() return shift end
 function GetBuildInfo() return clientVersion, clientBuild, "", clientInterface end
@@ -322,7 +338,7 @@ class SuiteTests(unittest.TestCase):
     def test_default_is_inert_and_ui_loads(self):
         self.start()
         self.runlua('fire("MERCHANT_SHOW"); fire("QUEST_DETAIL"); F:OpenSettings()')
-        self.assertEqual(len(self.g.F.order), 109)
+        self.assertEqual(len(self.g.F.order), 128)
         self.assertEqual(self.g.calls.repair, 0)
         self.assertEqual(self.g.calls.sell, 0)
         self.assertEqual(self.g.calls.accept, 0)
@@ -1108,8 +1124,11 @@ class SuiteTests(unittest.TestCase):
 
     def test_category_counts_and_layout_sanitation(self):
         self.start()
-        self.assertEqual(self.g.F.categoryButtons.Interface.label.text, "Interface (39)")
+        self.assertEqual(self.g.F.categoryButtons.Interface.label.text, "Interface (44)")
         self.assertEqual(self.g.F.categoryButtons.Home.label.text, "Home")
+        self.assertEqual(self.g.F.categoryButtons.Windows.label.text, "Windows (7)")
+        self.assertEqual(self.g.F.categoryButtons.Dialogs.label.text, "Dialogs (4)")
+        self.assertEqual(self.g.F.categoryButtons.Tooltips.label.text, "Tooltips (21)")
         self.runlua('F:SetEnabled("moveWindows", true); shift=true;'
                     'MerchantFrame:Trigger("OnDragStart");'
                     'MerchantFrame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 10, -10);'
@@ -1466,6 +1485,281 @@ class SuiteTests(unittest.TestCase):
         self.runlua('UnitXPValue=600; now=1060; fire("PLAYER_XP_UPDATE")')
         self.runlua('SlashCmdList.FOREVERSUITE("xp")')
         self.assertIn("XP per hour", self.g.prints[len(self.g.prints)])
+
+
+    def test_profiles_create_switch_and_restore(self):
+        self.start()
+        self.runlua('F:SetEnabled("profiles", true)')
+        self.runlua('F:SetEnabled("repair", true); F:SetOption("charItemLevel", "size", 18);'
+                    'SlashCmdList.FOREVERSUITE("profile new Raiding")')
+        self.assertIn("Created and saved profile Raiding", self.g.prints[len(self.g.prints)])
+        self.runlua('F:SetEnabled("repair", false); F:SetOption("charItemLevel", "size", 12)')
+        self.runlua('SlashCmdList.FOREVERSUITE("profile use Raiding")')
+        self.assertTrue(self.g.F.features.repair.state == "active")
+        self.assertEqual(self.g.F.GetOption(self.g.F, "charItemLevel", "size"), 18)
+        self.runlua('SlashCmdList.FOREVERSUITE("profile list")')
+        self.assertIn("Raiding", self.g.prints[len(self.g.prints) - 1] + self.g.prints[len(self.g.prints)])
+        self.runlua('SlashCmdList.FOREVERSUITE("profile delete Default")')
+        self.assertIn("Deleted profile Default", self.g.prints[len(self.g.prints)])
+
+    def test_profile_export_import_validation(self):
+        self.start()
+        self.runlua('F:SetEnabled("profiles", true); F:SetEnabled("repair", true);'
+                    'F:SetOption("charItemLevel", "size", 18); F:SetOption("dialogAccept", "key", "ENTER");'
+                    'SlashCmdList.FOREVERSUITE("profile save")')
+        self.runlua('F.exported = F:ExportProfile()')
+        exported = self.lua.eval('F.exported')
+        self.assertTrue(exported.startswith("FS1|"))
+        self.assertIn("E=repair", exported)
+        self.runlua('imported = F:ImportProfile("FS1|E=repair,ghostFeature;O=charItemLevel.size=99;'
+                    'O=dialogAccept.key=NOPE;O=unknownFeature.size=5", "Bad Import")')
+        self.assertEqual(self.lua.eval('select(1, imported)'), True)
+        self.runlua('F:UseProfile("Bad Import")')
+        self.assertEqual(self.g.F.GetOption(self.g.F, "charItemLevel", "size"), 11)
+        self.assertEqual(self.g.F.GetOption(self.g.F, "dialogAccept", "key"), "SPACE")
+        self.assertTrue(self.g.F.features.repair.state == "active")
+        self.runlua('imported2 = F:ImportProfile("not-a-profile")')
+        self.assertEqual(self.lua.eval('select(1, imported2)'), False)
+
+    def test_profile_scope_and_saved_sanitation(self):
+        self.start()
+        self.runlua('F:SetEnabled("profiles", true); SlashCmdList.FOREVERSUITE("profile scope character")')
+        self.assertEqual(self.g.ForeverSuiteDB.profiles.scope, "character")
+        self.assertEqual(self.g.F.GetOption(self.g.F, "profiles", "scope"), "character")
+        self.runlua('ForeverSuiteDB.profiles={data={Good={enabled={repair=true}}, [""]={}},'
+                    'order={"Good","", "Missing"}, active="Nope", scope="weird"}; F.db=nil; F:Initialize()')
+        profiles = self.g.ForeverSuiteDB.profiles
+        self.assertEqual(list(profiles.order.values()), ["Good"])
+        self.assertEqual(profiles.active, "Good")
+        self.assertEqual(profiles.scope, "global")
+
+    def test_cvar_browser_info_validation_history(self):
+        self.start()
+        self.runlua('F:SetEnabled("cvarBrowser", true)')
+        self.runlua('SlashCmdList.FOREVERSUITE("cvar ffxGlow")')
+        self.assertIn("ffxGlow = 1", self.g.prints[len(self.g.prints) - 2])
+        self.runlua('SlashCmdList.FOREVERSUITE("cvar ffxGlow off")')
+        self.assertEqual(self.g.cvars.ffxGlow, "0")
+        self.runlua('SlashCmdList.FOREVERSUITE("cvar cameraDistanceMaxZoomFactor 9")')
+        self.assertIn("Not changed", self.g.prints[len(self.g.prints)])
+        self.runlua('SlashCmdList.FOREVERSUITE("cvar cameraDistanceMaxZoomFactor 3.5")')
+        self.assertEqual(self.g.cvars.cameraDistanceMaxZoomFactor, "3.5")
+        self.runlua('SlashCmdList.FOREVERSUITE("cvar history")')
+        self.assertIn("cameraDistanceMaxZoomFactor", self.g.prints[len(self.g.prints)])
+        before = len(self.g.prints)
+        self.runlua('SlashCmdList.FOREVERSUITE("cvar list nameplate")')
+        window = " ".join(self.g.prints[i] for i in range(before + 1, len(self.g.prints) + 1))
+        self.assertIn("CVar(s) match", window)
+        self.assertIn("nameplateMaxDistance", window)
+        self.runlua('SlashCmdList.FOREVERSUITE("cvar madeUpCvar on")')
+        self.assertIn("Unknown CVar", self.g.prints[len(self.g.prints)])
+
+
+    def test_ui_scale_applies_to_foreversuite_windows(self):
+        self.start()
+        self.runlua('F:OpenSettings(); F:SetEnabled("uiScale", true)')
+        self.assertEqual(self.g.F.window.scale, 1)
+        self.runlua('F:SetOption("uiScale", "scale", 130)')
+        self.assertEqual(self.g.F.window.scale, 1.3)
+        self.runlua('F:ShowDetails("repair")')
+        self.assertEqual(self.g.F.detailsWindow.scale, 1.3)
+        self.runlua('F:SetEnabled("uiScale", false)')
+        self.assertEqual(self.g.F.window.scale, 1)
+
+    def test_refresh_performance_is_reported(self):
+        self.start()
+        self.runlua('F:SetEnabled("repair", true)')
+        report = self.g.F.Report(self.g.F)
+        self.assertIn("Performance:", report)
+        self.assertIn("Refresh", report)
+
+
+    def test_window_size_command_and_remember(self):
+        self.start()
+        self.runlua('F:SetEnabled("resizeWindows", true)')
+        self.runlua('SlashCmdList.FOREVERSUITE("size MerchantFrame 900 700")')
+        self.assertIn("resized to 900 x 700", self.g.prints[len(self.g.prints)])
+        self.assertEqual(self.g.ForeverSuiteDB.layouts.MerchantFrame.width, 900)
+        self.runlua('SlashCmdList.FOREVERSUITE("size MerchantFrame 10 10")')
+        self.assertIn("Not resized", self.g.prints[len(self.g.prints)])
+        self.runlua('SlashCmdList.FOREVERSUITE("size NoSuchFrame 400 400")')
+        self.assertIn("unknown window", self.g.prints[len(self.g.prints)])
+
+    def test_window_snap_clamps_to_screen_edge(self):
+        self.start()
+        self.runlua('UIParent.width=1920; UIParent.height=1080; F:SetEnabled("snapWindows", true);'
+                    'MerchantFrame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 1900, -50)')
+        self.runlua('MerchantFrame:Trigger("OnDragStop")')
+        point = self.g.MerchantFrame.points
+        self.assertEqual(point[1], "TOPLEFT")
+        self.assertEqual(point[3], "TOPLEFT")
+        self.assertLessEqual(point[4], 1920)
+        self.runlua('UIParent.width=1000; F:SetEnabled("snapWindows", false)')
+
+    def test_window_anchor_command(self):
+        self.start()
+        self.runlua('F:SetEnabled("windowAnchors", true)')
+        self.runlua('SlashCmdList.FOREVERSUITE("anchor QuestFrame MerchantFrame 20 -30")')
+        self.assertIn("anchored to MerchantFrame", self.g.prints[len(self.g.prints)])
+        anchor = self.g.ForeverSuiteDB.anchors.QuestFrame
+        self.assertEqual(anchor.target, "MerchantFrame")
+        self.runlua('QuestFrame:Trigger("OnShow")')
+        self.assertEqual(self.g.QuestFrame.points[2].name, "MerchantFrame")
+        self.runlua('SlashCmdList.FOREVERSUITE("anchor QuestFrame NoSuchFrame")')
+        self.assertIn("must be another tracked window", self.g.prints[len(self.g.prints)])
+        self.runlua('SlashCmdList.FOREVERSUITE("anchor QuestFrame clear")')
+        self.assertIsNone(self.g.ForeverSuiteDB.anchors)
+
+    def test_window_layout_save_use_delete(self):
+        self.start()
+        self.runlua('F:SetEnabled("moveWindows", true);'
+                    'MerchantFrame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 40, -60);'
+                    'MerchantFrame:SetSize(800, 600)')
+        self.runlua('SlashCmdList.FOREVERSUITE("layout save Questing")')
+        self.assertIn("Saved window layout Questing", self.g.prints[len(self.g.prints)])
+        saved = self.g.ForeverSuiteDB.windowLayouts.Questing
+        self.assertIsNotNone(saved)
+        self.runlua('MerchantFrame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 500, -500)')
+        self.runlua('SlashCmdList.FOREVERSUITE("layout use Questing")')
+        self.assertEqual(self.g.MerchantFrame.points[3], 40)
+        self.assertEqual(self.g.MerchantFrame.points[4], -60)
+        self.runlua('SlashCmdList.FOREVERSUITE("layout list")')
+        self.assertIn("Questing", self.g.prints[len(self.g.prints)])
+        self.runlua('SlashCmdList.FOREVERSUITE("layout delete Questing")')
+        self.assertIsNone(self.g.ForeverSuiteDB.windowLayouts)
+
+    def test_window_keep_open_and_close_button_wins(self):
+        self.start()
+        self.runlua('F:SetEnabled("windowKeepOpen", true)')
+        self.runlua('QuestFrame:Show()')
+        self.runlua('MerchantFrame:SetScript("OnShow", function() QuestFrame:Hide() end); MerchantFrame:Show()')
+        self.assertTrue(self.g.QuestFrame.shown)
+        self.runlua('local close = CreateFrame("Button", "QuestFrameCloseButton");'
+                    'close:SetScript("OnClick", function() end); F.pinnedWindows.QuestFrame=nil')
+        self.assertIsNone(self.g.F.pinnedWindows.QuestFrame)
+
+    def test_window_exceptions_skip_auction_house(self):
+        self.start()
+        self.runlua('F:SetEnabled("windowExceptions", true); F:SetEnabled("moveWindows", true); shift=true')
+        self.assertTrue(self.g.F.WindowExcluded(self.g.F, "AuctionHouseFrame"))
+        self.assertFalse(self.g.F.WindowExcluded(self.g.F, "MerchantFrame"))
+        self.runlua('F:SetOption("windowExceptions", "auctionHouse", false)')
+        self.assertFalse(self.g.F.WindowExcluded(self.g.F, "AuctionHouseFrame"))
+
+    def test_window_anchor_and_layout_sanitation(self):
+        self.runlua('ForeverSuiteDB={schema=1, anchors={Bad={target="MerchantFrame", x="no"}, Good={target="MerchantFrame", x=5, y=-5},'
+                    'Self={target="Self", x=0, y=0}}, windowLayouts={Bad=5, Good={MerchantFrame={point="CENTER", x=1, y=2}},'
+                    ' Wide={MerchantFrame={point="CENTER", x=1, y=2, width=99999}}}}')
+        self.start()
+        self.assertIsNone(self.g.ForeverSuiteDB.anchors.Bad)
+        self.assertIsNone(self.g.ForeverSuiteDB.anchors.Self)
+        self.assertIsNotNone(self.g.ForeverSuiteDB.anchors.Good)
+        self.assertIsNone(self.g.ForeverSuiteDB.windowLayouts.Bad)
+        self.assertIsNotNone(self.g.ForeverSuiteDB.windowLayouts.Good)
+        self.assertIsNone(self.g.ForeverSuiteDB.windowLayouts.Wide)
+
+
+    def test_dialog_turn_in_key_respects_reward_choices(self):
+        self.start()
+        self.runlua('F:SetEnabled("dialogKeys", true); F:SetOption("dialogKeys", "turnInKey", "BACKSPACE")')
+        self.runlua('showButton("QuestFrameCompleteQuestButton"); choices=0')
+        self.runlua('ForeverSuiteKeyCatcher.scripts.OnKeyDown(ForeverSuiteKeyCatcher, "BACKSPACE")')
+        self.assertEqual(self.g.QuestFrameCompleteQuestButton.clicks, 1)
+        self.runlua('choices=2; showButton("QuestFrameCompleteQuestButton")')
+        self.runlua('ForeverSuiteKeyCatcher.scripts.OnKeyDown(ForeverSuiteKeyCatcher, "BACKSPACE")')
+        self.assertEqual(self.g.QuestFrameCompleteQuestButton.clicks, 1)
+
+    def test_dialog_decline_key_clicks_decline_only(self):
+        self.start()
+        self.runlua('F:SetEnabled("dialogKeys", true); F:SetOption("dialogKeys", "declineKey", "DELETE")')
+        self.runlua('local decline = CreateFrame("Button", "QuestFrameDeclineButton"); decline.shown = true')
+        self.runlua('ForeverSuiteKeyCatcher.scripts.OnKeyDown(ForeverSuiteKeyCatcher, "DELETE")')
+        self.assertEqual(self.g.QuestFrameDeclineButton.clicks, 1)
+        self.runlua('showButton("QuestFrameAcceptButton")')
+        self.runlua('ForeverSuiteKeyCatcher.scripts.OnKeyDown(ForeverSuiteKeyCatcher, "DELETE")')
+        self.assertEqual(self.g.QuestFrameAcceptButton.clicks, None)
+
+    def test_beta_survey_popup_is_closed(self):
+        self.start()
+        self.runlua('F:SetEnabled("betaPopups", true)')
+        self.runlua('local survey = CreateFrame("Frame", "BetaSurveyFrame"); survey:Show()')
+        self.assertTrue(self.g.BetaSurveyFrame.shown)
+        self.runlua('fire("PLAYER_LOGIN"); BetaSurveyFrame:Show()')
+        self.assertFalse(self.g.BetaSurveyFrame.shown)
+
+    def test_beta_reporter_button_toggle_and_command(self):
+        self.start()
+        self.runlua('local button = CreateFrame("Button", "BetaReportButton"); button:Show()')
+        self.runlua('F:SetEnabled("betaReporter", true)')
+        self.assertFalse(self.g.BetaReportButton.shown)
+        self.runlua('F:SetEnabled("betaReporter", false)')
+        self.assertTrue(self.g.BetaReportButton.shown)
+        self.runlua('SlashCmdList.FOREVERSUITE("bugreport")')
+        self.assertIn("Opened the client bug reporter", self.g.prints[len(self.g.prints)])
+        self.runlua('SlashCmdList.FOREVERSUITE("popups")')
+        self.assertIn("BetaReportButton", self.g.prints[len(self.g.prints)])
+
+
+    def test_flyout_item_level_in_shopping_tooltip(self):
+        self.start()
+        self.runlua('itemMeta["item:2001"] = { equipLoc = "INVTYPE_HEAD" }; itemReady = true')
+        self.runlua('F:SetEnabled("flyoutItemLevel", true)')
+        self.runlua('ShoppingTooltip1.link = "item:2001"; ShoppingTooltip1.lines = {};'
+                    'tooltipCallbacks[Enum.TooltipDataType.Item](ShoppingTooltip1, { id = 2001 })')
+        lines = " | ".join(self.g.ShoppingTooltip1.lines.values())
+        self.assertIn("Item Level: 75", lines)
+        self.assertIn("equipped 82", lines)
+        self.runlua('GameTooltip.link="item:2001"; GameTooltip.lines={};'
+                    'tooltipCallbacks[Enum.TooltipDataType.Item](GameTooltip, { id = 2001 })')
+        self.assertNotIn("Item Level: 75", " | ".join(self.g.GameTooltip.lines.values()))
+
+    def test_missing_enchant_and_gem_indicators(self):
+        self.start()
+        self.runlua('itemReady = true; itemMeta["item:1001:0:0:0:0"] = { equipLoc = "INVTYPE_HEAD" };'
+                    'inventoryLinks.player[1] = "item:1001:0:0:0:0";'
+                    'socketStats["item:1001:0:0:0:0"] = { EMPTY_SOCKET_RED = 1, SOCKET_YELLOW = 1 }')
+        self.runlua('F:SetEnabled("missingEnchant", true); F:SetEnabled("missingGems", true); hover();'
+                    'tip.link = "item:1001:0:0:0:0"; tip.lines = {}; hover()')
+        lines = " | ".join(self.g.tip.lines.values())
+        self.assertIn("Missing enchant", lines)
+        self.assertIn("Empty socket: 2 of 2", lines)
+        self.runlua('itemMeta["item:1001:4827:0:0:0"] = { equipLoc = "INVTYPE_HEAD" };'
+                    'inventoryLinks.player[1] = "item:1001:4827:0:0:0"; tip.lines = {};'
+                    'tip.link = "item:1001:4827:0:0:0"; hover()')
+        self.assertNotIn("Missing enchant", " | ".join(self.g.tip.lines.values()))
+
+    def test_socket_inspection_tooltip_and_command(self):
+        self.start()
+        self.runlua('itemReady = true;'
+                    'inventoryLinks.player[1] = "item:1001:0:0"; socketStats["item:1001:0:0"] = { EMPTY_SOCKET_BLUE = 1 };'
+                    'itemMeta["item:1001:0:0"] = { equipLoc = "INVTYPE_HEAD" }')
+        self.runlua('F:SetEnabled("socketInfo", true); hover(); tip.link = "item:1001:0:0"; tip.lines = {}; hover()')
+        lines = " | ".join(self.g.tip.lines.values())
+        self.assertIn("Sockets: 0 of 1 filled", lines)
+        self.runlua('SlashCmdList.FOREVERSUITE("sockets")')
+        self.assertIn("Slot 1", self.g.prints[len(self.g.prints)])
+
+    def test_unit_tooltip_health_and_class_colour(self):
+        self.start()
+        self.runlua('unitClasses.target = { "Target", "WARRIOR" }; unitHealths.target = { 500, 1000 }')
+        self.runlua('F:SetEnabled("unitHealth", true); F:SetEnabled("tooltipClassColor", true)')
+        frame = self.runlua('return hoverUnit("target")')
+        lines = " | ".join(self.g.tips["unit"].lines.values())
+        self.assertIn("Health: 500 / 1000 (50%)", lines)
+        self.assertEqual(self.g.tips["unit"].border[1], 0.78)
+        self.runlua('F:SetEnabled("tooltipClassColor", false)')
+        self.assertEqual(self.g.tips["unit"].border[1], 0)
+
+    def test_tooltip_anchor_position_option(self):
+        self.start()
+        self.runlua('F:SetEnabled("tooltipAnchor", true); F:SetOption("tooltipAnchor", "position", "topright")')
+        self.runlua('GameTooltip:Show()')
+        point = self.g.GameTooltip.points
+        self.assertEqual(point[1], "TOPRIGHT")
+        self.assertEqual(point[3], "TOPRIGHT")
+        self.assertEqual(point[4], -12)
+        self.runlua('F:SetOption("tooltipAnchor", "position", "default")')
+        self.assertEqual(self.g.ForeverSuiteDB.options.tooltipAnchor.position, "default")
 
 
 if __name__ == "__main__":

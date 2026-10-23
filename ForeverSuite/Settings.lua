@@ -95,7 +95,9 @@ function F:ShowDetails(id)
     local frame = self.detailsWindow
     frame.body:SetText(self:DetailText(id))
     frame.content:SetHeight(frame.body:GetStringHeight() + 20)
-    frame.scroll:SetVerticalScroll(0); frame.scroll:UpdateScrollChildRect(); frame:Show()
+    frame.scroll:SetVerticalScroll(0); frame.scroll:UpdateScrollChildRect()
+    if self.ApplyWindowScale then self:ApplyWindowScale() end
+    frame:Show()
 end
 
 function F:ShowReport(text)
@@ -112,6 +114,7 @@ function F:ShowReport(text)
         edit:SetScript("OnTextChanged", function() scroll:UpdateScrollChildRect() end)
         scroll:SetScrollChild(edit); frame.edit = edit; self.reportWindow = frame
     end
+    if self.ApplyWindowScale then self:ApplyWindowScale() end
     self.reportWindow.edit:SetText(text)
     self.reportWindow:Show(); self.reportWindow.edit:SetFocus(); self.reportWindow.edit:HighlightText()
 end
@@ -237,6 +240,7 @@ function F:ShowOptions(id)
     frame.content:SetHeight(cached.height)
     frame.scroll:SetVerticalScroll(0); frame.scroll:UpdateScrollChildRect()
     self:RefreshOptionControls()
+    if self.ApplyWindowScale then self:ApplyWindowScale() end
     frame:Show()
 end
 
@@ -324,7 +328,9 @@ end
 function F:OpenSettings()
     self:Initialize()
     if not self.window then self:SetupSettings() end
-    self:RefreshSettings(); self.window:Show()
+    self:RefreshSettings()
+    if self.ApplyWindowScale then self:ApplyWindowScale() end
+    self.window:Show()
 end
 
 function F:SetupSettings()
@@ -439,3 +445,31 @@ function F:SetupSettings()
         Settings.RegisterAddOnCategory(Settings.RegisterCanvasLayoutCategory(panel, "ForeverSuite"))
     end
 end
+
+function F:ApplyWindowScale()
+    local scale = 1
+    if self:Active("uiScale") then
+        local percent = self:GetOption("uiScale", "scale") or 100
+        scale = percent / 100
+    end
+    for _, key in ipairs({ "window", "detailsWindow", "optionsWindow", "reportWindow" }) do
+        local frame = self[key]
+        if frame and frame.SetScale then frame:SetScale(scale) end
+    end
+end
+
+F:Register("uiScale", {
+    title = "Settings window scale",
+    category = "Interface",
+    description = "Scales ForeverSuite's own settings, details, options and report windows from 80 to 150 percent so the text matches your eyes and screen. It does not change the game UI scale or any Blizzard window.",
+    disableText = "Returns ForeverSuite windows to 100 percent. Blizzard windows are never affected.",
+    conflicts = {},
+    options = {
+        { key = "scale", type = "number", title = "Window scale", default = 100, min = 80, max = 150, step = 5, unit = "%",
+          description = "Scale for ForeverSuite windows only. Very large values can push a window past the screen edge; the client clamps it." },
+    },
+    available = function() return UIParent ~= nil end,
+    enable = function() F:ApplyWindowScale() end,
+    refresh = function() F:ApplyWindowScale() end,
+    disable = function() F:ApplyWindowScale() end,
+})

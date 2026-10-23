@@ -1,7 +1,7 @@
 -- SPDX-License-Identifier: MIT
 local addonName, F = ...
 F.name = addonName
-F.version = "0.2.0-alpha.6"
+F.version = "0.2.0-alpha.7"
 F.features, F.order, F.listeners, F.errors = {}, {}, {}, {}
 F.frame = CreateFrame("Frame")
 F.paused = false
@@ -113,8 +113,22 @@ function F:CanAutomate()
     return not InCombatLockdown() and not IsShiftKeyDown()
 end
 
+local function perfNow()
+    if type(debugprofilestop) == "function" then
+        local ok, value = pcall(debugprofilestop)
+        if ok and type(value) == "number" then return value end
+    end
+    if type(GetTime) == "function" then
+        local ok, value = pcall(GetTime)
+        if ok and type(value) == "number" then return value * 1000 end
+    end
+    return nil
+end
+
 function F:Refresh()
     if not self.db or self.refreshing then return end
+    local started = perfNow()
+    local slowestId, slowest = nil, -1
     if InCombatLockdown() then self.pending = true; return end
     self.refreshing = true
     self.pending = false
@@ -145,7 +159,12 @@ function F:Refresh()
         elseif not feature.active then
             feature.active = true
             local ok, err = true, nil
+            local enableStart = perfNow()
             if feature.enable then ok, err = pcall(feature.enable) end
+            if enableStart then
+                local spent = perfNow() - enableStart
+                if type(spent) == "number" and spent > slowest then slowest, slowestId = spent, id end
+            end
             if not ok then
                 feature.active = false
                 self:RecordError(id, err)
@@ -165,6 +184,13 @@ function F:Refresh()
     end
     self.pendingOptions = {}
     self.refreshing = false
+    if started then
+        local spent = perfNow() - started
+        if type(spent) == "number" then
+            self.performance = { lastRefreshMs = spent, slowestMs = slowest > 0 and slowest or nil,
+                slowestId = slowest > 0 and slowestId or nil }
+        end
+    end
     if self.RefreshSettings then self:RefreshSettings() end
 end
 
@@ -327,6 +353,44 @@ function F:Initialize()
             end
             if next(db.except) == nil then db.except = nil end
         end
+        if type(db.profiles) == "table" then
+            local store = db.profiles
+            if type(store.data) ~= "table" then store.data = {} end
+            if type(store.order) ~= "table" then store.order = {} end
+            local kept, seen = {}, {}
+            for _, name in ipairs(store.order) do
+                if type(name) == "string" and name ~= "" and #name <= 24 and not seen[name] and store.data[name] then
+                    kept[#kept + 1] = name
+                    seen[name] = true
+                end
+            end
+            for name in pairs(store.data) do
+                if type(name) ~= "string" or name == "" or #name > 24 then store.data[name] = nil
+                elseif not seen[name] then
+                    kept[#kept + 1] = name
+                    seen[name] = true
+                end
+            end
+            store.order = kept
+            if type(store.active) ~= "string" or not store.data[store.active] then
+                store.active = kept[1]
+            end
+            if store.scope ~= "character" then store.scope = "global" end
+            if type(store.perCharacter) ~= "table" then store.perCharacter = nil end
+            if #kept == 0 then db.profiles = nil end
+        else
+            db.profiles = nil
+        end
+        if type(db.cvarHistory) == "table" then
+            local kept = {}
+            for _, line in ipairs(db.cvarHistory) do
+                if type(line) == "string" and #line <= 200 then kept[#kept + 1] = line end
+            end
+            while #kept > 20 do table.remove(kept, 1) end
+            if #kept > 0 then db.cvarHistory = kept else db.cvarHistory = nil end
+        else
+            db.cvarHistory = nil
+        end
         if type(db.gold) == "table" then
             for key, value in pairs(db.gold) do
                 if type(key) ~= "string" or type(value) ~= "number" or value ~= value
@@ -349,6 +413,37 @@ function F:Initialize()
         else
             db.layouts = nil
         end
+        if type(db.anchors) == "table" then
+            for name, entry in pairs(db.anchors) do
+                local valid = type(name) == "string" and type(entry) == "table"
+                    and type(entry.target) == "string" and entry.target ~= name
+                    and type(entry.x) == "number" and type(entry.y) == "number"
+                    and math.abs(entry.x) <= 2000 and math.abs(entry.y) <= 2000
+                if not valid then db.anchors[name] = nil end
+            end
+            if next(db.anchors) == nil then db.anchors = nil end
+        else
+            db.anchors = nil
+        end
+        if type(db.windowLayouts) == "table" then
+            for name, snapshot in pairs(db.windowLayouts) do
+                if type(name) ~= "string" or name == "" or #name > 24 or type(snapshot) ~= "table" then
+                    db.windowLayouts[name] = nil
+                else
+                    for windowName, entry in pairs(snapshot) do
+                        local valid = type(windowName) == "string" and type(entry) == "table"
+                            and type(entry.point) == "string" and type(entry.x) == "number" and type(entry.y) == "number"
+                            and (entry.width == nil or (type(entry.width) == "number" and entry.width >= 1 and entry.width <= 4000))
+                            and (entry.height == nil or (type(entry.height) == "number" and entry.height >= 1 and entry.height <= 4000))
+                        if not valid then snapshot[windowName] = nil end
+                    end
+                    if next(snapshot) == nil then db.windowLayouts[name] = nil end
+                end
+            end
+            if next(db.windowLayouts) == nil then db.windowLayouts = nil end
+        else
+            db.windowLayouts = nil
+        end
         for key, stored in pairs(db.options) do
             local feature = self.features[key]
             if not feature or type(stored) ~= "table" then
@@ -370,7 +465,16 @@ function F:Initialize()
 end
 
 function F:Report()
+    local performance = ""
+    if self.performance then
+        performance = string.format("Refresh %.2f ms", self.performance.lastRefreshMs or 0)
+        if self.performance.slowestId then
+            performance = performance .. string.format("; slowest enable %s %.2f ms",
+                self.performance.slowestId, self.performance.slowestMs or 0)
+        end
+    end
     local lines = { "ForeverSuite " .. self.version, "Client: " .. (self.build or "unknown"),
+        performance ~= "" and ("Performance: " .. performance) or "Performance: not measured yet",
         "Stage 2 preview. In-game validation still required.",
         "All features are opt-in. Conflict detection checks loaded addons, not their settings.",
         "Repair cap: " .. tostring(self.db.repairCap / 10000) .. " gold" }
@@ -439,6 +543,9 @@ local function helpText()
     F:Print("  /fs windows [list | reset [name]], /fs gold")
     F:Print("  /fs junk <item> / /fs unjunk <item>, /fs neversell [add|remove|clear] <item>, /fs except [accept|turnin] <text>")
     F:Print("  /fs copy [lines], /fs xp, /fs bag <text>, /fs watch <button> | clear")
+    F:Print("  /fs profile [list|new|use|save|delete|scope|export|import], /fs cvar [name] [value] | list | history")
+    F:Print("  /fs size <window> <width> <height>, /fs anchor <window> <target|clear> [x] [y], /fs layout [save|use|delete] <name>")
+    F:Print("  /fs bugreport, /fs popups, /fs sockets")
     F:Print("  Feature IDs appear in settings and in /fs report.")
 end
 
@@ -629,6 +736,144 @@ SlashCmdList.FOREVERSUITE = function(message)
         end
         F.db.watch[#F.db.watch + 1] = rest
         F:Print("Also watching button " .. rest .. " for the dialog key.")
+    elseif command == "bugreport" then
+        if F.OpenBugReporter and F:OpenBugReporter() then
+            F:Print("Opened the client bug reporter.")
+        else
+            F:Print("This client has no script-visible bug reporter. Use the client's own Help menu to report a bug.")
+        end
+    elseif command == "popups" then
+        local surveys = F.BetaFrames and F:BetaFrames("surveys") or {}
+        local buttons = F.BetaFrames and F:BetaFrames("buttons") or {}
+        F:Print("Detected survey frames: " .. (#surveys > 0 and table.concat(surveys, ", ") or "none"))
+        F:Print("Detected report buttons: " .. (#buttons > 0 and table.concat(buttons, ", ") or "none"))
+    elseif command == "sockets" then
+        if not F:Active("socketInfo") then F:Print("Enable Socket inspection first."); return end
+        local rows = F.InspectSockets and F:InspectSockets() or {}
+        if #rows == 0 then
+            F:Print("No equipped item has an empty socket (or this client does not report socket data).")
+        else
+            for _, row in ipairs(rows) do
+                F:Print("Slot " .. row.slot .. ": " .. tostring(row.link) .. " has "
+                    .. row.empty .. " of " .. row.total .. " sockets empty.")
+            end
+        end
+    elseif command == "size" then
+        local name, width, height = rest:match("^(%S+)%s+(%S+)%s+(%S+)$")
+        if not name then F:Print("Use /fs size <window> <width> <height>, for example /fs size MerchantFrame 900 700."); return end
+        local ok, problem = F:SetWindowSize(name, tonumber(width), tonumber(height))
+        F:Print(ok and (name .. " resized to " .. width .. " x " .. height .. ".") or ("Not resized: " .. tostring(problem)))
+    elseif command == "anchor" then
+        local name, target, x, y = rest:match("^(%S+)%s*(%S*)%s*(%S*)%s*(%S*)$")
+        if not name then F:Print("Use /fs anchor <window> <target|clear> [x] [y]."); return end
+        local ok, problem = F:SetWindowAnchor(name, target, x, y)
+        if not ok then F:Print("Anchor not changed: " .. tostring(problem)); return end
+        if target == "" or target == "clear" then
+            F:Print("Anchor cleared for " .. name .. ".")
+        else
+            F:ApplyWindowAnchor(name)
+            F:Print(name .. " anchored to " .. target .. " at " .. tostring(x) .. ", " .. tostring(y) .. ".")
+        end
+    elseif command == "layout" then
+        local action, name = rest:match("^(%S*)%s*(.-)%s*$")
+        action = action:lower()
+        if action == "" or action == "list" then
+            local names = F.WindowLayoutNames and F:WindowLayoutNames() or {}
+            F:Print(#names .. " window layout(s): " .. (#names > 0 and table.concat(names, ", ") or "none"))
+        elseif action == "save" then
+            local ok, problem = F:SaveWindowLayout(name)
+            F:Print(ok and ("Saved window layout " .. name .. ".") or ("Not saved: " .. tostring(problem)))
+        elseif action == "use" then
+            local ok, result = F:ApplyWindowLayout(name)
+            F:Print(ok and ("Applied window layout " .. name .. " to " .. result .. " window(s).")
+                or ("Not applied: " .. tostring(result)))
+        elseif action == "delete" then
+            local ok, problem = F:DeleteWindowLayout(name)
+            F:Print(ok and ("Deleted window layout " .. name .. ".") or ("Not deleted: " .. tostring(problem)))
+        else
+            F:Print("Use /fs layout list | save <name> | use <name> | delete <name>.")
+        end
+    elseif command == "profile" then
+        if not F.ProfileNames then F:Print("Profiles are unavailable."); return end
+        if not F:Active("profiles") and command ~= "profile" then
+            F:Print("Enable Settings profiles first."); return
+        end
+        local action, rest2 = rest:match("^(%S*)%s*(.-)%s*$")
+        action = action:lower()
+        if action == "" or action == "list" then
+            local names = F:ProfileNames()
+            local active = F:ActiveProfile()
+            F:Print("Profiles (" .. #names .. "): " .. table.concat(names, ", "))
+            F:Print("Active: " .. tostring(active) .. "  Scope: " .. tostring((F.db.profiles or {}).scope or "global"))
+        elseif not F:Active("profiles") then
+            F:Print("Enable Settings profiles first.")
+        elseif action == "new" then
+            local ok, problem = F:NewProfile(rest2)
+            F:Print(ok and ("Created and saved profile " .. rest2 .. ".") or ("Profile not created: " .. tostring(problem)))
+        elseif action == "use" then
+            local ok, problem = F:UseProfile(rest2)
+            F:Print(ok and ("Switched to profile " .. rest2 .. ".") or ("Profile not switched: " .. tostring(problem)))
+        elseif action == "save" then
+            local target = rest2 ~= "" and rest2 or F:ActiveProfile()
+            if not target then F:Print("No active profile. Use /fs profile new <name>."); return end
+            F:SaveProfile(target)
+            F:Print("Saved current settings into profile " .. target .. ".")
+        elseif action == "delete" then
+            local ok, problem = F:DeleteProfile(rest2)
+            F:Print(ok and ("Deleted profile " .. rest2 .. ".") or ("Profile not deleted: " .. tostring(problem)))
+        elseif action == "scope" then
+            local scope = rest2:lower()
+            if F:SetProfileScope(scope) then
+                F:SetOption("profiles", "scope", scope)
+                F:Print("Profiles are now " .. (scope == "character" and "per character." or "shared by every character."))
+            else
+                F:Print("Use /fs profile scope global or /fs profile scope character.")
+            end
+        elseif action == "export" then
+            local text, problem = F:ExportProfile(rest2 ~= "" and rest2 or nil)
+            if text then
+                if F.ShowReport then F:ShowReport(text) end
+                F:Print("Exported profile " .. tostring(rest2 ~= "" and rest2 or F:ActiveProfile()) .. " to the copy box.")
+            else F:Print("Export failed: " .. tostring(problem)) end
+        elseif action == "import" then
+            if rest2 == "" then F:Print("Use /fs profile import <text> [name]."); return end
+            local ok, target, count = F:ImportProfile(rest2)
+            F:Print(ok and ("Imported profile as " .. target .. " (" .. count .. " total).")
+                or ("Import failed: " .. tostring(target)))
+        else
+            F:Print("Use /fs profile list|new|use|save|delete|scope|export|import.")
+        end
+    elseif command == "cvar" then
+        if not F:Active("cvarBrowser") then F:Print("Enable Advanced CVar browser first."); return end
+        local action, rest2 = rest:match("^(%S*)%s*(.-)%s*$")
+        if action == "" or action == "list" then
+            local rows = F:SearchCvars(rest2)
+            F:Print(#rows .. " CVar(s) match" .. (rest2 ~= "" and (" \"" .. rest2 .. "\"") or "") .. ":")
+            for index = 1, math.min(#rows, 12) do
+                local info = F:CvarInfo(rows[index].name)
+                F:Print("  " .. rows[index].name .. " = " .. tostring(info and info.current))
+            end
+        elseif action == "history" then
+            local history = F.db.cvarHistory or {}
+            if #history == 0 then F:Print("No CVar changes recorded yet.")
+            else for _, line in ipairs(history) do F:Print("  " .. line) end end
+        else
+            local value = rest2
+            local info = F:CvarInfo(action)
+            if not info then F:Print("Unknown CVar. Use /fs cvar list <text> to search."); return end
+            if value == "" then
+                F:Print(info.entry.name .. " = " .. tostring(info.current) .. " (default " .. info.entry.default .. ")")
+                F:Print("  " .. info.entry.help)
+                if info.entry.kind == "number" then
+                    F:Print("  Range " .. info.entry.min .. " to " .. info.entry.max .. ".")
+                else
+                    F:Print("  Accepts on or off.")
+                end
+            else
+                local ok, result = F:SetCvarValue(action, value)
+                F:Print(ok and (action .. " set to " .. tostring(result) .. ".") or ("Not changed: " .. tostring(result)))
+            end
+        end
     elseif command == "sell" then
         if F.readOnly then F:Print("Settings are read only."); return end
         local rows = F.SaleCandidates and F:SaleCandidates() or {}

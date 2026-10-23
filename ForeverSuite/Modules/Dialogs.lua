@@ -165,9 +165,24 @@ local function autoSingleGossip()
     if gossipOption(1) then selectGossip(1) end
 end
 
+local function pressButton(name)
+    local control = visibleButton(name)
+    if control then control:Click(); return true end
+    return false
+end
+
+-- Turn-in only runs when the client reports no reward choices, so a bound key can
+-- never choose a reward for the player.
+local function turnIn()
+    local choices = rewardChoices()
+    if choices ~= nil and choices > 0 then return false end
+    return pressButton("QuestFrameCompleteQuestButton")
+end
+
 local function syncKeyboard()
     if not keyFrame then return end
     local wanted = F:Active("dialogAccept") or F:Active("rewardKeys") or F:Active("gossipKeys")
+        or F:Active("dialogKeys")
     if InCombatLockdown() then
         -- SetPropagateKeyboardInput is restricted in combat. Hide the catcher so it cannot
         -- hold on to keys; it is shown and reset after combat.
@@ -187,6 +202,10 @@ local function onKeyDown(self, key)
     if not InCombatLockdown() and F:CanAutomate() and type(key) == "string" then
         if F:Active("dialogAccept") and key == F:GetOption("dialogAccept", "key") then
             consume = clickContinue()
+        elseif F:Active("dialogKeys") and key == F:GetOption("dialogKeys", "turnInKey") then
+            consume = turnIn()
+        elseif F:Active("dialogKeys") and key == F:GetOption("dialogKeys", "declineKey") then
+            consume = pressButton("QuestFrameDeclineButton")
         elseif F:Active("rewardKeys") or F:Active("gossipKeys") then
             local digit = key:match("^([1-9])$") or key:match("^NUMPAD([1-9])$")
             if digit then
@@ -297,6 +316,37 @@ F:Register("gossipKeys", {
             autoSingleGossip()
         end)
         F:Listen("gossipKeys", "GOSSIP_CLOSED", syncKeyboard)
+        syncKeyboard()
+    end,
+    refresh = syncKeyboard,
+    disable = syncKeyboard,
+})
+
+local keyChoices = { { value = "NONE", label = "Not bound" } }
+for _, entry in ipairs({ { "SPACE", "Space" }, { "ENTER", "Enter" }, { "BACKSPACE", "Backspace" },
+    { "DELETE", "Delete" }, { "F", "F" }, { "G", "G" }, { "R", "R" }, { "T", "T" } }) do
+    keyChoices[#keyChoices + 1] = { value = entry[1], label = entry[2] }
+end
+
+F:Register("dialogKeys", {
+    title = "Custom dialog key bindings",
+    category = "Dialogs",
+    description = "Binds extra keys to the turn-in and decline buttons of quest dialogs, separately from the accept key. Turn-in waits until the client reports no reward choice, so a bound key cannot pick a reward for you. Decline only clicks the visible decline button.",
+    disableText = "Removes the extra bindings immediately. The open dialog is unchanged and no button is pressed after the feature is off.",
+    conflicts = conflicts,
+    options = {
+        { key = "turnInKey", type = "choice", title = "Turn-in key", default = "NONE", choices = keyChoices,
+          description = "Presses the final turn-in button only when the quest shows no reward choices. Leave it unbound if you prefer to click turn-in yourself." },
+        { key = "declineKey", type = "choice", title = "Decline key", default = "NONE", choices = keyChoices,
+          description = "Clicks the visible decline button. Declining only closes the dialog; the quest stays in your log and can be accepted later." },
+    },
+    available = function() return _G.QuestFrameAcceptButton and _G.QuestFrameAcceptButton.Click end,
+    enable = function()
+        ensureKeyFrame()
+        F:Listen("dialogKeys", "PLAYER_REGEN_DISABLED", syncKeyboard)
+        F:Listen("dialogKeys", "PLAYER_REGEN_ENABLED", syncKeyboard)
+        F:Listen("dialogKeys", "QUEST_COMPLETE", syncKeyboard)
+        F:Listen("dialogKeys", "QUEST_DETAIL", syncKeyboard)
         syncKeyboard()
     end,
     refresh = syncKeyboard,

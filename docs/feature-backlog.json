@@ -337,8 +337,9 @@
     "title": "Resize and scale windows",
     "category": "Windows and dialogs",
     "stage": 2,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Each tracked window gets a corner resize grip and remembers its size; /fs size <window> <w> <h> sets one exactly.",
+    "feature_key": "resizeWindows"
   },
   {
     "id": "FS-039",
@@ -354,8 +355,9 @@
     "title": "Per-layout window profiles",
     "category": "Windows and dialogs",
     "stage": 2,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Named layout sets store the position and size of every tracked window; /fs layout save|use|delete|list.",
+    "feature_key": "windowLayouts"
   },
   {
     "id": "FS-041",
@@ -371,32 +373,36 @@
     "title": "Snap windows to screen bounds",
     "category": "Windows and dialogs",
     "stage": 2,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Clamps a dragged window back inside the screen with a configurable margin so it can never be lost off screen.",
+    "feature_key": "snapWindows"
   },
   {
     "id": "FS-043",
     "title": "Window anchor relationships",
     "category": "Windows and dialogs",
     "stage": 2,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Pins one window to another with /fs anchor <window> <target> [x] [y]; the anchor is cleared with /fs anchor <window> clear.",
+    "feature_key": "windowAnchors"
   },
   {
     "id": "FS-044",
     "title": "Keep compatible panels open together",
     "category": "Windows and dialogs",
     "stage": 2,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Reopens tracked panels that the client closed when another window opened; a window closed with its own close button is not reopened.",
+    "feature_key": "windowKeepOpen"
   },
   {
     "id": "FS-045",
     "title": "Panel exceptions for secure or fragile frames",
     "category": "Windows and dialogs",
     "stage": 2,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Excludes the auction house, the world map and any protected frame from every window feature.",
+    "feature_key": "windowExceptions"
   },
   {
     "id": "FS-046",
@@ -430,8 +436,9 @@
     "title": "Custom dialog key bindings",
     "category": "Windows and dialogs",
     "stage": 2,
-    "status": "planned",
-    "detail": "Space, Enter, E plus the common letter keys Q, F, R, T, G, V, C, X and Z can be chosen. Capturing an arbitrary key from a key-press prompt is still planned."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Binds extra keys to turn-in and decline separately from the accept key; turn-in waits for a quest without reward choices.",
+    "feature_key": "dialogKeys"
   },
   {
     "id": "FS-050",
@@ -474,24 +481,27 @@
     "title": "Selective beta survey suppression",
     "category": "Windows and dialogs",
     "stage": 2,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Closes detected beta survey and feedback prompts by frame name as soon as they appear.",
+    "feature_key": "betaPopups"
   },
   {
     "id": "FS-055",
     "title": "Restore manual beta reporting",
     "category": "Windows and dialogs",
     "stage": 2,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "/fs bugreport opens the client reporter at any time, so manual reporting still works after the button is hidden.",
+    "feature_key": "betaReporter"
   },
   {
     "id": "FS-056",
     "title": "Hide beta reporter button independently",
     "category": "Windows and dialogs",
     "stage": 2,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "The hide-button option can be turned off on its own, leaving reporting on the normal interface.",
+    "feature_key": "betaReporter"
   },
   {
     "id": "FS-057",
@@ -543,8 +553,9 @@
     "title": "Equipment flyout item levels",
     "category": "Inventory and tooltips",
     "stage": 2,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Adds item level and equipped comparison to shopping and comparison tooltips, not only the main tooltip.",
+    "feature_key": "flyoutItemLevel"
   },
   {
     "id": "FS-063",
@@ -560,24 +571,27 @@
     "title": "Missing enchant indicators",
     "category": "Inventory and tooltips",
     "stage": 2,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Marks an equipped item in an enchantable slot whose link carries no enchant.",
+    "feature_key": "missingEnchant"
   },
   {
     "id": "FS-065",
     "title": "Missing gem indicators",
     "category": "Inventory and tooltips",
     "stage": 2,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Marks equipped items with empty sockets using the client socket data.",
+    "feature_key": "missingGems"
   },
   {
     "id": "FS-066",
     "title": "Socket inspection helpers",
     "category": "Inventory and tooltips",
     "stage": 2,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Adds a socket summary to item tooltips and lists equipped items with empty sockets via /fs sockets.",
+    "feature_key": "socketInfo"
   },
   {
     "id": "FS-067",
@@ -620,16 +634,18 @@
     "title": "Tooltip class colors",
     "category": "Inventory and tooltips",
     "stage": 2,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Colours unit tooltip borders with the unit class colour and restores the previous colour when the feature is turned off.",
+    "feature_key": "tooltipClassColor"
   },
   {
     "id": "FS-072",
     "title": "Tooltip health bar",
     "category": "Inventory and tooltips",
     "stage": 2,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Adds current and maximum health plus percentage to unit tooltips.",
+    "feature_key": "unitHealth"
   },
   {
     "id": "FS-073",
@@ -645,8 +661,9 @@
     "title": "Tooltip anchor modes",
     "category": "Inventory and tooltips",
     "stage": 2,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Places the main tooltip in a chosen screen corner instead of following the mouse.",
+    "feature_key": "tooltipAnchor"
   },
   {
     "id": "FS-075",
@@ -1783,80 +1800,90 @@
     "title": "Searchable advanced CVar browser",
     "category": "Settings and completion",
     "stage": 5,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Search a curated CVar list with /fs cvar list <text>, and read current value, default, meaning and range with /fs cvar <name>.",
+    "feature_key": "cvarBrowser"
   },
   {
     "id": "FS-213",
     "title": "Per-CVar help and defaults",
     "category": "Settings and completion",
     "stage": 5,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Every browser entry carries a plain-language help line, its default and its valid range.",
+    "feature_key": "cvarBrowser"
   },
   {
     "id": "FS-214",
     "title": "CVar type/range validation",
     "category": "Settings and completion",
     "stage": 5,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Booleans accept only on/off and numbers must be finite and inside the documented range before the value is written.",
+    "feature_key": "cvarBrowser"
   },
   {
     "id": "FS-215",
     "title": "CVar change history",
     "category": "Settings and completion",
     "stage": 5,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "The last 20 browser changes are stored with before and after values and shown by /fs cvar history.",
+    "feature_key": "cvarBrowser"
   },
   {
     "id": "FS-216",
     "title": "Global profiles",
     "category": "Settings and completion",
     "stage": 5,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Named profiles store every switch and option and switch with /fs profile.",
+    "feature_key": "profiles"
   },
   {
     "id": "FS-217",
     "title": "Per-character profiles",
     "category": "Settings and completion",
     "stage": 5,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "A character scope remembers which profile each character used and restores it at login.",
+    "feature_key": "profiles"
   },
   {
     "id": "FS-218",
     "title": "Import/export profiles",
     "category": "Settings and completion",
     "stage": 5,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Export writes a validated FS1 string into the copy box; import accepts it and drops anything unknown.",
+    "feature_key": "profiles"
   },
   {
     "id": "FS-219",
     "title": "Input validation on imported settings",
     "category": "Settings and completion",
     "stage": 5,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Import validates feature IDs, option keys and values against the live registry before saving the profile.",
+    "feature_key": "profiles"
   },
   {
     "id": "FS-220",
     "title": "Beta-to-launch profile migration",
     "category": "Settings and completion",
     "stage": 5,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview via profile export/import; in-game validation pending",
+    "detail": "Export the profile string from the beta client, then import it in the launch client with /fs profile import. Unknown or unavailable features are dropped instead of applied.",
+    "feature_key": "profiles"
   },
   {
     "id": "FS-221",
     "title": "Per-feature ownership adapters",
     "category": "Settings and completion",
     "stage": 5,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Applying a profile revalidates and refreshes every affected feature through the shared registry instead of writing raw data.",
+    "feature_key": "profiles"
   },
   {
     "id": "FS-222",
@@ -1887,16 +1914,18 @@
     "title": "UI scaling and accessibility",
     "category": "Settings and completion",
     "stage": 5,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Scales only the ForeverSuite settings, details, options and report windows.",
+    "feature_key": "uiScale"
   },
   {
     "id": "FS-226",
     "title": "Per-module performance measurements",
     "category": "Settings and completion",
     "stage": 5,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Every refresh records total time and the slowest feature enable; /fs report prints both.",
+    "feature_key": "profiles"
   },
   {
     "id": "FS-227",

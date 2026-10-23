@@ -33,8 +33,6 @@ local function add(tooltip, record, key, text)
     record[key] = true
 end
 
-local ITEM_TOOLTIP_FEATURES = { "maxStack", "itemLevel", "itemID", "itemCount", "sellPrice", "upgradeHint", "bindType" }
-
 local SLOT_FOR_EQUIP = {
     INVTYPE_HEAD = { 1 }, INVTYPE_NECK = { 2 }, INVTYPE_SHOULDER = { 3 }, INVTYPE_SHIRT = { 4 },
     INVTYPE_CHEST = { 5 }, INVTYPE_ROBE = { 5 }, INVTYPE_WAIST = { 6 }, INVTYPE_LEGS = { 7 },
@@ -44,6 +42,71 @@ local SLOT_FOR_EQUIP = {
     INVTYPE_HOLDOFFHAND = { 17 }, INVTYPE_RANGED = { 18 }, INVTYPE_RANGEDRIGHT = { 18 },
     INVTYPE_RELIC = { 18 }, INVTYPE_THROWN = { 18 }, INVTYPE_2HWEAPON = { 16, 17 }, INVTYPE_TABARD = { 19 },
 }
+
+local ITEM_TOOLTIP_FEATURES = { "maxStack", "itemLevel", "itemID", "itemCount", "sellPrice", "upgradeHint", "bindType",
+    "flyoutItemLevel", "missingEnchant", "missingGems", "socketInfo" }
+local UNIT_TOOLTIP_FEATURES = { "npcID", "tooltipClassColor", "unitHealth" }
+
+-- Item link fields: item:id:enchant:gem1:gem2:gem3:gem4:suffix:unique:...
+local function linkFields(link)
+    if type(link) ~= "string" or link:sub(1, 5) ~= "item:" then return nil end
+    local fields = {}
+    for value in link:gmatch("[^:]+") do fields[#fields + 1] = value end
+    return fields
+end
+
+local function equippedLink(slot)
+    if not GetInventoryItemLink then return nil end
+    local ok, link = pcall(GetInventoryItemLink, "player", slot)
+    if ok and type(link) == "string" then return link end
+    return nil
+end
+
+local ENCHANTABLE = {
+    INVTYPE_HEAD = true, INVTYPE_SHOULDER = true, INVTYPE_CLOAK = true, INVTYPE_CHEST = true,
+    INVTYPE_ROBE = true, INVTYPE_WRIST = true, INVTYPE_HAND = true, INVTYPE_LEGS = true,
+    INVTYPE_FEET = true, INVTYPE_WEAPON = true, INVTYPE_WEAPONMAINHAND = true,
+    INVTYPE_WEAPONOFFHAND = true, INVTYPE_2HWEAPON = true, INVTYPE_SHIELD = true,
+}
+
+-- Socket counts come from the client's item stats table. When the client does not
+-- expose that table the helpers stay silent instead of guessing.
+local function socketCount(link)
+    if type(GetItemStats) ~= "function" then return nil end
+    local ok, stats = pcall(GetItemStats, link)
+    if not ok or type(stats) ~= "table" then return nil end
+    local total, empty = 0, 0
+    for key, value in pairs(stats) do
+        if type(key) == "string" and key:find("SOCKET") then
+            local count = type(value) == "number" and value or 1
+            total = total + count
+            if key:find("EMPTY") then empty = empty + count end
+        end
+    end
+    if total == 0 then return nil end
+    return total, empty
+end
+
+local function isEquipped(link, equipLoc)
+    local slots = SLOT_FOR_EQUIP[equipLoc]
+    if not slots then return false, nil end
+    for _, slot in ipairs(slots) do
+        if equippedLink(slot) == link then return true, slot end
+    end
+    return false, nil
+end
+
+local function bestEquippedLevel(equipLoc)
+    local slots = SLOT_FOR_EQUIP[equipLoc]
+    if not slots or not C_Item or not C_Item.GetDetailedItemLevelInfo then return nil end
+    local best
+    for _, slot in ipairs(slots) do
+        local link = equippedLink(slot)
+        local level = link and C_Item.GetDetailedItemLevelInfo(link)
+        if type(level) == "number" and level > 0 and (not best or level > best) then best = level end
+    end
+    return best
+end
 
 -- Returns the best comparison against the slot(s) the hovered item would occupy.
 local function upgradeComparison(link, equipLoc, hoveredLevel)
@@ -136,6 +199,48 @@ local function itemTooltip(tooltip, data)
             end
         end
     end
+    local name = tooltip.GetName and tooltip:GetName() or ""
+    local detailLevel = C_Item and C_Item.GetDetailedItemLevelInfo and C_Item.GetDetailedItemLevelInfo(link)
+    if F:Active("flyoutItemLevel") and name ~= "GameTooltip" then
+        if F:Plain(detailLevel) and type(detailLevel) == "number" and detailLevel > 0 then
+            local equipped = type(equip) == "string" and bestEquippedLevel(equip)
+            local text = "Item Level: " .. detailLevel
+            if equipped then
+                local delta = detailLevel - equipped
+                text = text .. " (equipped " .. equipped .. (delta == 0 and "" or
+                    (delta > 0 and ", +" .. delta or ", " .. delta)) .. ")"
+            end
+            add(tooltip, record, "flyout", text)
+        end
+    end
+    if F:Active("missingEnchant") and type(equip) == "string" and ENCHANTABLE[equip] then
+        local onCharacter = isEquipped(link, equip)
+        local fields = linkFields(link)
+        if onCharacter and fields then
+            local enchant = tonumber(fields[3] or "0") or 0
+            if enchant == 0 then add(tooltip, record, "missingEnchant", "Missing enchant") end
+        end
+    end
+    if F:Active("missingGems") or F:Active("socketInfo") then
+        local fields = linkFields(link)
+        local total, empty = socketCount(link)
+        local onCharacter = isEquipped(link, equip)
+        local filled = 0
+        if fields then
+            for index = 4, 7 do
+                local gem = tonumber(fields[index] or "0") or 0
+                if gem ~= 0 then filled = filled + 1 end
+            end
+        end
+        if total and total > 0 then
+            if onCharacter and F:Active("missingGems") and filled < total then
+                add(tooltip, record, "missingGems", "Empty socket: " .. (total - filled) .. " of " .. total)
+            end
+            if F:Active("socketInfo") then
+                add(tooltip, record, "socketInfo", "Sockets: " .. filled .. " of " .. total .. " filled")
+            end
+        end
+    end
 end
 
 local function spellTooltip(tooltip, data)
@@ -147,19 +252,52 @@ local function spellTooltip(tooltip, data)
     add(tooltip, record, "spellID", "Spell ID: " .. id)
 end
 
+local classBorderSaved = {}
+
+local function restoreClassBorder(tooltip)
+    local saved = classBorderSaved[tooltip]
+    if not saved or not tooltip.SetBackdropBorderColor then return end
+    tooltip:SetBackdropBorderColor(saved[1] or 0, saved[2] or 0, saved[3] or 0, saved[4] or 1)
+    classBorderSaved[tooltip] = nil
+end
+
 local function unitTooltip(tooltip, data)
-    if not F:Active("npcID") or not tooltip or not tooltip.GetUnit or type(data) ~= "table" or not F:Plain(data) then return end
+    if not anyActive(UNIT_TOOLTIP_FEATURES) or InCombatLockdown() then return end
+    if not tooltip or not tooltip.GetUnit or type(data) ~= "table" or not F:Plain(data) then return end
     local _, unit = tooltip:GetUnit()
-    if not F:Plain(unit) or type(unit) ~= "string" or not UnitGUID then return end
-    local guid = UnitGUID(unit)
-    if not F:Plain(guid) or type(guid) ~= "string" then return end
-    -- Creature-0-<server>-<instance>-<zone>-<npcID>-<spawn>
-    local npcID = guid:match("^Creature%-%d+%-%d+%-%d+%-%d+%-(%d+)")
-        or guid:match("^Vehicle%-%d+%-%d+%-%d+%-%d+%-(%d+)")
-    if not npcID then return end
+    if not F:Plain(unit) or type(unit) ~= "string" then return end
     prepare(tooltip)
-    local record = recordFor(tooltip, "unit", guid)
-    add(tooltip, record, "npcID", "NPC ID: " .. npcID)
+    local record = recordFor(tooltip, "unit", unit)
+    if F:Active("npcID") and UnitGUID then
+        local guid = UnitGUID(unit)
+        if F:Plain(guid) and type(guid) == "string" then
+            -- Creature-0-<server>-<instance>-<zone>-<npcID>-<spawn>
+            local npcID = guid:match("^Creature%-%d+%-%d+%-%d+%-%d+%-(%d+)")
+                or guid:match("^Vehicle%-%d+%-%d+%-%d+%-%d+%-(%d+)")
+            if npcID then add(tooltip, record, "npcID", "NPC ID: " .. npcID) end
+        end
+    end
+    if F:Active("unitHealth") and UnitHealth and UnitHealthMax then
+        local health, maximum = UnitHealth(unit), UnitHealthMax(unit)
+        if F:Plain(health) and F:Plain(maximum) and type(health) == "number" and type(maximum) == "number"
+            and maximum > 0 and health >= 0 then
+            local percent = math.floor(health / maximum * 100 + 0.5)
+            add(tooltip, record, "unitHealth", "Health: " .. health .. " / " .. maximum .. " (" .. percent .. "%)")
+        end
+    end
+    if F:Active("tooltipClassColor") and UnitClass and tooltip.SetBackdropBorderColor then
+        local _, classFile = UnitClass(unit)
+        local color = type(classFile) == "string" and RAID_CLASS_COLORS and RAID_CLASS_COLORS[classFile]
+        if type(color) == "table" then
+            if classBorderSaved[tooltip] and tooltip.fsClassUnit ~= classFile then restoreClassBorder(tooltip) end
+            tooltip.fsClassUnit = classFile
+            if not classBorderSaved[tooltip] and tooltip.GetBackdropBorderColor then
+                local r, g, b, a = tooltip:GetBackdropBorderColor()
+                classBorderSaved[tooltip] = { r, g, b, a }
+            end
+            tooltip:SetBackdropBorderColor(color.r or 1, color.g or 1, color.b or 1, 1)
+        end
+    end
 end
 
 local function questTooltip(tooltip, data)
@@ -188,6 +326,14 @@ local function safe(handler, tooltip, data, ids)
             if F:Active(id) then F:RecordError(id, err) end
         end
     end
+end
+
+local function installUnit()
+    if installed[Enum.TooltipDataType.Unit] then return end
+    TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Unit, function(tooltip, data)
+        safe(unitTooltip, tooltip, data, UNIT_TOOLTIP_FEATURES)
+    end)
+    installed[Enum.TooltipDataType.Unit] = true
 end
 
 local function install(dataType, handler, ids)
@@ -471,3 +617,136 @@ F:Register("tooltipHideCombat", {
         F:Listen("tooltipHideCombat", "PLAYER_REGEN_DISABLED", hideCombatTooltips)
     end,
 })
+
+F:Register("flyoutItemLevel", {
+    title = "Item levels in flyout tooltips",
+    category = "Tooltips",
+    description = "Shows the item level and the comparison with what you are wearing in the smaller shopping and comparison tooltips, not only the main game tooltip. It only reads equipment data.",
+    disableText = "Stops adding item levels to flyout tooltips. Re-hover to rebuild the tooltip.",
+    conflicts = { "SimpleItemLevel", "TinyInspect", "EnhanceQoL", "Leatrix_Plus", "Leatrix_Plus_Forever" },
+    enable = itemEnable,
+    available = itemAvailable,
+})
+
+F:Register("missingEnchant", {
+    title = "Missing enchant indicator",
+    category = "Tooltips",
+    description = "Marks an equipped item in a slot that can be enchanted when it carries no enchant, so a forgotten enchant is easy to spot. It reads the item link; nothing is bought, applied or changed.",
+    disableText = "Stops marking items without enchants. Re-hover to rebuild the tooltip.",
+    conflicts = { "Pawn", "TinyInspect", "EnhanceQoL" },
+    enable = itemEnable,
+    available = itemAvailable,
+})
+
+F:Register("missingGems", {
+    title = "Missing gem indicator",
+    category = "Tooltips",
+    description = "Marks an equipped item that has an empty socket, for example because a gem was never added or was replaced. Socket counts come from the client's own item stats; if the client does not report them the line is skipped.",
+    disableText = "Stops marking empty sockets. Re-hover to rebuild the tooltip.",
+    conflicts = { "Pawn", "TinyInspect", "EnhanceQoL" },
+    enable = itemEnable,
+    available = itemAvailable,
+})
+
+F:Register("socketInfo", {
+    title = "Socket inspection",
+    category = "Tooltips",
+    description = "Adds a socket summary to item tooltips and provides /fs sockets, which checks every equipped item and lists the ones with empty sockets. Inspection only: no gems are inserted, removed or bought.",
+    disableText = "Stops adding socket summaries and disables /fs sockets.",
+    conflicts = { "TinyInspect", "EnhanceQoL" },
+    enable = itemEnable,
+    available = itemAvailable,
+})
+
+F:Register("tooltipClassColor", {
+    title = "Class-coloured unit tooltips",
+    category = "Tooltips",
+    description = "Colours the border of a unit tooltip with that unit's class colour, so a player's class is readable at a glance. Only the border is coloured; text and content are untouched.",
+    disableText = "Restores the border colour each tooltip had before the feature coloured it.",
+    conflicts = { "TipTac", "TinyTooltip", "EnhanceQoL", "Leatrix_Plus", "Leatrix_Plus_Forever" },
+    available = function()
+        return tooltipAvailable() and Enum.TooltipDataType.Unit ~= nil and UnitClass ~= nil
+    end,
+    enable = installUnit,
+    disable = function()
+        for tooltip in pairs(classBorderSaved) do restoreClassBorder(tooltip) end
+    end,
+})
+
+F:Register("unitHealth", {
+    title = "Health in unit tooltips",
+    category = "Tooltips",
+    description = "Adds current health, maximum health and the percentage to unit tooltips. It only reads the values the client already tracks; no unit frame is replaced.",
+    disableText = "Stops adding health lines. Re-hover to rebuild the tooltip.",
+    conflicts = { "TipTac", "TinyTooltip", "EnhanceQoL" },
+    available = function()
+        return tooltipAvailable() and Enum.TooltipDataType.Unit ~= nil and UnitHealth ~= nil and UnitHealthMax ~= nil
+    end,
+    enable = installUnit,
+})
+
+local ANCHORS = {
+    default = nil,
+    topleft = { "TOPLEFT", "TOPLEFT", 12, -12 },
+    topright = { "TOPRIGHT", "TOPRIGHT", -12, -12 },
+    bottomleft = { "BOTTOMLEFT", "BOTTOMLEFT", 12, 12 },
+    bottomright = { "BOTTOMRIGHT", "BOTTOMRIGHT", -12, 12 },
+}
+
+local function applyTooltipAnchor()
+    if InCombatLockdown() then return end
+    local frame = _G.GameTooltip
+    if not frame then return end
+    if not frame.fsAnchorHooked and frame.HookScript then
+        frame.fsAnchorHooked = true
+        frame:HookScript("OnShow", function(self)
+            if not F:Active("tooltipAnchor") then return end
+            local entry = ANCHORS[F:GetOption("tooltipAnchor", "position") or "default"]
+            if not entry then return end
+            self:ClearAllPoints()
+            self:SetPoint(entry[1], UIParent, entry[2], entry[3], entry[4])
+        end)
+    end
+    if not F:Active("tooltipAnchor") then return end
+    local entry = ANCHORS[F:GetOption("tooltipAnchor", "position") or "default"]
+    if entry and frame:IsShown() then
+        frame:ClearAllPoints()
+        frame:SetPoint(entry[1], UIParent, entry[2], entry[3], entry[4])
+    elseif not entry and frame.ClearAllPoints then
+        frame:ClearAllPoints()
+    end
+end
+
+F:Register("tooltipAnchor", {
+    title = "Tooltip anchor position",
+    category = "Tooltips",
+    description = "Places the game tooltip in a fixed screen corner instead of following the mouse, which keeps a long item tooltip from covering the fight. Item and shopping tooltips keep their normal place.",
+    disableText = "Stops forcing a corner. The tooltip returns to the client's own mouse position the next time it is shown.",
+    conflicts = { "TipTac", "TinyTooltip", "Leatrix_Plus", "Leatrix_Plus_Forever" },
+    options = {
+        { key = "position", type = "choice", title = "Tooltip corner", default = "default",
+          choices = { { value = "default", label = "Follow the mouse (client default)" },
+              { value = "topleft", label = "Top left" }, { value = "topright", label = "Top right" },
+              { value = "bottomleft", label = "Bottom left" }, { value = "bottomright", label = "Bottom right" } },
+          description = "Corner used for the main game tooltip. The client still chooses the anchor it uses for its own layout when this is set to the default." },
+    },
+    available = function() return GameTooltip ~= nil and GameTooltip.HookScript ~= nil end,
+    enable = applyTooltipAnchor,
+    refresh = applyTooltipAnchor,
+    disable = applyTooltipAnchor,
+})
+
+function F:InspectSockets()
+    local rows = {}
+    if type(GetItemStats) ~= "function" then return rows end
+    for slot = 1, 19 do
+        local link = equippedLink(slot)
+        if link then
+            local total, empty = socketCount(link)
+            if total and empty > 0 then
+                rows[#rows + 1] = { slot = slot, link = link, total = total, empty = empty }
+            end
+        end
+    end
+    return rows
+end

@@ -2,7 +2,7 @@
 
 This is the initial capability backlog, not a complete parity claim. Distinct behaviors remain in scope; an implemented preview still requires in-game acceptance. Source options are separately indexed to catch omitted parameters and smaller features.
 
-249 tracked capabilities: 111 implemented and 138 planned. The shipped preview has 108 independently configurable features; several features and feature options share one capability row, and features added ahead of the index were recorded as FS-230 to FS-249. IDs remain stable as work continues.
+249 tracked capabilities: 140 implemented and 109 planned. The shipped preview has 128 independently configurable features; several features and feature options share one capability row, and features added ahead of the index were recorded as FS-230 to FS-249. IDs remain stable as work continues.
 
 | ID | Capability | Stage | Status |
 |---|---|---|---|
@@ -43,43 +43,43 @@ This is the initial capability backlog, not a complete parity claim. Distinct be
 | FS-035 | Keep chat text visible | 1 | Preview; game test pending |
 | FS-036 | Arrow keys edit chat | 1 | Preview; game test pending |
 | FS-037 | Drag Blizzard windows | 2 | Preview; game test pending |
-| FS-038 | Resize and scale windows | 2 | Planned |
+| FS-038 | Resize and scale windows | 2 | Preview; game test pending |
 | FS-039 | Remember window positions | 2 | Preview (option of FS-037) |
-| FS-040 | Per-layout window profiles | 2 | Planned |
+| FS-040 | Per-layout window profiles | 2 | Preview; game test pending |
 | FS-041 | Reset a single window | 2 | Preview (command) |
-| FS-042 | Snap windows to screen bounds | 2 | Planned |
-| FS-043 | Window anchor relationships | 2 | Planned |
-| FS-044 | Keep compatible panels open together | 2 | Planned |
-| FS-045 | Panel exceptions for secure or fragile frames | 2 | Planned |
+| FS-042 | Snap windows to screen bounds | 2 | Preview; game test pending |
+| FS-043 | Window anchor relationships | 2 | Preview; game test pending |
+| FS-044 | Keep compatible panels open together | 2 | Preview; game test pending |
+| FS-045 | Panel exceptions for secure or fragile frames | 2 | Preview; game test pending |
 | FS-046 | Keyboard accept/continue | 2 | Preview; game test pending |
 | FS-047 | Keyboard numbered gossip selection | 2 | Preview; game test pending |
 | FS-048 | Keyboard reward selection | 2 | Preview; game test pending |
-| FS-049 | Custom dialog key bindings | 2 | Planned |
+| FS-049 | Custom dialog key bindings | 2 | Preview; game test pending |
 | FS-050 | Dialog click priority | 2 | Preview; game test pending |
 | FS-051 | Dialog popup exclusions | 2 | Preview; game test pending |
 | FS-052 | Custom watched buttons | 2 | Preview; game test pending |
 | FS-053 | Dialog key hints | 2 | Preview (option of FS-046); game test pending |
-| FS-054 | Selective beta survey suppression | 2 | Planned |
-| FS-055 | Restore manual beta reporting | 2 | Planned |
-| FS-056 | Hide beta reporter button independently | 2 | Planned |
+| FS-054 | Selective beta survey suppression | 2 | Preview; game test pending |
+| FS-055 | Restore manual beta reporting | 2 | Preview; game test pending |
+| FS-056 | Hide beta reporter button independently | 2 | Preview; game test pending |
 | FS-057 | Bag item-level overlays | 2 | Preview; game test pending |
 | FS-058 | Bank item-level overlays | 2 | Preview (option of FS-057); game test pending |
 | FS-059 | Character item-level overlays | 2 | Preview; game test pending |
 | FS-060 | Inspect item-level overlays | 2 | Preview; game test pending |
 | FS-061 | Loot item-level overlays | 2 | Preview; game test pending |
-| FS-062 | Equipment flyout item levels | 2 | Planned |
+| FS-062 | Equipment flyout item levels | 2 | Preview; game test pending |
 | FS-063 | Average equipped item level | 2 | Preview; game test pending |
-| FS-064 | Missing enchant indicators | 2 | Planned |
-| FS-065 | Missing gem indicators | 2 | Planned |
-| FS-066 | Socket inspection helpers | 2 | Planned |
+| FS-064 | Missing enchant indicators | 2 | Preview; game test pending |
+| FS-065 | Missing gem indicators | 2 | Preview; game test pending |
+| FS-066 | Socket inspection helpers | 2 | Preview; game test pending |
 | FS-067 | Upgrade arrows | 2 | Preview; game test pending |
 | FS-068 | Bind-type labels | 2 | Preview; game test pending |
 | FS-069 | Durability overlays | 2 | Preview; game test pending |
 | FS-070 | Equipment label positioning | 2 | Preview; game test pending |
-| FS-071 | Tooltip class colors | 2 | Planned |
-| FS-072 | Tooltip health bar | 2 | Planned |
+| FS-071 | Tooltip class colors | 2 | Preview; game test pending |
+| FS-072 | Tooltip health bar | 2 | Preview; game test pending |
 | FS-073 | Tooltip borders and colors | 2 | Preview; game test pending |
-| FS-074 | Tooltip anchor modes | 2 | Planned |
+| FS-074 | Tooltip anchor modes | 2 | Preview; game test pending |
 | FS-075 | Tooltip combat visibility rules | 2 | Preview; game test pending |
 | FS-076 | Spell IDs in tooltips | 2 | Preview; game test pending |
 | FS-077 | NPC IDs in tooltips | 2 | Preview; game test pending |
@@ -237,21 +237,21 @@ This is the initial capability backlog, not a complete parity claim. Distinct be
 | FS-209 | Group role and leader indicators | 4 | Planned |
 | FS-210 | Dungeon group tools when supported | 4 | Planned |
 | FS-211 | Gameplay system availability audit | 4 | Planned |
-| FS-212 | Searchable advanced CVar browser | 5 | Planned |
-| FS-213 | Per-CVar help and defaults | 5 | Planned |
-| FS-214 | CVar type/range validation | 5 | Planned |
-| FS-215 | CVar change history | 5 | Planned |
-| FS-216 | Global profiles | 5 | Planned |
-| FS-217 | Per-character profiles | 5 | Planned |
-| FS-218 | Import/export profiles | 5 | Planned |
-| FS-219 | Input validation on imported settings | 5 | Planned |
-| FS-220 | Beta-to-launch profile migration | 5 | Planned |
-| FS-221 | Per-feature ownership adapters | 5 | Planned |
+| FS-212 | Searchable advanced CVar browser | 5 | Preview; game test pending |
+| FS-213 | Per-CVar help and defaults | 5 | Preview; game test pending |
+| FS-214 | CVar type/range validation | 5 | Preview; game test pending |
+| FS-215 | CVar change history | 5 | Preview; game test pending |
+| FS-216 | Global profiles | 5 | Preview; game test pending |
+| FS-217 | Per-character profiles | 5 | Preview; game test pending |
+| FS-218 | Import/export profiles | 5 | Preview; game test pending |
+| FS-219 | Input validation on imported settings | 5 | Preview; game test pending |
+| FS-220 | Beta-to-launch profile migration | 5 | Preview; game test pending |
+| FS-221 | Per-feature ownership adapters | 5 | Preview; game test pending |
 | FS-222 | Reference addon setting migration | 5 | Planned |
 | FS-223 | Localization | 5 | Planned |
 | FS-224 | Gamepad settings navigation | 5 | Planned |
-| FS-225 | UI scaling and accessibility | 5 | Planned |
-| FS-226 | Per-module performance measurements | 5 | Planned |
+| FS-225 | UI scaling and accessibility | 5 | Preview; game test pending |
+| FS-226 | Per-module performance measurements | 5 | Preview; game test pending |
 | FS-227 | Full source-option coverage reconciliation | 5 | Planned |
 | FS-228 | License and asset provenance audit | 5 | Planned |
 | FS-229 | Launch-client regression suite | 5 | Planned |
