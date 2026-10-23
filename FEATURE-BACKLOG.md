@@ -2,7 +2,7 @@
 
 This is the initial capability backlog, not a complete parity claim. Distinct behaviors remain in scope; an implemented preview still requires in-game acceptance. Source options are separately indexed to catch omitted parameters and smaller features.
 
-229 tracked capabilities: 45 implemented in the Stage 2 preview (44 features plus one option of an existing feature) and 184 planned. IDs remain stable as work continues.
+229 tracked capabilities: 47 implemented in the Stage 2 preview (45 features plus two options of existing features) and 182 planned. IDs remain stable as work continues.
 
 | ID | Capability | Stage | Status |
 |---|---|---|---|
@@ -62,8 +62,8 @@ This is the initial capability backlog, not a complete parity claim. Distinct be
 | FS-054 | Selective beta survey suppression | 2 | Planned |
 | FS-055 | Restore manual beta reporting | 2 | Planned |
 | FS-056 | Hide beta reporter button independently | 2 | Planned |
-| FS-057 | Bag item-level overlays | 2 | Planned |
-| FS-058 | Bank item-level overlays | 2 | Planned |
+| FS-057 | Bag item-level overlays | 2 | Preview; game test pending |
+| FS-058 | Bank item-level overlays | 2 | Preview (option of FS-057); game test pending |
 | FS-059 | Character item-level overlays | 2 | Preview; game test pending |
 | FS-060 | Inspect item-level overlays | 2 | Preview; game test pending |
 | FS-061 | Loot item-level overlays | 2 | Planned |

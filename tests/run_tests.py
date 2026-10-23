@@ -70,6 +70,7 @@ function methods:GetAltArrowKeyMode() return self.arrows == true end
 function methods:SetAltArrowKeyMode(value) self.arrows = value end
 function methods:GetItem() return "Item", self.link end
 function methods:GetUnit() return "Unit", self.unit end
+function methods:GetID() return self.bag or 0 end
 function methods:AddLine(text) table.insert(self.lines, text) end
 function CreateFrame(_, name)
  local frame = setmetatable({scripts={}, hooks={}, events={}, lines={}}, {__index=methods})
@@ -104,6 +105,17 @@ for _, slot in ipairs(slotButtons) do
  namedButton("Character" .. slot .. "Slot", true)
  namedButton("Inspect" .. slot .. "Slot", true)
 end
+NUM_BAG_SLOTS, NUM_BANKBAGSLOTS, NUM_BANKGENERIC_SLOTS = 4, 7, 7
+containerLinks, containerSlots = {}, {}
+function GetContainerItemLink(bag, slot) local contents = containerLinks[bag]; return contents and contents[slot] end
+function GetContainerNumSlots(bag) return containerSlots[bag] or 0 end
+for index = 1, NUM_BAG_SLOTS + NUM_BANKBAGSLOTS do
+ local frame = CreateFrame("Frame", "ContainerFrame" .. index)
+ frame.bag = index - 1; containerSlots[index - 1] = 2
+ for slot = 1, 2 do namedButton("ContainerFrame" .. index .. "Item" .. slot, true) end
+end
+for slot = 1, NUM_BANKGENERIC_SLOTS do namedButton("BankFrameItem" .. slot, true) end
+BankFrame = CreateFrame("Frame", "BankFrame")
 function InCombatLockdown() return combat end
 function IsShiftKeyDown() return shift end
 function GetBuildInfo() return clientVersion, clientBuild, "", clientInterface end
@@ -189,7 +201,7 @@ class SuiteTests(unittest.TestCase):
     def test_default_is_inert_and_ui_loads(self):
         self.start()
         self.runlua('fire("MERCHANT_SHOW"); fire("QUEST_DETAIL"); F:OpenSettings()')
-        self.assertEqual(len(self.g.F.order), 44)
+        self.assertEqual(len(self.g.F.order), 45)
         self.assertEqual(self.g.calls.repair, 0)
         self.assertEqual(self.g.calls.sell, 0)
         self.assertEqual(self.g.calls.accept, 0)
@@ -378,6 +390,9 @@ class SuiteTests(unittest.TestCase):
         self.assertFalse(self.g.F.rows.repair.shown)
         self.runlua('F.window.search:SetText("repair")')
         self.assertTrue(self.g.F.rows.repair.shown)
+        self.runlua('F.window.search:SetText("bank")')
+        self.assertTrue(self.g.F.rows.bagItemLevel.shown)
+        self.assertFalse(self.g.F.rows.repair.shown)
         self.runlua('F:ShowDetails("noGlow")')
         self.assertIn("When switched off", self.g.F.detailsWindow.body.text)
         self.assertIn("ffxGlow = 0", self.g.F.detailsWindow.body.text)
@@ -641,6 +656,44 @@ class SuiteTests(unittest.TestCase):
         self.assertIn("choices: Space, Enter, E", self.g.prints[len(self.g.prints)])
         self.runlua('SlashCmdList.FOREVERSUITE("options repair")')
         self.assertIn("has no options", self.g.prints[len(self.g.prints)])
+
+
+    def test_bag_item_levels_and_bank_option(self):
+        self.start()
+        self.runlua('containerLinks[1]={[1]="item:1001",[2]="item:2001"};'
+                    'containerLinks[5]={[1]="item:1002"};'
+                    'containerLinks[-1]={[1]="item:1002",[2]="item:2001"}')
+        self.runlua('F:SetEnabled("bagItemLevel", true)')
+        bagSlot = self.g.ContainerFrame2Item1.fontstrings[1]
+        self.assertEqual(bagSlot.text, "82")
+        self.assertEqual(bagSlot.fontSize, 11)
+        self.assertEqual(bagSlot.points[1], "TOPLEFT")
+        self.assertTrue(bagSlot.shown)
+        self.assertIsNone(self.g.ContainerFrame6Item1.fontstrings)
+        self.runlua('F:SetOption("bagItemLevel","includeBank",true)')
+        bankSlot = self.g.ContainerFrame6Item1.fontstrings[1]
+        self.assertEqual(bankSlot.text, "90")
+        self.assertTrue(bankSlot.shown)
+        self.assertEqual(self.g.BankFrameItem2.fontstrings[1].text, "75")
+        self.runlua('containerLinks[1]=nil; fire("BAG_UPDATE", 1)')
+        self.assertFalse(bagSlot.shown)
+        self.runlua('containerLinks[1]={[1]="item:1001"}; fire("BAG_UPDATE_DELAYED")')
+        self.assertTrue(bagSlot.shown)
+        self.runlua('F:SetOption("bagItemLevel","position","CENTER"); F:SetOption("bagItemLevel","size",18)')
+        self.assertEqual(bagSlot.points[1], "CENTER")
+        self.assertEqual(bagSlot.fontSize, 18)
+        self.runlua('combat=true; F:SetEnabled("bagItemLevel", false)')
+        self.assertTrue(bagSlot.shown)
+        self.runlua('combat=false; fire("PLAYER_REGEN_ENABLED")')
+        self.assertFalse(bagSlot.shown)
+        self.runlua('F:SetEnabled("bagItemLevel", true)')
+        self.assertTrue(bagSlot.shown)
+        self.runlua('F:SetEnabled("bagItemLevel", false)')
+        self.assertFalse(bagSlot.shown)
+        self.assertFalse(self.g.BankFrameItem2.fontstrings[1].shown)
+        self.runlua('ContainerFrame2:Show(); BankFrame:Show()')
+        self.assertFalse(bagSlot.shown)
+        self.assertFalse(self.g.BankFrameItem2.fontstrings[1].shown)
 
 
 if __name__ == "__main__":

@@ -491,16 +491,18 @@
     "title": "Bag item-level overlays",
     "category": "Inventory and tooltips",
     "stage": 2,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Shows actual item levels on bag slots with position and size options. Numbering only; no item is moved, sold or sorted.",
+    "feature_key": "bagItemLevel"
   },
   {
     "id": "FS-058",
     "title": "Bank item-level overlays",
     "category": "Inventory and tooltips",
     "stage": 2,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview as an option of FS-057; in-game validation pending",
+    "detail": "Enable Include bank on the bag item-level feature to number main bank slots and bank bags. Bank contents are only known after the bank has been opened.",
+    "feature_key": "bagItemLevel"
   },
   {
     "id": "FS-059",
@@ -508,7 +510,7 @@
     "category": "Inventory and tooltips",
     "stage": 2,
     "status": "implemented-preview; in-game validation pending",
-    "detail": "Shows actual item levels on equipped character-panel slots with position and size options. Bag, bank, loot and flyout overlays remain separate planned capabilities.",
+    "detail": "Shows actual item levels on equipped character-panel slots with position and size options. Inspect, bag and bank overlays are separate features; loot and flyout overlays remain planned.",
     "feature_key": "charItemLevel"
   },
   {

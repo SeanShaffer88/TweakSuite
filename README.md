@@ -2,7 +2,7 @@
 
 A comprehensive, modular quality-of-life addon for **World of Warcraft: Forever**, combining overlapping ideas into one settings surface while retaining distinct useful features. The goal is broad feature coverage across all 13 requested addons, delivered in stages. There is no target cap on the number of tweaks.
 
-**0.2.0-alpha.1 starts Stage 2 with 44 opt-in features: the 36 Stage 1 settings plus keyboard dialogs, character/inspect item levels and four more tooltip lines. It is not yet a replacement for the complete source addon collection.** Stage 2 is incomplete: window movement, bag/bank overlays, beta report controls and most tooltip styling remain planned. Original code; no other addons or their assets are bundled. Beta and preinstalled launch client executables were both observed at 1.60.1.70532 on October 22, 2026. Gameplay and visual verification are still pending.
+**0.2.0-alpha.1 starts Stage 2 with 45 opt-in features: the 36 Stage 1 settings plus keyboard dialogs, character/inspect/bag item levels and four more tooltip lines. It is not yet a replacement for the complete source addon collection.** Stage 2 is incomplete: window movement, loot/flyout overlays, beta report controls and most tooltip styling remain planned. Original code; no other addons or their assets are bundled. Beta and preinstalled launch client executables were both observed at 1.60.1.70532 on October 22, 2026. Gameplay and visual verification are still pending.
 
 ## Install and open
 
@@ -31,7 +31,7 @@ Without `-Install`, it only checks the selected client. It refuses to overwrite 
 - **Automation (5):** personal-gold repairs with a configurable cap, native Sell All Junk, faster auto-looting, accepting quests, turning in quests with no reward choices and no money requirement.
 - **Dialogs (2):** a configurable key (Space, Enter or E) presses the visible Accept/Continue button, with an optional key hint; number keys 1-6 select a quest reward without turning the quest in.
 - **Tooltips (7):** maximum stack size, item ID, actual equipment item level, owned count, spell ID, NPC ID and currency ID.
-- **Inventory (2):** actual item levels on equipped character-panel slots and on the inspect panel, with configurable text position and size.
+- **Inventory (3):** actual item levels on equipped character-panel slots, the inspect panel, and bag/bank slots, with configurable text position and size and an optional bank switch.
 - **Interface (8):** auto-loot default, cast on key down, instant quest text, full-screen glow, low-health flash, target of target, loot history and spell activation artwork.
 - **Nameplates (9):** visibility, stacking, class colors, friendly/enemy pet, guardian and totem plates, and the personal resource bar.
 - **Overhead names (5):** your own name, titles, guild names, guild ranks and critter names.
@@ -54,7 +54,7 @@ The dialog features are independently opt-in and stay off in combat and while Sh
 ## Inventory and tooltips
 
 - Character and inspect overlays show `C_Item.GetDetailedItemLevelInfo` for equipped slots. Empty slots, unavailable data and secret values show nothing. The inspect overlay waits for the client's normal inspect data and does not request extra inspection.
-- Bag, bank, loot and equipment-flyout overlays are still planned; only the character and inspect panels are covered in this build.
+- Bag overlays number each container slot, defaulting to the top-left corner so the stack count stays readable. Enable **Include bank** to add the main bank slots and bank bags; the client only knows bank contents after the bank has been opened in this session. Breaking an item, moving it or changing bags updates the numbers on the next bag event. Loot and equipment-flyout overlays are still planned.
 - Tooltip lines are added outside combat only, to avoid restricted values. Move the mouse away and hover again after changing a tooltip option.
 - **Item count** counts bags by default; enable **Include bank** to add bank contents. The client only knows bank contents after the bank has been opened in the session. Other characters and other accounts are not counted.
 - **NPC ID** is shown only for creature and vehicle units, extracted from the standard GUID. Player, pet and game-object tooltips are left alone. Spell and currency IDs require the client to label the tooltip with that data type; otherwise the feature reports **API unavailable**.
