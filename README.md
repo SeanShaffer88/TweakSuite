@@ -2,7 +2,7 @@
 
 ![TweakSuite](media/logo.png)
 
-A comprehensive, modular quality-of-life addon for **World of Warcraft: Forever** by **Malikor**. It combines overlapping ideas into one settings surface while keeping distinct useful features, and every feature starts **off**.
+A comprehensive, modular quality-of-life addon for **World of Warcraft: Forever** by **Malikor**. Source: [github.com/SeanShaffer88/TweakSuite](https://github.com/SeanShaffer88/TweakSuite) (formerly `ForeverSuite`; old links redirect). It combines overlapping ideas into one settings surface while keeping distinct useful features, and every feature starts **off**.
 
 **0.3.0-alpha.1** renames the project from ForeverSuite to TweakSuite, relicenses it under the GNU GPL v3 (or later), adds an addon icon and logo, and keeps all 227 opt-in features. The capability backlog has no planned rows left: every row is implemented in preview or scoped out with a written reason. Original code; no other addons or their assets are bundled. Beta and launch client executables were both observed at 1.60.1.70532 on October 22, 2026. **In-game gameplay and visual verification are still pending**, so treat this as a preview and keep the addons you rely on until each replacement is tested.
 
