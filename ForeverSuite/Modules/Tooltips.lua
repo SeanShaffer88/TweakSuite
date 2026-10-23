@@ -33,8 +33,38 @@ local function add(tooltip, record, key, text)
     record[key] = true
 end
 
+local ITEM_TOOLTIP_FEATURES = { "maxStack", "itemLevel", "itemID", "itemCount", "sellPrice", "upgradeHint" }
+
+local SLOT_FOR_EQUIP = {
+    INVTYPE_HEAD = { 1 }, INVTYPE_NECK = { 2 }, INVTYPE_SHOULDER = { 3 }, INVTYPE_SHIRT = { 4 },
+    INVTYPE_CHEST = { 5 }, INVTYPE_ROBE = { 5 }, INVTYPE_WAIST = { 6 }, INVTYPE_LEGS = { 7 },
+    INVTYPE_FEET = { 8 }, INVTYPE_WRIST = { 9 }, INVTYPE_HAND = { 10 }, INVTYPE_FINGER = { 11, 12 },
+    INVTYPE_TRINKET = { 13, 14 }, INVTYPE_CLOAK = { 15 }, INVTYPE_WEAPON = { 16, 17 },
+    INVTYPE_WEAPONMAINHAND = { 16 }, INVTYPE_WEAPONOFFHAND = { 17 }, INVTYPE_SHIELD = { 17 },
+    INVTYPE_HOLDOFFHAND = { 17 }, INVTYPE_RANGED = { 18 }, INVTYPE_RANGEDRIGHT = { 18 },
+    INVTYPE_RELIC = { 18 }, INVTYPE_THROWN = { 18 }, INVTYPE_2HWEAPON = { 16, 17 }, INVTYPE_TABARD = { 19 },
+}
+
+-- Returns the best comparison against the slot(s) the hovered item would occupy.
+local function upgradeComparison(link, equipLoc, hoveredLevel)
+    local slots = SLOT_FOR_EQUIP[equipLoc]
+    if not slots or not GetInventoryItemLink or not C_Item or not C_Item.GetDetailedItemLevelInfo then return nil end
+    local best
+    for _, slot in ipairs(slots) do
+        local worn = GetInventoryItemLink("player", slot)
+        if type(worn) == "string" and worn ~= link then
+            local wornLevel = C_Item.GetDetailedItemLevelInfo(worn)
+            if type(wornLevel) == "number" and wornLevel > 0 then
+                local delta = hoveredLevel - wornLevel
+                if not best or delta > best then best = delta end
+            end
+        end
+    end
+    return best
+end
+
 local function itemTooltip(tooltip, data)
-    if not anyActive({ "maxStack", "itemLevel", "itemID", "itemCount", "sellPrice" }) then return end
+    if not anyActive(ITEM_TOOLTIP_FEATURES) then return end
     if not tooltip or not tooltip.GetItem or type(data) ~= "table" or not F:Plain(data) then return end
     local _, link = tooltip:GetItem()
     if not F:Plain(link) or type(link) ~= "string" then return end
@@ -79,6 +109,23 @@ local function itemTooltip(tooltip, data)
             end
             local money = GetMoneyString and GetMoneyString(price) or (price .. " copper")
             add(tooltip, record, "sellPrice", label .. money)
+        end
+    end
+    if F:Active("upgradeHint") and type(equip) == "string" then
+        local hoveredLevel = C_Item and C_Item.GetDetailedItemLevelInfo and C_Item.GetDetailedItemLevelInfo(link)
+        if type(hoveredLevel) == "number" and hoveredLevel > 0 then
+            local delta = upgradeComparison(link, equip, hoveredLevel)
+            if delta ~= nil then
+                if delta > 0 then
+                    add(tooltip, record, "upgradeHint", "Upgrade: +" .. delta .. " item levels")
+                elseif delta < 0 then
+                    if F:GetOption("upgradeHint", "showDowngrades") ~= false then
+                        add(tooltip, record, "upgradeHint", "Downgrade: " .. delta .. " item levels")
+                    end
+                else
+                    add(tooltip, record, "upgradeHint", "Same item level as equipped")
+                end
+            end
         end
     end
 end
@@ -153,7 +200,7 @@ local function itemAvailable()
         and C_Item.GetItemInfo and C_Item.GetDetailedItemLevelInfo
 end
 
-local function itemEnable() install(Enum.TooltipDataType.Item, itemTooltip, { "maxStack", "itemLevel", "itemID", "itemCount", "sellPrice" }) end
+local function itemEnable() install(Enum.TooltipDataType.Item, itemTooltip, ITEM_TOOLTIP_FEATURES) end
 local common = { "EnhanceQoL", "EnhanceQoLTooltip", "Leatrix_Plus", "Leatrix_Plus_Forever", "TweaksForever" }
 
 F:Register("maxStack", {
@@ -315,5 +362,22 @@ F:Register("questID", {
     available = function()
         return TooltipDataProcessor and TooltipDataProcessor.AddTooltipPostCall and Enum
             and Enum.TooltipDataType and Enum.TooltipDataType.Quest
+    end,
+})
+
+F:Register("upgradeHint", {
+    title = "Item level comparison in tooltips",
+    category = "Tooltips",
+    description = "Compares a hovered equippable item with what you are wearing in that slot and states the difference in item levels. It only reads equipment; nothing is equipped, swapped or sold. Rings, trinkets and two-hand weapons compare against the best matching slot.",
+    conflicts = { "Pawn", "SimpleItemLevel", "EnhanceQoL", "TinyInspect", "Leatrix_Plus", "Leatrix_Plus_Forever" },
+    disableText = "Stops adding the comparison line to new tooltips. Re-hover to rebuild the current tooltip.",
+    options = {
+        { key = "showDowngrades", type = "boolean", title = "Show downgrades", default = true,
+          description = "Also states when the hovered item is worse than the equipped one. Turn this off to see only upgrades and equal item levels." },
+    },
+    enable = itemEnable,
+    available = function()
+        return tooltipAvailable() and Enum.TooltipDataType.Item and C_Item
+            and C_Item.GetItemInfo and C_Item.GetDetailedItemLevelInfo and GetInventoryItemLink ~= nil
     end,
 })

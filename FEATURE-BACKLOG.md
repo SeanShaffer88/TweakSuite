@@ -2,7 +2,7 @@
 
 This is the initial capability backlog, not a complete parity claim. Distinct behaviors remain in scope; an implemented preview still requires in-game acceptance. Source options are separately indexed to catch omitted parameters and smaller features.
 
-245 tracked capabilities: 74 implemented and 171 planned. The shipped preview has 87 independently configurable features; several features and feature options share one capability row, and features added ahead of the index were recorded as FS-230 to FS-245. IDs remain stable as work continues.
+249 tracked capabilities: 81 implemented and 168 planned. The shipped preview has 92 independently configurable features; several features and feature options share one capability row, and features added ahead of the index were recorded as FS-230 to FS-249. IDs remain stable as work continues.
 
 | ID | Capability | Stage | Status |
 |---|---|---|---|
@@ -72,7 +72,7 @@ This is the initial capability backlog, not a complete parity claim. Distinct be
 | FS-064 | Missing enchant indicators | 2 | Planned |
 | FS-065 | Missing gem indicators | 2 | Planned |
 | FS-066 | Socket inspection helpers | 2 | Planned |
-| FS-067 | Upgrade arrows | 2 | Planned |
+| FS-067 | Upgrade arrows | 2 | Preview; game test pending |
 | FS-068 | Bind-type labels | 2 | Planned |
 | FS-069 | Durability overlays | 2 | Preview; game test pending |
 | FS-070 | Equipment label positioning | 2 | Planned |
@@ -104,8 +104,12 @@ This is the initial capability backlog, not a complete parity claim. Distinct be
 | FS-243 | Nameplate scale | 2 | Preview; game test pending |
 | FS-244 | Hide the minimap clock | 2 | Preview; game test pending |
 | FS-245 | Hide the minimap zone label | 2 | Preview; game test pending |
+| FS-246 | Whisper sound alert | 2 | Preview; game test pending |
+| FS-247 | Thousands separators | 2 | Preview; game test pending |
+| FS-248 | New spells on the action bar | 2 | Preview; game test pending |
+| FS-249 | Always show friendly nameplates | 2 | Preview; game test pending |
 | FS-083 | Guild repair funds policy | 3 | Preview (option of FS-001) |
-| FS-084 | Repair feedback and totals | 3 | Planned |
+| FS-084 | Repair feedback and totals | 3 | Preview (option of FS-001) |
 | FS-085 | Never-sell item list | 3 | Planned |
 | FS-086 | Sell whitelist | 3 | Planned |
 | FS-087 | Sell by quality and item level | 3 | Planned |
@@ -115,7 +119,7 @@ This is the initial capability backlog, not a complete parity claim. Distinct be
 | FS-091 | Sale preview and cancellation | 3 | Planned |
 | FS-092 | Quest acceptance exceptions | 3 | Planned |
 | FS-093 | Quest completion exceptions | 3 | Planned |
-| FS-094 | Daily/weekly quest filters | 3 | Planned |
+| FS-094 | Daily/weekly quest filters | 3 | Preview (options of FS-004) |
 | FS-095 | Trivial quest filters | 3 | Planned |
 | FS-096 | Already-completed quest filters | 3 | Planned |
 | FS-097 | Single-option gossip rules | 3 | Planned |

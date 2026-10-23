@@ -111,6 +111,12 @@ cvarFeature("rotateMinimap", "Rotate the minimap", "rotateMinimap", "1",
     "Turns the minimap with your character's facing direction instead of keeping north at the top.")
 cvarFeature("chatTimestamps", "Timestamps in chat", "showTimestamps", "1",
     "Adds a local time stamp in front of each chat message.")
+cvarFeature("thousandsSeparators", "Thousands separators in large numbers", "breakUpLargeNumbers", "1",
+    "Groups long numbers such as damage, healing and money with a separator so they are easier to read.")
+cvarFeature("autoPushSpells", "New spells go to the action bar", "autoPushSpellToActionBar", "1",
+    "Places newly learned spells on the first free action bar slot when the client supports automatic placement.")
+cvarFeature("friendlyNameplates", "Always show friendly nameplates", "nameplateShowFriends", "1",
+    "Keeps nameplates visible for friendly players outside combat.")
 cvarFeature("nameplateScale", "Nameplate scale", "nameplateGlobalScale",
     function() return tostring(F:GetOption("nameplateScale", "scale") / 100) end,
     "Scales nameplates as a percentage of their default size. The client may clamp extreme values.",
@@ -133,7 +139,7 @@ cvarFeature("cameraZoom", "Maximum camera zoom distance", "cameraDistanceMaxZoom
         description = "Camera distance multiplier. 1 is the closest view, 2 is the common default, 4 is the widest this setting allows. Some clients clamp the value." } })
 
 for category, ids in pairs({
-    Nameplates = { "nameplates", "stackPlates", "classPlates", "hideFriendlyPets", "hideFriendlyGuardians", "hideFriendlyTotems", "hideEnemyPets", "enemyTotems", "personalResource", "nameplateDistance", "nameplateScale" },
+    Nameplates = { "nameplates", "stackPlates", "classPlates", "hideFriendlyPets", "hideFriendlyGuardians", "hideFriendlyTotems", "hideEnemyPets", "enemyTotems", "personalResource", "nameplateDistance", "nameplateScale", "friendlyNameplates" },
     ["Overhead names"] = { "hideOwnName", "hideTitles", "hideGuildNames", "hideGuildRanks", "hideCritterNames" },
     Camera = { "noCameraBobbing", "noTerrainTilt", "noWaterCollision" },
     Chat = { "chatWheel", "chatBubbles", "partyBubbles", "chatTimestamps" },
@@ -287,4 +293,28 @@ F:Register("chatUnclamp", { title = "Let chat windows leave the screen", categor
             if wasClamped and frame.SetClampedToScreen then frame:SetClampedToScreen(true) end
             clampSaved[frame] = nil
         end
+    end })
+
+local function tellSound()
+    if SOUNDKIT and SOUNDKIT.TELL_MESSAGE ~= nil then return SOUNDKIT.TELL_MESSAGE end
+    return "TellMessage"
+end
+F:Register("whisperSound", { title = "Sound for incoming whispers", category = "Chat",
+    description = "Plays the client's tell sound when another player whispers you, so a quiet chat window does not hide the message. It does not play for your own outgoing whispers.",
+    disableText = "Stops playing the extra sound. Chat itself is unchanged.",
+    conflicts = { "Leatrix_Plus", "Leatrix_Plus_Forever", "EnhanceQoL", "Prat-3.0" },
+    options = {
+        { key = "muteInCombat", type = "boolean", title = "Mute during combat", default = false,
+          description = "Skips the sound while you are in combat. The whisper still appears in chat either way." },
+    },
+    available = function() return PlaySound ~= nil or PlaySoundFile ~= nil end,
+    enable = function()
+        F:Listen("whisperSound", "CHAT_MSG_WHISPER", function()
+            if F:GetOption("whisperSound", "muteInCombat") == true and InCombatLockdown() then return end
+            if PlaySound then
+                PlaySound(tellSound())
+            elseif PlaySoundFile and SOUNDKIT and SOUNDKIT.TELL_MESSAGE_FILE then
+                PlaySoundFile(SOUNDKIT.TELL_MESSAGE_FILE)
+            end
+        end)
     end })

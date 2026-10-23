@@ -161,6 +161,12 @@ function GetInventoryItemDurability(slot)
 end
 freeBagSlots = 12
 function GetNumFreeBagSlots() return freeBagSlots end
+questDaily, questRepeatable = false, false
+function IsDailyQuest() return questDaily end
+function IsRepeatableQuest() return questRepeatable end
+playedSounds = {}
+function PlaySound(id) table.insert(playedSounds, id) end
+SOUNDKIT = { TELL_MESSAGE = 3081 }
 function InCombatLockdown() return combat end
 function IsShiftKeyDown() return shift end
 function GetBuildInfo() return clientVersion, clientBuild, "", clientInterface end
@@ -253,7 +259,7 @@ class SuiteTests(unittest.TestCase):
     def test_default_is_inert_and_ui_loads(self):
         self.start()
         self.runlua('fire("MERCHANT_SHOW"); fire("QUEST_DETAIL"); F:OpenSettings()')
-        self.assertEqual(len(self.g.F.order), 87)
+        self.assertEqual(len(self.g.F.order), 92)
         self.assertEqual(self.g.calls.repair, 0)
         self.assertEqual(self.g.calls.sell, 0)
         self.assertEqual(self.g.calls.accept, 0)
@@ -1039,7 +1045,7 @@ class SuiteTests(unittest.TestCase):
 
     def test_category_counts_and_layout_sanitation(self):
         self.start()
-        self.assertEqual(self.g.F.categoryButtons.Interface.label.text, "Interface (33)")
+        self.assertEqual(self.g.F.categoryButtons.Interface.label.text, "Interface (35)")
         self.assertEqual(self.g.F.categoryButtons.Home.label.text, "Home")
         self.runlua('F:SetEnabled("moveWindows", true); shift=true;'
                     'MerchantFrame:Trigger("OnDragStart");'
@@ -1060,6 +1066,66 @@ class SuiteTests(unittest.TestCase):
         self.runlua('F:SetEnabled("moveWindows", true); MerchantFrame:Show()')
         self.assertEqual(self.g.MerchantFrame.points[1], "CENTER")
         self.assertEqual(self.g.MerchantFrame.points[3], 10)
+
+
+    def test_upgrade_comparison_against_equipped_item(self):
+        self.start()
+        self.runlua('F:SetEnabled("upgradeHint", true); inventoryLevels["item:123"]=100; hover()')
+        self.assertEqual(self.g.tip.lines[1], "Upgrade: +18 item levels")
+        self.runlua('inventoryLevels["item:123"]=82; tip.lines={}; tip:Trigger("OnTooltipCleared"); hover()')
+        self.assertEqual(self.g.tip.lines[1], "Same item level as equipped")
+        self.runlua('inventoryLevels["item:123"]=50; tip.lines={}; tip:Trigger("OnTooltipCleared"); hover()')
+        self.assertEqual(self.g.tip.lines[1], "Downgrade: -32 item levels")
+        self.runlua('F:SetOption("upgradeHint", "showDowngrades", false); tip.lines={}; tip:Trigger("OnTooltipCleared"); hover()')
+        self.assertEqual(len(self.g.tip.lines), 0)
+        self.runlua('F:SetEnabled("upgradeHint", false); inventoryLevels["item:123"]=100; tip.lines={}; tip:Trigger("OnTooltipCleared"); hover()')
+        self.assertEqual(len(self.g.tip.lines), 0)
+
+    def test_whisper_sound_and_combat_option(self):
+        self.start()
+        self.runlua('F:SetEnabled("whisperSound", true); fire("CHAT_MSG_WHISPER", "hello", "Friend")')
+        self.assertEqual(len(self.g.playedSounds), 1)
+        self.assertEqual(self.g.playedSounds[1], 3081)
+        self.runlua('F:SetOption("whisperSound", "muteInCombat", true); combat=true; fire("CHAT_MSG_WHISPER", "hi", "Friend")')
+        self.assertEqual(len(self.g.playedSounds), 1)
+        self.runlua('combat=false; fire("CHAT_MSG_WHISPER", "hi", "Friend")')
+        self.assertEqual(len(self.g.playedSounds), 2)
+        self.runlua('F:SetEnabled("whisperSound", false); fire("CHAT_MSG_WHISPER", "hi", "Friend")')
+        self.assertEqual(len(self.g.playedSounds), 2)
+
+    def test_quest_accept_filters(self):
+        self.start()
+        self.runlua('F:SetEnabled("acceptQuests", true); F:SetOption("acceptQuests", "skipDailies", true);'
+                    'questDaily=true; fire("QUEST_DETAIL")')
+        self.assertEqual(self.g.calls.accept, 0)
+        self.runlua('questDaily=false; fire("QUEST_DETAIL")')
+        self.assertEqual(self.g.calls.accept, 1)
+        self.runlua('F:SetOption("acceptQuests", "skipRepeatable", true); questRepeatable=true; fire("QUEST_DETAIL")')
+        self.assertEqual(self.g.calls.accept, 1)
+        self.runlua('questRepeatable=false; shift=true; fire("QUEST_DETAIL"); shift=false')
+        self.assertEqual(self.g.calls.accept, 1)
+
+    def test_repair_reporting_option(self):
+        self.start()
+        self.runlua('F:SetEnabled("repair", true); fire("MERCHANT_SHOW")')
+        self.assertIn("Repaired for 10000c.", self.g.prints[len(self.g.prints)])
+        before = len(self.g.prints)
+        self.runlua('F:SetOption("repair", "report", false); fire("MERCHANT_SHOW")')
+        self.assertEqual(len(self.g.prints), before)
+        self.assertEqual(self.g.calls.repair, 2)
+        self.runlua('F:SetOption("repair", "report", true); money=0; fire("MERCHANT_SHOW")')
+        self.assertEqual(self.g.calls.repair, 2)
+
+    def test_new_interface_cvars(self):
+        self.start()
+        self.runlua('F:SetEnabled("thousandsSeparators", true); F:SetEnabled("autoPushSpells", true);'
+                    'F:SetEnabled("friendlyNameplates", true)')
+        self.assertEqual(self.g.cvars.breakUpLargeNumbers, "1")
+        self.assertEqual(self.g.cvars.autoPushSpellToActionBar, "1")
+        self.assertEqual(self.g.cvars.nameplateShowFriends, "1")
+        self.assertEqual(self.g.F.features.friendlyNameplates.category, "Nameplates")
+        self.runlua('F:SetEnabled("friendlyNameplates", false)')
+        self.assertEqual(self.g.cvars.nameplateShowFriends, "0")
 
 
 if __name__ == "__main__":
