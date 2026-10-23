@@ -29,7 +29,7 @@ inventoryLinks = { player = { [1] = "item:1001", [16] = "item:1002" }, target = 
 inventoryLevels = { ["item:1001"] = 82, ["item:1002"] = 90, ["item:2001"] = 75 }
 tips = {}
 local methods = {}
-local noops = {"SetSize", "SetFrameStrata", "SetClampedToScreen", "EnableMouse", "SetAlpha",
+local noops = {"SetSize", "SetFrameStrata", "EnableMouse", "SetAlpha",
  "SetMovable", "SetBackdrop", "SetJustifyH", "SetJustifyV", "RegisterForDrag", "StartMoving", "StopMovingOrSizing",
  "SetAutoFocus", "SetFontObject", "SetMaxLetters", "SetMultiLine", "SetScrollChild",
  "UpdateScrollChildRect", "SetFocus", "ClearFocus", "HighlightText", "ClearAllPoints", "SetTextColor", "SetVerticalScroll",
@@ -40,6 +40,8 @@ function methods:SetHeight(h) self.height = h end
 function methods:SetWidth(w) self.width = w end
 function methods:SetFont(_, size, flags) self.fontSize = size; self.fontFlags = flags end
 function methods:GetName() return self.name end
+function methods:SetClampedToScreen(value) self.clamped = value end
+function methods:IsClampedToScreen() return self.clamped ~= false end
 function methods:GetPoint() if self.points then return unpack(self.points) end end
 function methods:SetScale(value) self.scale = value end
 function methods:GetScale() return self.scale or 1 end
@@ -89,7 +91,7 @@ end
 function methods:CreateTexture() return CreateFrame("Texture") end
 function methods:GetStringHeight() return 450 end
 UIParent = CreateFrame("Frame")
-ChatFrame1 = CreateFrame("Frame", "ChatFrame1"); ChatFrame1.fading = true
+ChatFrame1 = CreateFrame("Frame", "ChatFrame1"); ChatFrame1.fading = true; ChatFrame1.clamped = true
 ChatFrame1EditBox = CreateFrame("EditBox", "ChatFrame1EditBox"); ChatFrame1EditBox.arrows = true
 CharacterFrame = CreateFrame("Frame", "CharacterFrame"); CharacterFrame.shown = false
 InspectFrame = CreateFrame("Frame", "InspectFrame"); InspectFrame.shown = false; InspectFrame.unit = "target"
@@ -114,6 +116,8 @@ end
 NUM_BAG_SLOTS, NUM_BANKBAGSLOTS, NUM_BANKGENERIC_SLOTS = 4, 7, 7
 containerLinks, containerSlots = {}, {}
 function GetMoneyString(copper) return copper .. "c" end
+lootLinks = {}
+function GetLootSlotLink(index) return lootLinks[index] end
 function GetContainerItemLink(bag, slot) local contents = containerLinks[bag]; return contents and contents[slot] end
 function GetContainerNumSlots(bag) return containerSlots[bag] or 0 end
 for index = 1, NUM_BAG_SLOTS + NUM_BANKBAGSLOTS do
@@ -130,6 +134,11 @@ for _, name in ipairs({ "MerchantFrame", "QuestFrame", "GossipFrame", "MailFrame
 end
 ObjectiveTrackerFrame = CreateFrame("Frame", "ObjectiveTrackerFrame"); ObjectiveTrackerFrame.shown = true
 MainMenuBarBackpackButton = CreateFrame("Button", "MainMenuBarBackpackButton"); MainMenuBarBackpackButton.shown = true
+LootFrame = CreateFrame("Frame", "LootFrame")
+for index = 1, 4 do CreateFrame("Button", "LootButton" .. index) end
+for index = 1, 4 do CreateFrame("Frame", "GroupLootFrame" .. index) end
+rollLinks = {}
+function GetLootRollItemLink(index) return rollLinks[index] end
 for _, name in ipairs({ "ChatFrame1ButtonFrame", "ChatFrameMenuButton", "ChatFrame1UpButton", "ChatFrame1DownButton", "ChatFrame1BottomButton" }) do
  local frame = CreateFrame("Button", name); frame.shown = true
 end
@@ -177,7 +186,7 @@ C_MerchantFrame = { IsSellAllJunkEnabled=function() return true end,
 C_AddOns = { IsAddOnLoaded=function(name) return loaded[name] == true end }
 C_CVar = { GetCVar=function(name) return cvars[name] end,
  SetCVar=function(name, value) if name ~= refusedCVar then cvars[name]=value end end }
-Enum={TooltipDataType={Item=0, Spell=1, Unit=2, Currency=3}}
+Enum={TooltipDataType={Item=0, Spell=1, Unit=2, Currency=3, Quest=4}}
 tooltipCallbacks = {}
 TooltipDataProcessor={AddTooltipPostCall=function(dataType, fn)
  tooltipCallbacks[dataType]=fn; calls.hooks=calls.hooks+1
@@ -206,6 +215,11 @@ end
 function hoverUnit(unit)
  local frame = tipFor("unit"); frame.unit = unit
  tooltipCallbacks[Enum.TooltipDataType.Unit](frame, {})
+ return frame
+end
+function hoverQuest(id)
+ local frame = tipFor("quest")
+ tooltipCallbacks[Enum.TooltipDataType.Quest](frame, { id = id })
  return frame
 end
 function hoverCurrency(data)
@@ -237,7 +251,7 @@ class SuiteTests(unittest.TestCase):
     def test_default_is_inert_and_ui_loads(self):
         self.start()
         self.runlua('fire("MERCHANT_SHOW"); fire("QUEST_DETAIL"); F:OpenSettings()')
-        self.assertEqual(len(self.g.F.order), 77)
+        self.assertEqual(len(self.g.F.order), 84)
         self.assertEqual(self.g.calls.repair, 0)
         self.assertEqual(self.g.calls.sell, 0)
         self.assertEqual(self.g.calls.accept, 0)
@@ -932,6 +946,73 @@ class SuiteTests(unittest.TestCase):
         self.assertEqual(label.text, "3")
         self.runlua('F:SetEnabled("bagSpace", false)')
         self.assertFalse(label.shown)
+
+
+    def test_quest_id_tooltip_and_loot_item_levels(self):
+        self.start()
+        self.runlua('F:SetEnabled("questID", true); hoverQuest(4242)')
+        self.assertEqual(self.g.tips.quest.lines[1], "Quest ID: 4242")
+        self.runlua('F:SetEnabled("lootItemLevel", true)')
+        self.runlua('lootLinks[1]="item:2001"; lootLinks[2]="item:1001"; lootLinks[3]="item:1002"; fire("LOOT_OPENED")')
+        self.assertEqual(self.g.LootButton1.fontstrings[1].text, "75")
+        self.assertEqual(self.g.LootButton2.fontstrings[1].text, "82")
+        self.assertEqual(self.g.LootButton3.fontstrings[1].text, "90")
+        self.assertIsNone(self.g.LootButton4.fontstrings)
+        self.runlua('lootLinks[1]=nil; fire("LOOT_SLOT_CLEARED")')
+        self.assertFalse(self.g.LootButton1.fontstrings[1].shown)
+        self.runlua('F:SetEnabled("lootItemLevel", false)')
+        self.assertFalse(self.g.LootButton2.fontstrings[1].shown)
+
+    def test_chat_unclamp_and_nameplate_distance(self):
+        self.start()
+        self.runlua('F:SetEnabled("chatUnclamp", true)')
+        self.assertFalse(self.g.ChatFrame1.clamped)
+        self.runlua('F:SetEnabled("chatUnclamp", false)')
+        self.assertTrue(self.g.ChatFrame1.clamped)
+        self.runlua('F:SetEnabled("autoTrackFaction", true); F:SetEnabled("nameplateDistance", true)')
+        self.assertEqual(self.g.cvars.autoTrackReputation, "1")
+        self.assertEqual(self.g.cvars.nameplateMaxDistance, "40")
+        self.assertEqual(self.g.F.features.nameplateDistance.category, "Nameplates")
+        self.runlua('F:SetOption("nameplateDistance", "distance", 55)')
+        self.assertEqual(self.g.cvars.nameplateMaxDistance, "55")
+        self.runlua('F:SetEnabled("nameplateDistance", false)')
+        self.assertEqual(self.g.cvars.nameplateMaxDistance, "0")
+
+    def test_windows_command_lists_and_resets_layouts(self):
+        self.start()
+        self.runlua('F:SetEnabled("moveWindows", true); shift=true;'
+                    'MerchantFrame:Trigger("OnDragStart");'
+                    'MerchantFrame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 100, -100);'
+                    'MerchantFrame:Trigger("OnDragStop")')
+        self.assertIsNotNone(self.g.ForeverSuiteDB.layouts)
+        self.runlua('SlashCmdList.FOREVERSUITE("windows")')
+        self.assertIn("1 saved window position", self.g.prints[len(self.g.prints)])
+        self.runlua('SlashCmdList.FOREVERSUITE("windows reset")')
+        self.assertIsNone(self.g.ForeverSuiteDB.layouts)
+        self.assertEqual(self.g.MerchantFrame.points[1], "CENTER")
+
+
+    def test_group_loot_roll_item_levels(self):
+        self.start()
+        self.runlua('F:SetEnabled("rollItemLevel", true)')
+        self.runlua('rollLinks[2]="item:2001"; fire("START_LOOT_ROLL", 2)')
+        self.assertEqual(self.g.GroupLootFrame2.fontstrings[1].text, "75")
+        self.assertTrue(self.g.GroupLootFrame2.fontstrings[1].shown)
+        self.runlua('rollLinks[2]=nil; fire("START_LOOT_ROLL", 2)')
+        self.assertFalse(self.g.GroupLootFrame2.fontstrings[1].shown)
+        self.runlua('rollLinks[3]="item:1002"; fire("START_LOOT_ROLL", 3); F:SetEnabled("rollItemLevel", false)')
+        self.assertFalse(self.g.GroupLootFrame3.fontstrings[1].shown)
+
+    def test_death_effect_cvar_and_reset_options_command(self):
+        self.start()
+        self.runlua('F:SetEnabled("noDeathEffect", true)')
+        self.assertEqual(self.g.cvars.ffxDeath, "0")
+        self.runlua('F:SetOption("charItemLevel", "size", 18); F:SetOption("dialogAccept", "key", "ENTER")')
+        self.runlua('SlashCmdList.FOREVERSUITE("resetoptions")')
+        self.assertEqual(len(self.g.ForeverSuiteDB.options), 0)
+        self.assertEqual(self.g.F.GetOption(self.g.F, "charItemLevel", "size"), 11)
+        self.assertEqual(self.g.F.GetOption(self.g.F, "dialogAccept", "key"), "SPACE")
+        self.assertIn("reset to their defaults", self.g.prints[len(self.g.prints)])
 
 
 if __name__ == "__main__":

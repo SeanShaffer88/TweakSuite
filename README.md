@@ -2,7 +2,7 @@
 
 A comprehensive, modular quality-of-life addon for **World of Warcraft: Forever**, combining overlapping ideas into one settings surface while retaining distinct useful features. The goal is broad feature coverage across all 13 requested addons, delivered in stages. There is no target cap on the number of tweaks.
 
-**0.2.0-alpha.2 continues Stage 2 with 77 opt-in features: the 36 Stage 1 settings plus keyboard dialogs, item-level and durability overlays, movable Blizzard windows, tooltip styling and a larger set of interface and chat tweaks. It is not yet a replacement for the complete source addon collection.** Stage 2 is incomplete: window resizing, panel lifetimes, loot and flyout overlays, the beta report controls and advanced tooltip styling remain planned. Original code; no other addons or their assets are bundled. Beta and preinstalled launch client executables were both observed at 1.60.1.70532 on October 22, 2026. Gameplay and visual verification are still pending.
+**0.2.0-alpha.3 continues Stage 2 with 84 opt-in features: the 36 Stage 1 settings plus keyboard dialogs, item-level and durability overlays, loot and roll item levels, movable Blizzard windows, tooltip styling and a larger set of interface and chat tweaks. It is not yet a replacement for the complete source addon collection.** Stage 2 is incomplete: window resizing, panel lifetimes, equipment flyout overlays, the beta report controls and advanced tooltip styling remain planned. Original code; no other addons or their assets are bundled. Beta and preinstalled launch client executables were both observed at 1.60.1.70532 on October 22, 2026. Gameplay and visual verification are still pending.
 
 ## Install and open
 
@@ -26,24 +26,25 @@ Optional PowerShell installer, from the source repository:
 
 Without `-Install`, it only checks the selected client. It refuses to overwrite an existing ForeverSuite folder or copy while WoW is running. It does not modify other addons or saved settings.
 
-## Available now (77 features, 12 categories)
+## Available now (84 features, 12 categories)
 
 - **Automation (5):** personal-gold repairs with a configurable cap and a funding choice (personal, guild bank, or personal then guild), native Sell All Junk, faster auto-looting, accepting quests, turning in quests with no reward choices and no money requirement.
-- **Dialogs (2):** a configurable key (Space, Enter or E) presses the visible Accept/Continue button, with an optional key hint; number keys 1-6 select a quest reward without turning the quest in.
+- **Dialogs (2):** a configurable key (Space, Enter, E or the common letter keys) presses the visible Accept/Continue button, with an optional key hint; number keys 1-6 select a quest reward without turning the quest in.
 - **Windows (1):** Shift-drag 14 common Blizzard windows and keep each position, with options for the Shift requirement and for remembering positions across sessions.
-- **Tooltips (9):** maximum stack size, item ID, actual equipment item level, owned count with optional bank, spell ID, NPC ID, currency ID, vendor sell price and a tooltip scale percentage.
-- **Inventory (6):** actual item levels on character-panel, inspect, bag and bank slots with position and size options; average equipped item level; durability percentages on character slots; free bag slots on the backpack.
-- **Interface (29):** auto-loot default, cast on key down, instant quest text, full-screen glow, low-health flash, target of target, loot history, spell activation artwork, quest tracking and progress, map quest difficulty, quest tooltips, numeric cooldowns, target cast bar, action bar lock and visibility, auto-cast protection, target aura filtering, aura durations, self-cast, spell effect emphasis, combat text toggles, minimap rotation, camera zoom distance, hidden objective tracker, gryphon end caps, zone name text and the boss banner.
-- **Nameplates (9):** visibility, stacking, class colors, friendly/enemy pet, guardian and totem plates, and the personal resource bar.
+- **Tooltips (10):** maximum stack size, item ID, actual equipment item level, owned count with optional bank, spell ID, NPC ID, currency ID, quest ID, vendor sell price and a tooltip scale percentage.
+- **Inventory (8):** actual item levels on character-panel, inspect, bag and bank slots with position and size options; item levels on the loot window and on need/greed rolls; average equipped item level; durability percentages on character slots; free bag slots on the backpack.
+- **Interface (31):** auto-loot default, cast on key down, instant quest text, full-screen glow, low-health flash, target of target, loot history, spell activation artwork, quest tracking and progress, map quest difficulty, quest tooltips, numeric cooldowns, target cast bar, action bar lock and visibility, auto-cast protection, target aura filtering, aura durations, self-cast, spell effect emphasis, combat text toggles, minimap rotation, camera zoom distance, automatic reputation tracking, death screen effect, hidden objective tracker, gryphon end caps, zone name text and the boss banner.
+- **Nameplates (10):** visibility, maximum distance, stacking, class colors, friendly/enemy pet, guardian and totem plates, and the personal resource bar.
 - **Overhead names (5):** your own name, titles, guild names, guild ranks and critter names.
 - **Camera (3):** bobbing, terrain tilt and water collision.
-- **Chat (8):** mouse-wheel scrolling, persistent text, arrow-key editing without Alt, chat font size, chat bubbles and party bubbles, timestamps, and hidden chat window buttons.
+- **Chat (9):** mouse-wheel scrolling, persistent text, arrow-key editing without Alt, chat font size, chat bubbles and party bubbles, timestamps, hidden chat window buttons, and unclamped chat windows that can be dragged partly off screen.
 
 Unsupported CVars appear as **API unavailable** when requested. Enabling a setting means ForeverSuite owns the listed value; disabling restores its previous value only if another tool has not changed it. To restore those values before uninstalling, use `/fs reset` outside combat, then log out normally. Merely deleting the addon cannot run restoration code.
 
 ## Windows, inventory and tooltips
 
 - **Moving windows** works on the character, spellbook, merchant, quest, gossip, mail, bank, trade, tabard, trainer, pet stable, friends, auction house and world map windows. Shift is required by default so tabs and buttons stay clickable; a left drag without Shift is left to the client. Positions are saved per window and restored when the window opens again. Drags are ignored in combat, and switching the feature off returns each window to where it was before the first move in that session.
+- Loot and need/greed roll frames show item levels too, so a roll can be judged before its timer ends; nothing is looted or rolled automatically.
 - Character, inspect, bag and bank overlays show `C_Item.GetDetailedItemLevelInfo` for equipped or contained slots. Empty slots, unavailable data and secret values show nothing. The inspect overlay waits for the client's normal inspect data and does not request extra inspection.
 - Bag overlays default to the top-left corner so the stack count stays readable. Enable **Include bank** to number the main bank slots and bank bags; the client only knows bank contents after the bank has been opened in this session.
 - **Durability percentages** appear in the lower-left corner of character slots and are colored green, yellow (50% or less) or red (20% or less). **Free bag slots** appear on the backpack button and update with bag changes.
@@ -57,7 +58,7 @@ Unsupported CVars appear as **API unavailable** when requested. Enabling a setti
 The dialog features are independently opt-in and stay off in combat and while Shift is held.
 
 - **Keyboard accept and continue** clicks only the visible Accept or Continue button on the client's quest frame. It never clicks Decline, Goodbye or a popup confirmation. It also refuses to complete a quest that still offers reward choices, so a reward cannot be turned in by an accidental key press.
-- The default key is Space. Change it to Enter or E in the feature's options. When no matching dialog button is visible, the key is passed through to the game, so jumping and normal bindings still work.
+- The default key is Space. Change it to Enter, E or a common letter key in the feature's options. Capturing an arbitrary key press is still planned. When no matching dialog button is visible, the key is passed through to the game, so jumping and normal bindings still work.
 - The optional key hint appears above the one button the key would press. Turn it off in options.
 - **Number keys select quest rewards** clicks the reward icon for 1-6. Selecting a reward does not turn in the quest; you still confirm with the client's own button.
 - A small invisible keyboard catcher is shown only while one of these features is enabled. It is hidden during combat because the client restricts keyboard-propagation changes in combat. Nothing is clicked in combat.
@@ -76,6 +77,8 @@ The dialog features are independently opt-in and stay off in combat and while Sh
 | `/fs reset` | Switch every feature off and restore owned settings when possible; options are kept |
 | `/fs reset dialogAccept` | Switch one feature off and reset its options to defaults |
 | `/fs report` | Copyable client, feature, option, conflict and recent-error report |
+| `/fs windows` | Count saved window positions; `/fs windows reset` clears them and puts windows back |
+| `/fs resetoptions` | Reset every feature option to its default without changing on/off states |
 
 Hold **Shift** when opening a merchant or quest dialog to skip automation. Automation also pauses during combat. Junk sale uses Blizzard's bulk operation, including items manually marked as junk. It does not yet have custom exclusions or buyback-cap logic. Quest acceptance has no exception list yet; enable it only when this behavior is wanted. Reward choices remain manual unless you explicitly use the reward number keys to select an icon.
 

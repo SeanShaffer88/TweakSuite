@@ -1,7 +1,7 @@
 -- SPDX-License-Identifier: MIT
 local addonName, F = ...
 F.name = addonName
-F.version = "0.2.0-alpha.2"
+F.version = "0.2.0-alpha.3"
 F.features, F.order, F.listeners, F.errors = {}, {}, {}, {}
 F.frame = CreateFrame("Frame")
 F.paused = false
@@ -420,6 +420,26 @@ SlashCmdList.FOREVERSUITE = function(message)
                 .. " (default " .. F:OptionDefaultText(option) .. "). " .. option.description)
         end
     elseif command == "report" then F:ShowReport(F:Report())
+    elseif command == "resetoptions" then
+        if F.readOnly then F:Print("Settings are read only."); return end
+        if type(F.db.options) == "table" then F.db.options = {} end
+        F:Refresh(); F:Print("All feature options reset to their defaults. On/off states were kept.")
+    elseif command == "windows" then
+        local action = rest:lower()
+        if action == "reset" then
+            if F.readOnly then F:Print("Settings are read only."); return end
+            F.db.layouts = nil
+            local feature = F.features.moveWindows
+            if feature and feature.active and feature.disable then feature.disable() end
+            F:Refresh()
+            F:Print("Saved window positions cleared; windows returned to their default place.")
+        elseif action == "" then
+            local count = 0
+            for _ in pairs((F.db and F.db.layouts) or {}) do count = count + 1 end
+            F:Print(count .. " saved window position(s). Use /fs windows reset to clear them.")
+        else
+            F:Print("Use /fs windows or /fs windows reset.")
+        end
     elseif command == "reset" then
         if F.readOnly then return end
         if rest ~= "" then

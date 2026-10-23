@@ -99,6 +99,15 @@ local function unitTooltip(tooltip, data)
     add(tooltip, record, "npcID", "NPC ID: " .. npcID)
 end
 
+local function questTooltip(tooltip, data)
+    if not F:Active("questID") or not tooltip or type(data) ~= "table" or not F:Plain(data) then return end
+    local id = data.id or data.questID
+    if not F:Plain(id) or type(id) ~= "number" or id <= 0 then return end
+    prepare(tooltip)
+    local record = recordFor(tooltip, "quest", id)
+    add(tooltip, record, "questID", "Quest ID: " .. id)
+end
+
 local function currencyTooltip(tooltip, data)
     if not F:Active("currencyID") or not tooltip or type(data) ~= "table" or not F:Plain(data) then return end
     local id = data.id or data.currencyID
@@ -281,5 +290,18 @@ F:Register("tooltipScale", {
             end
             scaleSaved[frame] = nil
         end
+    end,
+})
+
+F:Register("questID", {
+    title = "Quest ID in tooltips",
+    category = "Tooltips",
+    description = "Adds the quest ID to quest tooltips outside combat. Hidden when the client does not label a tooltip as a quest.",
+    conflicts = common,
+    disableText = "Stops adding the quest ID to new tooltips. Re-hover to rebuild the current tooltip.",
+    enable = function() install(Enum.TooltipDataType.Quest, questTooltip, { "questID" }) end,
+    available = function()
+        return TooltipDataProcessor and TooltipDataProcessor.AddTooltipPostCall and Enum
+            and Enum.TooltipDataType and Enum.TooltipDataType.Quest
     end,
 })

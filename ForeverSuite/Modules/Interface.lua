@@ -111,6 +111,15 @@ cvarFeature("rotateMinimap", "Rotate the minimap", "rotateMinimap", "1",
     "Turns the minimap with your character's facing direction instead of keeping north at the top.")
 cvarFeature("chatTimestamps", "Timestamps in chat", "showTimestamps", "1",
     "Adds a local time stamp in front of each chat message.")
+cvarFeature("noDeathEffect", "Disable the death screen effect", "ffxDeath", "0",
+    "Removes the desaturated death effect overlay when you die. The release dialog and corpse behavior are unchanged.")
+cvarFeature("autoTrackFaction", "Track reputation changes automatically", "autoTrackReputation", "1",
+    "Watches the faction whose reputation changes, so its progress bar updates without manual selection.")
+cvarFeature("nameplateDistance", "Nameplate maximum distance", "nameplateMaxDistance",
+    function() return tostring(F:GetOption("nameplateDistance", "distance")) end,
+    "Sets how far away enemy and friendly nameplates remain visible, in yards. The client may clamp the value.",
+    { { key = "distance", type = "number", title = "Maximum distance", default = 40, min = 20, max = 60, step = 1, unit = " yd",
+        description = "Nameplates beyond this distance fade out. 40 yards matches the usual client default; 60 keeps distant plates visible longer and costs more drawing time." } })
 cvarFeature("cameraZoom", "Maximum camera zoom distance", "cameraDistanceMaxZoomFactor",
     function() return tostring(F:GetOption("cameraZoom", "distance")) end,
     "Sets how far the camera may zoom out. Higher values allow a wider view; the client may clamp very large values.",
@@ -119,7 +128,7 @@ cvarFeature("cameraZoom", "Maximum camera zoom distance", "cameraDistanceMaxZoom
         description = "Camera distance multiplier. 1 is the closest view, 2 is the common default, 4 is the widest this setting allows. Some clients clamp the value." } })
 
 for category, ids in pairs({
-    Nameplates = { "nameplates", "stackPlates", "classPlates", "hideFriendlyPets", "hideFriendlyGuardians", "hideFriendlyTotems", "hideEnemyPets", "enemyTotems", "personalResource" },
+    Nameplates = { "nameplates", "stackPlates", "classPlates", "hideFriendlyPets", "hideFriendlyGuardians", "hideFriendlyTotems", "hideEnemyPets", "enemyTotems", "personalResource", "nameplateDistance" },
     ["Overhead names"] = { "hideOwnName", "hideTitles", "hideGuildNames", "hideGuildRanks", "hideCritterNames" },
     Camera = { "noCameraBobbing", "noTerrainTilt", "noWaterCollision" },
     Chat = { "chatWheel", "chatBubbles", "partyBubbles", "chatTimestamps" },
@@ -245,5 +254,32 @@ F:Register("chatFont", { title = "Chat font size", category = "Chat",
         for frame, saved in pairs(fontSaved) do
             if frame.SetFont and saved then frame:SetFont(saved.font, saved.size, saved.flags) end
             fontSaved[frame] = nil
+        end
+    end })
+
+local clampSaved = {}
+F:Register("chatUnclamp", { title = "Let chat windows leave the screen", category = "Chat",
+    description = "Removes the screen-edge clamp from chat windows so they can be dragged partly off screen, for example to hide them beyond the UI edge. Unlock the chat frame to drag them.",
+    disableText = "Restores the previous screen clamp on each chat window.",
+    conflicts = { "Leatrix_Plus", "Leatrix_Plus_Forever", "EnhanceQoL", "Prat-3.0", "Chatter" },
+    available = function() return ChatFrame1 ~= nil and ChatFrame1.SetClampedToScreen ~= nil end,
+    enable = function()
+        local function apply()
+            chatFrames(function(frame)
+                if frame.SetClampedToScreen then
+                    if clampSaved[frame] == nil and frame.IsClampedToScreen then
+                        clampSaved[frame] = frame:IsClampedToScreen() ~= false
+                    end
+                    frame:SetClampedToScreen(false)
+                end
+            end)
+        end
+        apply(); F:Listen("chatUnclamp", "UPDATE_CHAT_WINDOWS", apply)
+    end,
+    refresh = function() end,
+    disable = function()
+        for frame, wasClamped in pairs(clampSaved) do
+            if wasClamped and frame.SetClampedToScreen then frame:SetClampedToScreen(true) end
+            clampSaved[frame] = nil
         end
     end })

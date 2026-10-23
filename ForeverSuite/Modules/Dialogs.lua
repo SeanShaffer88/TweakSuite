@@ -153,7 +153,11 @@ F:Register("dialogAccept", {
     conflicts = conflicts,
     options = {
         { key = "key", type = "choice", title = "Dialog key", default = "SPACE",
-          choices = { { value = "SPACE", label = "Space" }, { value = "ENTER", label = "Enter" }, { value = "E", label = "E" } },
+          choices = { { value = "SPACE", label = "Space" }, { value = "ENTER", label = "Enter" },
+              { value = "E", label = "E" }, { value = "Q", label = "Q" }, { value = "F", label = "F" },
+              { value = "R", label = "R" }, { value = "T", label = "T" }, { value = "G", label = "G" },
+              { value = "V", label = "V" }, { value = "C", label = "C" }, { value = "X", label = "X" },
+              { value = "Z", label = "Z" } },
           description = "Key pressed while a dialog button is available. The key passes through to the game when no matching dialog button is shown." },
         { key = "hint", type = "boolean", title = "Show key hint", default = true,
           description = "Shows the key in brackets beside the one dialog button it would press." },

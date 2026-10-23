@@ -2,7 +2,7 @@
 
 This is the initial capability backlog, not a complete parity claim. Distinct behaviors remain in scope; an implemented preview still requires in-game acceptance. Source options are separately indexed to catch omitted parameters and smaller features.
 
-239 tracked capabilities: 65 implemented and 174 planned. The shipped preview has 77 independently configurable features; several features and feature options share one capability row, and a few features (such as tooltip scale) were added to the index as FS-230 to FS-239 when they were implemented. IDs remain stable as work continues.
+242 tracked capabilities: 71 implemented and 171 planned. The shipped preview has 84 independently configurable features; several features and feature options share one capability row, and features added ahead of the index were recorded as FS-230 to FS-242. IDs remain stable as work continues.
 
 | ID | Capability | Stage | Status |
 |---|---|---|---|
@@ -66,7 +66,7 @@ This is the initial capability backlog, not a complete parity claim. Distinct be
 | FS-058 | Bank item-level overlays | 2 | Preview (option of FS-057); game test pending |
 | FS-059 | Character item-level overlays | 2 | Preview; game test pending |
 | FS-060 | Inspect item-level overlays | 2 | Preview; game test pending |
-| FS-061 | Loot item-level overlays | 2 | Planned |
+| FS-061 | Loot item-level overlays | 2 | Preview; game test pending |
 | FS-062 | Equipment flyout item levels | 2 | Planned |
 | FS-063 | Average equipped item level | 2 | Preview; game test pending |
 | FS-064 | Missing enchant indicators | 2 | Planned |
@@ -83,7 +83,7 @@ This is the initial capability backlog, not a complete parity claim. Distinct be
 | FS-075 | Tooltip combat visibility rules | 2 | Planned |
 | FS-076 | Spell IDs in tooltips | 2 | Preview; game test pending |
 | FS-077 | NPC IDs in tooltips | 2 | Preview; game test pending |
-| FS-078 | Quest IDs in tooltips | 2 | Planned |
+| FS-078 | Quest IDs in tooltips | 2 | Preview; game test pending |
 | FS-079 | Currency IDs in tooltips | 2 | Preview; game test pending |
 | FS-080 | Item counts by storage location | 2 | Preview; game test pending |
 | FS-081 | Reputation token details | 2 | Planned |
@@ -98,6 +98,9 @@ This is the initial capability backlog, not a complete parity claim. Distinct be
 | FS-237 | Floating combat text toggles | 2 | Preview; game test pending |
 | FS-238 | Maximum camera zoom distance | 2 | Preview; game test pending |
 | FS-239 | Free bag slots on the backpack | 2 | Preview; game test pending |
+| FS-240 | Nameplate maximum distance | 2 | Preview; game test pending |
+| FS-241 | Automatic reputation tracking | 2 | Preview; game test pending |
+| FS-242 | Death screen effect toggle | 2 | Preview; game test pending |
 | FS-083 | Guild repair funds policy | 3 | Preview (option of FS-001) |
 | FS-084 | Repair feedback and totals | 3 | Planned |
 | FS-085 | Never-sell item list | 3 | Planned |
@@ -139,7 +142,7 @@ This is the initial capability backlog, not a complete parity claim. Distinct be
 | FS-121 | Class-colored chat names | 3 | Planned |
 | FS-122 | Chat message filtering | 3 | Planned |
 | FS-123 | Context-menu website links | 3 | Planned |
-| FS-124 | Chat frame unclamping | 3 | Planned |
+| FS-124 | Chat frame unclamping | 3 | Preview; game test pending |
 | FS-125 | World-map coordinates | 3 | Planned |
 | FS-126 | Cursor map coordinates | 3 | Planned |
 | FS-127 | Zone level ranges | 3 | Planned |

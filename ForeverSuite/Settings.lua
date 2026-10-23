@@ -171,7 +171,8 @@ function F:ShowOptions(id)
             description:SetPoint("TOPLEFT", 4, y - 20); description:SetWidth(330)
             local meta = "Default: " .. self:OptionDefaultText(option) .. "."
             if option.type == "number" then
-                meta = meta .. "  Range " .. option.min .. " to " .. option.max .. "; step " .. option.step .. "."
+                local unit = (option.unit and option.unit ~= "") and (" " .. option.unit) or ""
+                meta = meta .. "  Range " .. option.min .. " to " .. option.max .. unit .. "; step " .. option.step .. "."
             elseif option.type == "choice" then
                 meta = meta .. "  Click the button to cycle choices."
             end

@@ -550,3 +550,120 @@ F:Register("bagSpace", {
         if bagSpaceLabel then bagSpaceLabel:Hide() end
     end,
 })
+
+local lootLabels = {}
+local function applyLootLevels()
+    if not F:Active("lootItemLevel") or InCombatLockdown() then return end
+    if not _G.LootFrame or not GetLootSlotLink then return end
+    local count = GetNumLootItems and GetNumLootItems() or 0
+    if type(count) ~= "number" then count = 0 end
+    for index = 1, 4 do
+        local button = _G["LootButton" .. index]
+        if button then
+            local label = lootLabels[button]
+            local link = index <= count and GetLootSlotLink(index) or nil
+            local level
+            if type(link) == "string" and C_Item and C_Item.GetDetailedItemLevelInfo then
+                level = C_Item.GetDetailedItemLevelInfo(link)
+            end
+            if type(level) == "number" and level > 0 then
+                if not label then
+                    label = button:CreateFontString(nil, "OVERLAY")
+                    label:SetPoint("TOPLEFT", 3, -3)
+                    label:SetJustifyH("LEFT")
+                    label:SetTextColor(1, 0.82, 0.22)
+                    if STANDARD_TEXT_FONT and label.SetFont then
+                        label:SetFont(STANDARD_TEXT_FONT, 10, "OUTLINE")
+                    elseif GameFontNormalSmall then
+                        label:SetFontObject(GameFontNormalSmall)
+                    end
+                    lootLabels[button] = label
+                end
+                label:SetText(tostring(level))
+                label:Show()
+            elseif label then
+                label:Hide()
+            end
+        end
+    end
+end
+
+F:Register("lootItemLevel", {
+    title = "Item levels on the loot window",
+    category = "Inventory",
+    description = "Shows the actual item level beside each item in the client's loot window. It marks existing loot only; it never picks up or rolls on an item.",
+    disableText = "Hides the numbers on the loot window. Loot itself is unchanged.",
+    conflicts = { "SimpleItemLevel", "EnhanceQoL", "Leatrix_Plus", "Leatrix_Plus_Forever" },
+    available = function()
+        return _G.LootFrame ~= nil and GetLootSlotLink ~= nil
+            and C_Item and C_Item.GetDetailedItemLevelInfo ~= nil
+    end,
+    enable = function()
+        F:Listen("lootItemLevel", "LOOT_OPENED", applyLootLevels)
+        F:Listen("lootItemLevel", "LOOT_SLOT_CLEARED", applyLootLevels)
+        F:Listen("lootItemLevel", "PLAYER_ENTERING_WORLD", applyLootLevels)
+        F:Listen("lootItemLevel", "PLAYER_REGEN_ENABLED", applyLootLevels)
+        applyLootLevels()
+    end,
+    refresh = applyLootLevels,
+    disable = function()
+        for _, label in pairs(lootLabels) do label:Hide() end
+    end,
+})
+
+local rollLabels = {}
+local function applyRollLevels()
+    if not F:Active("rollItemLevel") or InCombatLockdown() then return end
+    if not GetLootRollItemLink then return end
+    for index = 1, 4 do
+        local button = _G["GroupLootFrame" .. index]
+        if button then
+            local label = rollLabels[button]
+            local link = GetLootRollItemLink(index)
+            local level
+            if type(link) == "string" and C_Item and C_Item.GetDetailedItemLevelInfo then
+                level = C_Item.GetDetailedItemLevelInfo(link)
+            end
+            if type(level) == "number" and level > 0 then
+                if not label then
+                    label = button:CreateFontString(nil, "OVERLAY")
+                    label:SetPoint("TOPLEFT", 3, -3)
+                    label:SetJustifyH("LEFT")
+                    label:SetTextColor(1, 0.82, 0.22)
+                    if STANDARD_TEXT_FONT and label.SetFont then
+                        label:SetFont(STANDARD_TEXT_FONT, 10, "OUTLINE")
+                    elseif GameFontNormalSmall then
+                        label:SetFontObject(GameFontNormalSmall)
+                    end
+                    rollLabels[button] = label
+                end
+                label:SetText(tostring(level))
+                label:Show()
+            elseif label then
+                label:Hide()
+            end
+        end
+    end
+end
+
+F:Register("rollItemLevel", {
+    title = "Item levels on loot rolls",
+    category = "Inventory",
+    description = "Shows the actual item level beside each need/greed roll so you can decide before the timer runs out. It never rolls for you.",
+    disableText = "Hides the numbers on loot roll frames. Rolling itself is unchanged.",
+    conflicts = { "SimpleItemLevel", "EnhanceQoL", "Leatrix_Plus", "Leatrix_Plus_Forever", "TinyInspect" },
+    available = function()
+        return _G.GroupLootFrame1 ~= nil and GetLootRollItemLink ~= nil
+            and C_Item and C_Item.GetDetailedItemLevelInfo ~= nil
+    end,
+    enable = function()
+        F:Listen("rollItemLevel", "START_LOOT_ROLL", applyRollLevels)
+        F:Listen("rollItemLevel", "PLAYER_ENTERING_WORLD", applyRollLevels)
+        F:Listen("rollItemLevel", "PLAYER_REGEN_ENABLED", applyRollLevels)
+        applyRollLevels()
+    end,
+    refresh = applyRollLevels,
+    disable = function()
+        for _, label in pairs(rollLabels) do label:Hide() end
+    end,
+})
