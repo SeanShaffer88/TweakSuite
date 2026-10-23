@@ -72,6 +72,8 @@ function methods:SetChecked(value) self.checked = value end
 function methods:GetChecked() return self.checked end
 function methods:SetEnabled(value) self.enabled = value end
 function methods:GetFont() return "Fonts/FRIZQT__.TTF", self.fontSize or 14, "" end
+function methods:SetMaxLines(value) self.maxLines = value end
+function methods:GetMaxLines() return self.maxLines or 128 end
 function methods:GetFading() return self.fading == true end
 function methods:SetFading(value) self.fading = value end
 function methods:GetAltArrowKeyMode() return self.arrows == true end
@@ -167,6 +169,23 @@ function IsRepeatableQuest() return questRepeatable end
 playedSounds = {}
 function PlaySound(id) table.insert(playedSounds, id) end
 SOUNDKIT = { TELL_MESSAGE = 3081 }
+gossipOptions = {}
+function GetNumGossipOptions() return #gossipOptions end
+function GetGossipOptions()
+ local flattened = {}
+ for _, entry in ipairs(gossipOptions) do
+  flattened[#flattened+1] = entry.text; flattened[#flattened+1] = entry.kind
+ end
+ return unpack(flattened)
+end
+function SelectGossipOption(index) calls.gossip = (calls.gossip or 0) + 1; calls.gossipIndex = index end
+friends, guildmates = {}, {}
+function UnitIsFriend(_, name) return friends[name] == true end
+function UnitIsInMyGuild(name) return guildmates[name] == true end
+function DeclineGroup() calls.declines = (calls.declines or 0) + 1 end
+function UnitName(unit) if unit == "player" then return "Tester" end return unit end
+function GetRealmName() return "TestRealm" end
+GossipFrame = CreateFrame("Frame", "GossipFrame")
 function InCombatLockdown() return combat end
 function IsShiftKeyDown() return shift end
 function GetBuildInfo() return clientVersion, clientBuild, "", clientInterface end
@@ -259,7 +278,7 @@ class SuiteTests(unittest.TestCase):
     def test_default_is_inert_and_ui_loads(self):
         self.start()
         self.runlua('fire("MERCHANT_SHOW"); fire("QUEST_DETAIL"); F:OpenSettings()')
-        self.assertEqual(len(self.g.F.order), 92)
+        self.assertEqual(len(self.g.F.order), 96)
         self.assertEqual(self.g.calls.repair, 0)
         self.assertEqual(self.g.calls.sell, 0)
         self.assertEqual(self.g.calls.accept, 0)
@@ -1126,6 +1145,97 @@ class SuiteTests(unittest.TestCase):
         self.assertEqual(self.g.F.features.friendlyNameplates.category, "Nameplates")
         self.runlua('F:SetEnabled("friendlyNameplates", false)')
         self.assertEqual(self.g.cvars.nameplateShowFriends, "0")
+
+
+    def test_numbered_gossip_selection_excludes_money(self):
+        self.start()
+        self.runlua('gossipOptions={{text="Read the note", kind="gossip"},'
+                    '{text="Buy a clue", kind="money"}, {text="Fight", kind="option"}};'
+                    'F:SetEnabled("gossipKeys", true); GossipFrame:Show(); fire("GOSSIP_SHOW")')
+        self.runlua('pressKey("1")')
+        self.assertEqual(self.g.calls.gossip, 1)
+        self.assertEqual(self.g.calls.gossipIndex, 1)
+        self.runlua('pressKey("2")')
+        self.assertEqual(self.g.calls.gossip, 1)
+        self.runlua('pressKey("3")')
+        self.assertEqual(self.g.calls.gossip, 2)
+        self.assertEqual(self.g.calls.gossipIndex, 3)
+        self.runlua('shift=true; pressKey("1"); shift=false')
+        self.assertEqual(self.g.calls.gossip, 2)
+        self.runlua('combat=true; pressKey("1")')
+        self.assertEqual(self.g.calls.gossip, 2)
+        self.runlua('combat=false; F:SetEnabled("gossipKeys", false); pressKey("1")')
+        self.assertEqual(self.g.calls.gossip, 2)
+        self.runlua('F:SetEnabled("gossipKeys", true); GossipFrame:Hide(); pressKey("1")')
+        self.assertEqual(self.g.calls.gossip, 2)
+
+    def test_stranger_invite_filter(self):
+        self.start()
+        self.runlua('F:SetEnabled("blockStrangerInvites", true); fire("PARTY_INVITE_REQUEST", "Stranger")')
+        self.assertEqual(self.g.calls.declines, 1)
+        self.assertIn("Declined a group invite from Stranger.", self.g.prints[len(self.g.prints)])
+        self.runlua('friends.Stranger=true; fire("PARTY_INVITE_REQUEST", "Stranger")')
+        self.assertEqual(self.g.calls.declines, 1)
+        self.runlua('friends.Stranger=nil; guildmates.Stranger=true; fire("PARTY_INVITE_REQUEST", "Stranger")')
+        self.assertEqual(self.g.calls.declines, 1)
+        self.runlua('F:SetOption("blockStrangerInvites", "allowGuild", false); fire("PARTY_INVITE_REQUEST", "Stranger")')
+        self.assertEqual(self.g.calls.declines, 2)
+        before = len(self.g.prints)
+        self.runlua('F:SetOption("blockStrangerInvites", "announce", false); fire("PARTY_INVITE_REQUEST", "Stranger")')
+        self.assertEqual(self.g.calls.declines, 3)
+        self.assertEqual(len(self.g.prints), before)
+        self.runlua('shift=true; fire("PARTY_INVITE_REQUEST", "Stranger"); shift=false')
+        self.assertEqual(self.g.calls.declines, 3)
+
+    def test_chat_history_length_and_restore(self):
+        self.start()
+        self.runlua('F:SetEnabled("chatHistory", true)')
+        self.assertEqual(self.g.ChatFrame1.maxLines, 512)
+        self.runlua('F:SetOption("chatHistory", "lines", 1024)')
+        self.assertEqual(self.g.ChatFrame1.maxLines, 1024)
+        self.runlua('F:SetEnabled("chatHistory", false)')
+        self.assertEqual(self.g.ChatFrame1.maxLines, 128)
+
+    def test_gold_tracker_records_and_reports(self):
+        self.start()
+        self.runlua('F:SetEnabled("goldTracker", true)')
+        self.assertEqual(self.g.ForeverSuiteDB.gold["TestRealm - Tester"], 1000000)
+        self.runlua('money=2500000; fire("PLAYER_MONEY")')
+        self.assertEqual(self.g.ForeverSuiteDB.gold["TestRealm - Tester"], 2500000)
+        self.runlua('SlashCmdList.FOREVERSUITE("gold")')
+        self.assertIn("TestRealm - Tester: 2500000c", self.g.prints[len(self.g.prints) - 1])
+        self.assertIn("Total across 1 character(s)", self.g.prints[len(self.g.prints)])
+        self.runlua('F:SetEnabled("goldTracker", false); money=1; fire("PLAYER_MONEY")')
+        self.assertEqual(self.g.ForeverSuiteDB.gold["TestRealm - Tester"], 2500000)
+
+    def test_gold_saved_data_sanitation(self):
+        self.runlua('ForeverSuiteDB={schema=1, gold={["A - B"]=5, [7]=1, ["Bad"]=0/0, ["Huge"]=1e15}}')
+        self.start()
+        self.assertEqual(self.g.ForeverSuiteDB.gold["A - B"], 5)
+        self.assertIsNone(self.g.ForeverSuiteDB.gold["Bad"])
+        self.assertIsNone(self.g.ForeverSuiteDB.gold["Huge"])
+        self.assertIsNone(self.g.ForeverSuiteDB.gold[7])
+
+    def test_reset_single_window_layout(self):
+        self.start()
+        self.runlua('F:SetEnabled("moveWindows", true); shift=true;'
+                    'MerchantFrame:Trigger("OnDragStart");'
+                    'MerchantFrame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 100, -100);'
+                    'MerchantFrame:Trigger("OnDragStop");'
+                    'QuestFrame:Trigger("OnDragStart");'
+                    'QuestFrame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 50, -50);'
+                    'QuestFrame:Trigger("OnDragStop")')
+        self.assertIsNotNone(self.g.ForeverSuiteDB.layouts.MerchantFrame)
+        self.assertIsNotNone(self.g.ForeverSuiteDB.layouts.QuestFrame)
+        self.runlua('SlashCmdList.FOREVERSUITE("windows reset MerchantFrame")')
+        self.assertIsNone(self.g.ForeverSuiteDB.layouts.MerchantFrame)
+        self.assertIsNotNone(self.g.ForeverSuiteDB.layouts.QuestFrame)
+        self.assertEqual(self.g.MerchantFrame.points[1], "CENTER")
+        self.assertEqual(self.g.QuestFrame.points[4], 50)
+        self.runlua('SlashCmdList.FOREVERSUITE("windows reset NoSuchFrame")')
+        self.assertIn("Unknown window", self.g.prints[len(self.g.prints)])
+        self.runlua('SlashCmdList.FOREVERSUITE("windows list")')
+        self.assertIn("MerchantFrame", self.g.prints[len(self.g.prints)])
 
 
 if __name__ == "__main__":

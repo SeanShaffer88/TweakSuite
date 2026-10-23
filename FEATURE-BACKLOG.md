@@ -2,7 +2,7 @@
 
 This is the initial capability backlog, not a complete parity claim. Distinct behaviors remain in scope; an implemented preview still requires in-game acceptance. Source options are separately indexed to catch omitted parameters and smaller features.
 
-249 tracked capabilities: 81 implemented and 168 planned. The shipped preview has 92 independently configurable features; several features and feature options share one capability row, and features added ahead of the index were recorded as FS-230 to FS-249. IDs remain stable as work continues.
+249 tracked capabilities: 86 implemented and 163 planned. The shipped preview has 96 independently configurable features; several features and feature options share one capability row, and features added ahead of the index were recorded as FS-230 to FS-249. IDs remain stable as work continues.
 
 | ID | Capability | Stage | Status |
 |---|---|---|---|
@@ -46,13 +46,13 @@ This is the initial capability backlog, not a complete parity claim. Distinct be
 | FS-038 | Resize and scale windows | 2 | Planned |
 | FS-039 | Remember window positions | 2 | Preview (option of FS-037) |
 | FS-040 | Per-layout window profiles | 2 | Planned |
-| FS-041 | Reset a single window | 2 | Planned |
+| FS-041 | Reset a single window | 2 | Preview (command) |
 | FS-042 | Snap windows to screen bounds | 2 | Planned |
 | FS-043 | Window anchor relationships | 2 | Planned |
 | FS-044 | Keep compatible panels open together | 2 | Planned |
 | FS-045 | Panel exceptions for secure or fragile frames | 2 | Planned |
 | FS-046 | Keyboard accept/continue | 2 | Preview; game test pending |
-| FS-047 | Keyboard numbered gossip selection | 2 | Planned |
+| FS-047 | Keyboard numbered gossip selection | 2 | Preview; game test pending |
 | FS-048 | Keyboard reward selection | 2 | Preview; game test pending |
 | FS-049 | Custom dialog key bindings | 2 | Planned |
 | FS-050 | Dialog click priority | 2 | Planned |
@@ -127,7 +127,7 @@ This is the initial capability backlog, not a complete parity claim. Distinct be
 | FS-099 | Paid gossip exclusions | 3 | Planned |
 | FS-100 | Flight map shortcuts | 3 | Planned |
 | FS-101 | Friend and guild invite acceptance | 3 | Planned |
-| FS-102 | Block stranger invites | 3 | Planned |
+| FS-102 | Block stranger invites | 3 | Preview; game test pending |
 | FS-103 | Duel decline rules | 3 | Planned |
 | FS-104 | Summon acceptance rules | 3 | Planned |
 | FS-105 | Resurrection acceptance rules | 3 | Planned |
@@ -140,7 +140,7 @@ This is the initial capability backlog, not a complete parity claim. Distinct be
 | FS-112 | Chat edit box placement | 3 | Planned |
 | FS-113 | Chat button visibility | 3 | Preview; game test pending |
 | FS-114 | Sticky chat controls | 3 | Planned |
-| FS-115 | Chat history length | 3 | Planned |
+| FS-115 | Chat history length | 3 | Preview; game test pending |
 | FS-116 | Copy chat text | 3 | Planned |
 | FS-117 | Whisper notification sounds | 3 | Planned |
 | FS-118 | Persistent chat history | 3 | Planned |
@@ -186,7 +186,7 @@ This is the initial capability backlog, not a complete parity claim. Distinct be
 | FS-158 | Reagent bag integration | 3 | Planned |
 | FS-159 | Bag filters | 3 | Planned |
 | FS-160 | Search by item properties | 3 | Planned |
-| FS-161 | Account gold tracker | 3 | Planned |
+| FS-161 | Account gold tracker | 3 | Preview; game test pending |
 | FS-162 | Minimap button collection | 3 | Planned |
 | FS-163 | Minimap shape and sizing | 3 | Planned |
 | FS-164 | Micro menu visibility | 3 | Planned |

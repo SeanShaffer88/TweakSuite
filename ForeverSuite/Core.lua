@@ -1,7 +1,7 @@
 -- SPDX-License-Identifier: MIT
 local addonName, F = ...
 F.name = addonName
-F.version = "0.2.0-alpha.4"
+F.version = "0.2.0-alpha.5"
 F.features, F.order, F.listeners, F.errors = {}, {}, {}, {}
 F.frame = CreateFrame("Frame")
 F.paused = false
@@ -302,6 +302,15 @@ function F:Initialize()
         for key, value in pairs(db.enabled) do
             if not self.features[key] or type(value) ~= "boolean" then db.enabled[key] = nil end
         end
+        if type(db.gold) == "table" then
+            for key, value in pairs(db.gold) do
+                if type(key) ~= "string" or type(value) ~= "number" or value ~= value
+                    or value < 0 or value > 1000000000000 then db.gold[key] = nil end
+            end
+            if next(db.gold) == nil then db.gold = nil end
+        else
+            db.gold = nil
+        end
         if type(db.layouts) == "table" then
             for name, stored in pairs(db.layouts) do
                 local valid = type(name) == "string" and type(stored) == "table"
@@ -438,21 +447,35 @@ SlashCmdList.FOREVERSUITE = function(message)
         if type(F.db.options) == "table" then F.db.options = {} end
         F:Refresh(); F:Print("All feature options reset to their defaults. On/off states were kept.")
     elseif command == "windows" then
-        local action = rest:lower()
+        local action, target = rest:match("^(%S*)%s*(.-)%s*$")
+        action = action:lower()
         if action == "reset" then
             if F.readOnly then F:Print("Settings are read only."); return end
+            if target ~= "" then
+                if F.ResetWindowLayout and F:ResetWindowLayout(target) then
+                    F:Print("Reset the saved position of " .. target .. ".")
+                else
+                    F:Print("Unknown window. Use /fs windows list to see the managed names.")
+                end
+                return
+            end
             F.db.layouts = nil
             local feature = F.features.moveWindows
             if feature and feature.active and feature.disable then feature.disable() end
             F:Refresh()
             F:Print("Saved window positions cleared; windows returned to their default place.")
+        elseif action == "list" then
+            local names = F.WindowNames and F:WindowNames() or {}
+            F:Print(#names .. " managed window(s): " .. table.concat(names, ", "))
         elseif action == "" then
             local count = 0
             for _ in pairs((F.db and F.db.layouts) or {}) do count = count + 1 end
-            F:Print(count .. " saved window position(s). Use /fs windows reset to clear them.")
+            F:Print(count .. " saved window position(s). Use /fs windows list or /fs windows reset.")
         else
-            F:Print("Use /fs windows or /fs windows reset.")
+            F:Print("Use /fs windows, /fs windows list, or /fs windows reset [window].")
         end
+    elseif command == "gold" then
+        if F.PrintGold then F:PrintGold() else F:Print("Gold tracking is unavailable.") end
     elseif command == "reset" then
         if F.readOnly then return end
         if rest ~= "" then

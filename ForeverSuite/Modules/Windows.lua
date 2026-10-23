@@ -7,7 +7,7 @@ local WINDOWS = {
     "PetStableFrame", "FriendsFrame", "AuctionHouseFrame", "WorldMapFrame",
 }
 local installed = setmetatable({}, { __mode = "k" })
-local originals, dragging = {}, {}
+local originals, dragging, defaults = {}, {}, {}
 
 local function requireShift()
     return F:GetOption("moveWindows", "requireShift") ~= false
@@ -82,6 +82,7 @@ local function install(frame)
         frame:HookScript("OnDragStop", onDragStop)
         frame:HookScript("OnShow", onShow)
     end
+    defaults[frame] = capture(frame)
     installed[frame] = true
     restore(frame)
 end
@@ -134,3 +135,30 @@ F:Register("moveWindows", {
         restoreOriginals()
     end,
 })
+
+function F:ResetWindowLayout(name)
+    if type(name) ~= "string" or name == "" then return false, "no window name" end
+    local known = false
+    for _, candidate in ipairs(WINDOWS) do
+        if candidate == name then known = true end
+    end
+    local frame = _G[name]
+    if not known or not frame then return false, "unknown window" end
+    if self.db and type(self.db.layouts) == "table" then self.db.layouts[name] = nil end
+    local original = defaults[frame]
+    if original then
+        applyStored(frame, original)
+    elseif frame.ClearAllPoints and frame.SetPoint then
+        frame:ClearAllPoints()
+        frame:SetPoint("CENTER")
+    end
+    return true
+end
+
+function F:WindowNames()
+    local names = {}
+    for _, name in ipairs(WINDOWS) do
+        if _G[name] then names[#names + 1] = name end
+    end
+    return names
+end

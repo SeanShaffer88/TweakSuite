@@ -667,3 +667,70 @@ F:Register("rollItemLevel", {
         for _, label in pairs(rollLabels) do label:Hide() end
     end,
 })
+
+local function characterKey()
+    local name = UnitName and UnitName("player") or nil
+    if not F:Plain(name) or type(name) ~= "string" or name == "" then return nil end
+    local realm = GetRealmName and GetRealmName() or nil
+    if type(realm) ~= "string" or realm == "" then realm = "unknown" end
+    return realm .. " - " .. name
+end
+
+local function recordGold()
+    if not F:Active("goldTracker") or not F.db or not GetMoney then return end
+    local key = characterKey()
+    local money = GetMoney()
+    if not key or not F:Plain(money) or type(money) ~= "number" or money < 0 then return end
+    if type(F.db.gold) ~= "table" then F.db.gold = {} end
+    F.db.gold[key] = money
+end
+
+function F:GoldSummary()
+    local rows, total = {}, 0
+    for key, value in pairs((self.db and self.db.gold) or {}) do
+        if type(value) == "number" and value >= 0 then
+            rows[#rows + 1] = { key = key, value = value }
+            total = total + value
+        end
+    end
+    table.sort(rows, function(a, b)
+        if a.value == b.value then return a.key < b.key end
+        return a.value > b.value
+    end)
+    return rows, total
+end
+
+function F:PrintGold()
+    local rows, total = self:GoldSummary()
+    if #rows == 0 then
+        self:Print("No gold recorded yet. The tracker records each character while it is enabled.")
+        return
+    end
+    local function moneyText(copper)
+        if GetMoneyString then
+            local ok, text = pcall(GetMoneyString, copper)
+            if ok and type(text) == "string" then return text end
+        end
+        return math.floor(copper / 10000) .. "g"
+    end
+    for _, row in ipairs(rows) do
+        self:Print(row.key .. ": " .. moneyText(row.value))
+    end
+    self:Print("Total across " .. #rows .. " character(s): " .. moneyText(total))
+end
+
+F:Register("goldTracker", {
+    title = "Record gold per character",
+    category = "Inventory",
+    description = "Remembers how much gold each character has while the feature is enabled, including after a reload. /fs gold prints the list and the total. It never moves, mails or trades gold.",
+    disableText = "Stops recording and updating gold. Values already recorded stay until /fs reset is used or the saved variables are cleared.",
+    conflicts = { "Leatrix_Plus", "Leatrix_Plus_Forever", "EnhanceQoL", "Accountant", "Altoholic" },
+    available = function() return GetMoney ~= nil and UnitName ~= nil end,
+    enable = function()
+        recordGold()
+        F:Listen("goldTracker", "PLAYER_ENTERING_WORLD", recordGold)
+        F:Listen("goldTracker", "PLAYER_MONEY", recordGold)
+    end,
+    refresh = recordGold,
+    disable = function() end,
+})

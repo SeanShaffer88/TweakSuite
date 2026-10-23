@@ -95,9 +95,38 @@ local function selectReward(index)
     return false
 end
 
+-- Gossip selection. Money gossip is never chosen, so a number key cannot spend gold.
+local function gossipOption(index)
+    if not GossipFrame or not GossipFrame:IsShown() then return nil end
+    if C_GossipInfo and C_GossipInfo.GetOptions then
+        local options = C_GossipInfo.GetOptions()
+        local entry = type(options) == "table" and options[index]
+        if type(entry) == "table" then
+            if type(entry.moneyCost) == "number" and entry.moneyCost > 0 then return nil end
+            if type(entry.optionType) == "string" and entry.optionType:lower():find("money") then return nil end
+            return index
+        end
+    end
+    if not GetNumGossipOptions or not GetGossipOptions then return nil end
+    local count = GetNumGossipOptions()
+    if type(count) ~= "number" or index > count then return nil end
+    local values = { GetGossipOptions() }
+    local optionType = values[(index - 1) * 2 + 2]
+    if type(optionType) == "string" and optionType:lower():find("money") then return nil end
+    return index
+end
+
+local function selectGossip(index)
+    if not F:Active("gossipKeys") or not SelectGossipOption then return false end
+    local visible = gossipOption(index)
+    if not visible then return false end
+    SelectGossipOption(visible)
+    return true
+end
+
 local function syncKeyboard()
     if not keyFrame then return end
-    local wanted = F:Active("dialogAccept") or F:Active("rewardKeys")
+    local wanted = F:Active("dialogAccept") or F:Active("rewardKeys") or F:Active("gossipKeys")
     if InCombatLockdown() then
         -- SetPropagateKeyboardInput is restricted in combat. Hide the catcher so it cannot
         -- hold on to keys; it is shown and reset after combat.
@@ -117,9 +146,13 @@ local function onKeyDown(self, key)
     if not InCombatLockdown() and F:CanAutomate() and type(key) == "string" then
         if F:Active("dialogAccept") and key == F:GetOption("dialogAccept", "key") then
             consume = clickContinue()
-        elseif F:Active("rewardKeys") then
+        elseif F:Active("rewardKeys") or F:Active("gossipKeys") then
             local digit = key:match("^([1-9])$") or key:match("^NUMPAD([1-9])$")
-            if digit then consume = selectReward(tonumber(digit)) end
+            if digit then
+                local index = tonumber(digit)
+                if F:Active("rewardKeys") then consume = selectReward(index) end
+                if not consume then consume = selectGossip(index) end
+            end
         end
     end
     if not InCombatLockdown() then self:SetPropagateKeyboardInput(not consume) end
@@ -192,6 +225,28 @@ F:Register("rewardKeys", {
         ensureKeyFrame()
         F:Listen("rewardKeys", "PLAYER_REGEN_DISABLED", syncKeyboard)
         F:Listen("rewardKeys", "PLAYER_REGEN_ENABLED", syncKeyboard)
+        syncKeyboard()
+    end,
+    refresh = syncKeyboard,
+    disable = syncKeyboard,
+})
+
+F:Register("gossipKeys", {
+    title = "Number keys select gossip options",
+    category = "Dialogs",
+    description = "While a gossip dialog is open, press 1 to 9 to choose the matching option. Options that cost money are never chosen, so a number key cannot buy anything. It does not accept quests, turn in quests or touch popup confirmations, and it pauses in combat or while Shift is held.",
+    disableText = "Stops number-key gossip selection immediately. The open gossip window is unchanged.",
+    conflicts = conflicts,
+    available = function()
+        return _G.GossipFrame ~= nil and SelectGossipOption ~= nil
+            and (GetNumGossipOptions ~= nil or (C_GossipInfo and C_GossipInfo.GetOptions ~= nil))
+    end,
+    enable = function()
+        ensureKeyFrame()
+        F:Listen("gossipKeys", "PLAYER_REGEN_DISABLED", syncKeyboard)
+        F:Listen("gossipKeys", "PLAYER_REGEN_ENABLED", syncKeyboard)
+        F:Listen("gossipKeys", "GOSSIP_SHOW", syncKeyboard)
+        F:Listen("gossipKeys", "GOSSIP_CLOSED", syncKeyboard)
         syncKeyboard()
     end,
     refresh = syncKeyboard,

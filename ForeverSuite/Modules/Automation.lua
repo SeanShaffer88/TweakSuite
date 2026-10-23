@@ -115,3 +115,51 @@ define("turnInQuests", "Turn in quests without reward choices",
         local choices, cost = GetNumQuestChoices(), GetQuestRequiredMoney()
         if F:Plain(choices) and F:Plain(cost) and choices == 0 and cost == 0 then GetQuestReward(0) end
     end)
+
+local function declineInvite()
+    if C_PartyInfo and C_PartyInfo.DeclineInvite then
+        C_PartyInfo.DeclineInvite()
+    elseif DeclineGroup then
+        DeclineGroup()
+    elseif DeclineInvite then
+        DeclineInvite()
+    end
+end
+
+local function inviteAllowed(name)
+    if type(name) ~= "string" or name == "" then return true end
+    if F:GetOption("blockStrangerInvites", "allowFriends") ~= false and UnitIsFriend
+        and UnitIsFriend("player", name) then return true end
+    if F:GetOption("blockStrangerInvites", "allowGuild") ~= false and UnitIsInMyGuild
+        and UnitIsInMyGuild(name) then return true end
+    return false
+end
+
+F:Register("blockStrangerInvites", {
+    title = "Decline group invites from strangers",
+    category = "Automation",
+    description = "Declines incoming group invitations from players who are neither your friends nor guild members. Friends and guild members still reach you by default. Hold Shift or leave combat to let an invite through. Nothing is reported to the other player beyond the normal decline.",
+    disableText = "Stops declining invites immediately. Any invite already declined stays declined.",
+    conflicts = { "Leatrix_Plus", "Leatrix_Plus_Forever", "EnhanceQoL", "BadBoy", "GlobalIgnore" },
+    options = {
+        { key = "allowFriends", type = "boolean", title = "Allow friends", default = true,
+          description = "Friend-listed players can still invite you. Turn this off to treat friends like strangers." },
+        { key = "allowGuild", type = "boolean", title = "Allow guild members", default = true,
+          description = "Players in your guild can still invite you. Turn this off to treat guild members like strangers." },
+        { key = "announce", type = "boolean", title = "Say when an invite was declined", default = true,
+          description = "Prints the declined player's name in chat, so an invitation is never silently dropped." },
+    },
+    available = function()
+        return (C_PartyInfo and C_PartyInfo.DeclineInvite) or DeclineGroup ~= nil or DeclineInvite ~= nil
+    end,
+    enable = function()
+        F:Listen("blockStrangerInvites", "PARTY_INVITE_REQUEST", function(_, name)
+            if not F:CanAutomate() then return end
+            if type(name) ~= "string" or inviteAllowed(name) then return end
+            declineInvite()
+            if F:GetOption("blockStrangerInvites", "announce") ~= false then
+                F:Print("Declined a group invite from " .. name .. ".")
+            end
+        end)
+    end,
+})

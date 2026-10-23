@@ -318,3 +318,38 @@ F:Register("whisperSound", { title = "Sound for incoming whispers", category = "
             end
         end)
     end })
+
+local maxLinesSaved = {}
+local function applyChatHistory()
+    if not F:Active("chatHistory") then return end
+    local lines = F:GetOption("chatHistory", "lines")
+    if type(lines) ~= "number" then return end
+    chatFrames(function(frame)
+        if not frame.SetMaxLines then return end
+        if maxLinesSaved[frame] == nil then
+            maxLinesSaved[frame] = frame.GetMaxLines and frame:GetMaxLines() or 128
+        end
+        frame:SetMaxLines(lines)
+    end)
+end
+F:Register("chatHistory", { title = "Chat history length", category = "Chat",
+    description = "Keeps more lines of chat in memory per window than the client default, so scrolling back reaches further. It changes scrollback only; the visible window size and font are unchanged.",
+    disableText = "Restores each chat window's previous scrollback limit if ForeverSuite was the one that raised it.",
+    conflicts = { "Leatrix_Plus", "Leatrix_Plus_Forever", "EnhanceQoL", "Prat-3.0", "Chatter" },
+    options = {
+        { key = "lines", type = "number", title = "Lines kept per window", default = 512, min = 128, max = 2048, step = 128, unit = " lines",
+          description = "How many past messages each chat window keeps for scrolling. Higher values use more memory; 128 matches the usual client default." },
+    },
+    available = function() return ChatFrame1 ~= nil and ChatFrame1.SetMaxLines ~= nil end,
+    enable = function()
+        applyChatHistory()
+        F:Listen("chatHistory", "UPDATE_CHAT_WINDOWS", applyChatHistory)
+        F:Listen("chatHistory", "PLAYER_ENTERING_WORLD", applyChatHistory)
+    end,
+    refresh = applyChatHistory,
+    disable = function()
+        for frame, saved in pairs(maxLinesSaved) do
+            if frame.SetMaxLines and type(saved) == "number" then frame:SetMaxLines(saved) end
+            maxLinesSaved[frame] = nil
+        end
+    end })
