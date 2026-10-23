@@ -400,8 +400,9 @@
     "title": "Keyboard accept/continue",
     "category": "Windows and dialogs",
     "stage": 2,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Press Space, Enter or E to click the visible Accept or Continue button. Never completes a quest with reward choices, ignores popups, passes the key through when no button is available, and pauses in combat or while Shift is held.",
+    "feature_key": "dialogAccept"
   },
   {
     "id": "FS-047",
@@ -416,8 +417,9 @@
     "title": "Keyboard reward selection",
     "category": "Windows and dialogs",
     "stage": 2,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Number keys 1-6 click the matching quest reward icon. Selection never turns in the quest; the client confirmation button is still required.",
+    "feature_key": "rewardKeys"
   },
   {
     "id": "FS-049",
@@ -425,7 +427,7 @@
     "category": "Windows and dialogs",
     "stage": 2,
     "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "detail": "The dialog key currently offers Space, Enter or E. Arbitrary key capture and per-dialog bindings are still planned."
   },
   {
     "id": "FS-050",
@@ -433,7 +435,7 @@
     "category": "Windows and dialogs",
     "stage": 2,
     "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "detail": "Current priority is Accept first, then Continue/Complete only when the client reports no reward choices. Configurable click priority is still planned."
   },
   {
     "id": "FS-051",
@@ -441,7 +443,7 @@
     "category": "Windows and dialogs",
     "stage": 2,
     "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "detail": "Static popup confirmations are never clicked by the dialog features. Configurable popup allow/exclude lists are still planned."
   },
   {
     "id": "FS-052",
@@ -456,8 +458,9 @@
     "title": "Dialog key hints",
     "category": "Windows and dialogs",
     "stage": 2,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview as an option of FS-046; in-game validation pending",
+    "detail": "Optional key hint above the button the dialog key would press. Configured in the Keyboard accept and continue feature options.",
+    "feature_key": "dialogAccept"
   },
   {
     "id": "FS-054",
@@ -504,16 +507,18 @@
     "title": "Character item-level overlays",
     "category": "Inventory and tooltips",
     "stage": 2,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Shows actual item levels on equipped character-panel slots with position and size options. Bag, bank, loot and flyout overlays remain separate planned capabilities.",
+    "feature_key": "charItemLevel"
   },
   {
     "id": "FS-060",
     "title": "Inspect item-level overlays",
     "category": "Inventory and tooltips",
     "stage": 2,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Shows actual item levels on the inspected player equipment after inspect data arrives. No extra inspect request; GUID-checked to avoid stale data.",
+    "feature_key": "inspectItemLevel"
   },
   {
     "id": "FS-061",
@@ -640,16 +645,18 @@
     "title": "Spell IDs in tooltips",
     "category": "Inventory and tooltips",
     "stage": 2,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Adds the spell ID to spell tooltips outside combat when the client labels the tooltip as a spell.",
+    "feature_key": "spellID"
   },
   {
     "id": "FS-077",
     "title": "NPC IDs in tooltips",
     "category": "Inventory and tooltips",
     "stage": 2,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Adds the NPC ID for creature and vehicle tooltips outside combat, parsed from the standard GUID. Player, pet and game-object tooltips are left alone.",
+    "feature_key": "npcID"
   },
   {
     "id": "FS-078",
@@ -664,16 +671,18 @@
     "title": "Currency IDs in tooltips",
     "category": "Inventory and tooltips",
     "stage": 2,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Adds the currency ID to currency tooltips outside combat when the client labels the tooltip as currency.",
+    "feature_key": "currencyID"
   },
   {
     "id": "FS-080",
     "title": "Item counts by storage location",
     "category": "Inventory and tooltips",
     "stage": 2,
-    "status": "planned",
-    "detail": "Preserve variants and filters during source audit; verify Forever API/content availability."
+    "status": "implemented-preview; in-game validation pending",
+    "detail": "Adds the owned count from bags, with an option to include bank contents. Does not count other characters or accounts.",
+    "feature_key": "itemCount"
   },
   {
     "id": "FS-081",

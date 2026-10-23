@@ -13,23 +13,31 @@ ADDON = ROOT / "ForeverSuite"
 FILES = [line.strip().replace("\\", "/") for line in (ADDON / "ForeverSuite.toc").read_text().splitlines()
          if line.strip() and not line.startswith("#")]
 
-MOCK = r'''
+MOCK = r"""
 calls = { repair = 0, sell = 0, loot = 0, accept = 0, reward = 0, hooks = 0 }
 combat, shift, loaded, cvars, frames = false, false, {}, {}, {}
 repairCost, money, choices, requiredMoney = 10000, 1000000, 0, 0
 itemStack, itemLevel, itemEquip, itemReady = 20, 50, "INVTYPE_HEAD", true
+itemCountValue, bankCountValue = 5, 9
 clientVersion, clientBuild, clientInterface = "1.60.1", "70532", 16001
 SlashCmdList, UISpecialFrames, CHAT_FRAMES = {}, {}, {"ChatFrame1"}
-ChatFontNormal = {}
+ChatFontNormal, GameFontNormalSmall = {}, {}
+STANDARD_TEXT_FONT = "Fonts/FRIZQT__.TTF"
+guids = { target = "Creature-0-1465-0-2105-448-000043F59F", player = "Player-970-0002FD64" }
+inventoryLinks = { player = { [1] = "item:1001", [16] = "item:1002" }, target = { [1] = "item:2001" } }
+inventoryLevels = { ["item:1001"] = 82, ["item:1002"] = 90, ["item:2001"] = 75 }
+tips = {}
 local methods = {}
-local noops = {"SetSize", "SetPoint", "SetFrameStrata", "SetClampedToScreen", "EnableMouse",
- "SetMovable", "SetBackdrop", "SetJustifyH", "RegisterForDrag", "StartMoving", "StopMovingOrSizing",
+local noops = {"SetSize", "SetFrameStrata", "SetClampedToScreen", "EnableMouse", "SetAlpha",
+ "SetMovable", "SetBackdrop", "SetJustifyH", "SetJustifyV", "RegisterForDrag", "StartMoving", "StopMovingOrSizing",
  "SetAutoFocus", "SetFontObject", "SetMaxLetters", "SetMultiLine", "SetScrollChild",
  "UpdateScrollChildRect", "SetFocus", "ClearFocus", "HighlightText", "ClearAllPoints", "SetTextColor", "SetVerticalScroll",
- "SetJustifyV", "SetBackdropColor", "SetBackdropBorderColor", "SetColorTexture", "SetAllPoints", "SetHighlightTexture"}
+ "SetBackdropColor", "SetBackdropBorderColor", "SetColorTexture", "SetAllPoints", "SetHighlightTexture"}
 for _, name in ipairs(noops) do methods[name] = function() end end
+function methods:SetPoint(...) self.points = {...} end
 function methods:SetHeight(h) self.height = h end
 function methods:SetWidth(w) self.width = w end
+function methods:SetFont(_, size, flags) self.fontSize = size; self.fontFlags = flags end
 function methods:SetScript(name, fn) self.scripts[name] = fn end
 function methods:HookScript(name, fn)
  self.hooks[name] = self.hooks[name] or {}; table.insert(self.hooks[name], fn)
@@ -42,6 +50,15 @@ function methods:RegisterEvent(name) if name == badEvent then error("Unknown eve
 function methods:Show() self.shown = true; self:Trigger("OnShow") end
 function methods:Hide() self.shown = false end
 function methods:SetShown(value) self.shown = value end
+function methods:IsShown() return self.shown == true end
+function methods:IsVisible() return self.shown == true end
+function methods:IsEnabled() return self.enabled ~= false end
+function methods:Click() self.clicks = (self.clicks or 0) + 1; if self.scripts.OnClick then self.scripts.OnClick(self) end end
+function methods:EnableKeyboard(value) self.keyboard = value end
+function methods:SetPropagateKeyboardInput(value)
+ if combat then error("SetPropagateKeyboardInput is restricted in combat") end
+ self.propagate = value
+end
 function methods:SetText(text) self.text = text; self:Trigger("OnTextChanged") end
 function methods:GetText() return self.text or "" end
 function methods:SetChecked(value) self.checked = value end
@@ -52,22 +69,47 @@ function methods:SetFading(value) self.fading = value end
 function methods:GetAltArrowKeyMode() return self.arrows == true end
 function methods:SetAltArrowKeyMode(value) self.arrows = value end
 function methods:GetItem() return "Item", self.link end
+function methods:GetUnit() return "Unit", self.unit end
 function methods:AddLine(text) table.insert(self.lines, text) end
 function CreateFrame(_, name)
  local frame = setmetatable({scripts={}, hooks={}, events={}, lines={}}, {__index=methods})
  if name then _G[name] = frame end; frames[#frames+1] = frame; return frame
 end
-function methods:CreateFontString() return CreateFrame("FontString") end
+function methods:CreateFontString()
+ local font = CreateFrame("FontString")
+ self.fontstrings = self.fontstrings or {}; table.insert(self.fontstrings, font); return font
+end
 function methods:CreateTexture() return CreateFrame("Texture") end
 function methods:GetStringHeight() return 450 end
 UIParent = CreateFrame("Frame")
 ChatFrame1 = CreateFrame("Frame", "ChatFrame1"); ChatFrame1.fading = true
 ChatFrame1EditBox = CreateFrame("EditBox", "ChatFrame1EditBox"); ChatFrame1EditBox.arrows = true
+CharacterFrame = CreateFrame("Frame", "CharacterFrame"); CharacterFrame.shown = false
+InspectFrame = CreateFrame("Frame", "InspectFrame"); InspectFrame.shown = false; InspectFrame.unit = "target"
+local function namedButton(name, shown)
+ local button = CreateFrame("Button", name); button.shown = shown == true; return button
+end
+local dialogButtons = { "QuestFrameAcceptButton", "QuestFrameCompleteButton", "QuestFrameCompleteQuestButton" }
+for _, name in ipairs(dialogButtons) do namedButton(name) end
+function showButton(name)
+ for _, label in ipairs(dialogButtons) do _G[label].shown = (label == name) end
+end
+for index = 1, 6 do namedButton("QuestInfoItem" .. index) end
+function showRewards(count)
+ for index = 1, 6 do _G["QuestInfoItem" .. index].shown = index <= count end
+end
+local slotButtons = { "Head", "Neck", "Shoulder", "Shirt", "Chest", "Waist", "Legs", "Feet", "Wrist",
+ "Hands", "Finger0", "Finger1", "Trinket0", "Trinket1", "Back", "MainHand", "SecondaryHand", "Ranged", "Tabard" }
+for _, slot in ipairs(slotButtons) do
+ namedButton("Character" .. slot .. "Slot", true)
+ namedButton("Inspect" .. slot .. "Slot", true)
+end
 function InCombatLockdown() return combat end
 function IsShiftKeyDown() return shift end
 function GetBuildInfo() return clientVersion, clientBuild, "", clientInterface end
 function issecretvalue(value) return type(value) == "table" and value.secret == true end
-function print() end
+prints = {}
+function print(message) table.insert(prints, tostring(message)) end
 function CanMerchantRepair() return true end
 function GetRepairAllCost() return repairCost, true end
 function GetMoney() return money end
@@ -76,26 +118,54 @@ function GetNumLootItems() return 3 end
 function LootSlot(index) calls.loot=calls.loot+1; calls.lastSlot=index end
 function AcceptQuest() calls.accept=calls.accept+1 end
 function GetNumQuestChoices() return choices end
+function GetQuestItemInfo() return "Reward", "item:999" end
 function GetQuestRequiredMoney() return requiredMoney end
 function GetQuestReward(choice) calls.reward=calls.reward+1; calls.rewardChoice=choice end
+function UnitGUID(unit) return guids[unit] end
+function GetInventoryItemLink(unit, slot) local links = inventoryLinks[unit]; return links and links[slot] end
+function GetItemCount(_, includeBank) return includeBank and bankCountValue or itemCountValue end
 C_MerchantFrame = { IsSellAllJunkEnabled=function() return true end,
  SellAllJunkItems=function() calls.sell=calls.sell+1 end }
 C_AddOns = { IsAddOnLoaded=function(name) return loaded[name] == true end }
 C_CVar = { GetCVar=function(name) return cvars[name] end,
  SetCVar=function(name, value) if name ~= refusedCVar then cvars[name]=value end end }
-Enum={TooltipDataType={Item=0}}
-TooltipDataProcessor={AddTooltipPostCall=function(_, fn) tooltipCallback=fn; calls.hooks=calls.hooks+1 end}
+Enum={TooltipDataType={Item=0, Spell=1, Unit=2, Currency=3}}
+tooltipCallbacks = {}
+TooltipDataProcessor={AddTooltipPostCall=function(dataType, fn)
+ tooltipCallbacks[dataType]=fn; calls.hooks=calls.hooks+1
+end}
 C_Item={GetItemInfo=function()
  if not itemReady then return nil end
  return "Item", "item:123", 2, 45, 1, "Armor", "Plate", itemStack, itemEquip
- end, GetDetailedItemLevelInfo=function() return itemLevel end}
+ end, GetDetailedItemLevelInfo=function(link) return inventoryLevels[link] or itemLevel end,
+ GetItemCount=function(_, includeBank) return includeBank and bankCountValue or itemCountValue end}
 Settings={RegisterCanvasLayoutCategory=function() return {} end, RegisterAddOnCategory=function() end}
 function fire(event, ...) F.frame:Trigger("OnEvent", event, ...) end
-function hover()
- if not tip then tip=CreateFrame("GameTooltip"); tip.link="item:123" end
- tooltipCallback(tip, {id=123})
+function pressKey(key) ForeverSuiteKeyCatcher:Trigger("OnKeyDown", key) end
+function tipFor(kind)
+ if not tips[kind] then tips[kind] = CreateFrame("GameTooltip"); tips[kind].lines = {} end
+ tips[kind].lines = {}; return tips[kind]
 end
-'''
+function hover()
+ if not tip then tip = CreateFrame("GameTooltip"); tip.link = "item:123" end
+ tooltipCallbacks[Enum.TooltipDataType.Item](tip, { id = 123 })
+end
+function hoverSpell(id)
+ local frame = tipFor("spell")
+ tooltipCallbacks[Enum.TooltipDataType.Spell](frame, { id = id })
+ return frame
+end
+function hoverUnit(unit)
+ local frame = tipFor("unit"); frame.unit = unit
+ tooltipCallbacks[Enum.TooltipDataType.Unit](frame, {})
+ return frame
+end
+function hoverCurrency(data)
+ local frame = tipFor("currency")
+ tooltipCallbacks[Enum.TooltipDataType.Currency](frame, data)
+ return frame
+end
+"""
 
 
 class SuiteTests(unittest.TestCase):
@@ -119,7 +189,7 @@ class SuiteTests(unittest.TestCase):
     def test_default_is_inert_and_ui_loads(self):
         self.start()
         self.runlua('fire("MERCHANT_SHOW"); fire("QUEST_DETAIL"); F:OpenSettings()')
-        self.assertEqual(len(self.g.F.order), 36)
+        self.assertEqual(len(self.g.F.order), 44)
         self.assertEqual(self.g.calls.repair, 0)
         self.assertEqual(self.g.calls.sell, 0)
         self.assertEqual(self.g.calls.accept, 0)
@@ -312,6 +382,265 @@ class SuiteTests(unittest.TestCase):
         self.assertIn("When switched off", self.g.F.detailsWindow.body.text)
         self.assertIn("ffxGlow = 0", self.g.F.detailsWindow.body.text)
         self.assertIn("Default", self.g.F.detailsWindow.body.text)
+
+
+    def test_options_defaults_validation_commands_and_details(self):
+        self.start()
+        self.assertEqual(self.g.F.GetOption(self.g.F, "dialogAccept", "key"), "SPACE")
+        self.assertTrue(self.g.F.GetOption(self.g.F, "dialogAccept", "hint"))
+        self.runlua('SlashCmdList.FOREVERSUITE("set dialogAccept key enter")')
+        self.assertEqual(self.g.F.GetOption(self.g.F, "dialogAccept", "key"), "ENTER")
+        self.runlua('SlashCmdList.FOREVERSUITE("set dialogAccept key NOPE")')
+        self.assertEqual(self.g.F.GetOption(self.g.F, "dialogAccept", "key"), "ENTER")
+        self.runlua('SlashCmdList.FOREVERSUITE("set dialogAccept hint off")')
+        self.assertFalse(self.g.F.GetOption(self.g.F, "dialogAccept", "hint"))
+        self.runlua('SlashCmdList.FOREVERSUITE("set charItemLevel size 99")')
+        self.assertEqual(self.g.F.GetOption(self.g.F, "charItemLevel", "size"), 11)
+        self.runlua('SlashCmdList.FOREVERSUITE("set charItemLevel size 12")')
+        self.assertEqual(self.g.F.GetOption(self.g.F, "charItemLevel", "size"), 12)
+        self.runlua('F:ShowDetails("dialogAccept")')
+        body = self.g.F.detailsWindow.body.text
+        self.assertIn("Options", body)
+        self.assertIn("Dialog key: Enter", body)
+        self.assertIn("Show key hint: Off", body)
+        self.assertIn("Choices: Space, Enter, E", body)
+        self.runlua('F:ShowDetails("charItemLevel")')
+        body = self.g.F.detailsWindow.body.text
+        self.assertIn("Text position: Bottom right", body)
+        self.assertIn("Text size: 12", body)
+        self.assertIn("Range 6 to 24; step 1", body)
+        self.assertIn("Choices: Bottom right, Top left, Center", body)
+
+    def test_option_persistence_and_invalid_saved_values(self):
+        self.runlua('ForeverSuiteDB={schema=1,enabled={},options={dialogAccept={key="ENTER",hint=false,bogus=1},ghost={x=1},charItemLevel={size=99},itemCount={includeBank="yes"}}}')
+        self.start()
+        self.assertEqual(self.g.F.GetOption(self.g.F, "dialogAccept", "key"), "ENTER")
+        self.assertFalse(self.g.F.GetOption(self.g.F, "dialogAccept", "hint"))
+        self.assertIsNone(self.g.ForeverSuiteDB.options.dialogAccept.bogus)
+        self.assertIsNone(self.g.ForeverSuiteDB.options.ghost)
+        self.assertIsNone(self.g.ForeverSuiteDB.options.charItemLevel)
+        self.assertFalse(self.g.F.GetOption(self.g.F, "itemCount", "includeBank"))
+
+    def test_reset_single_feature_clears_options(self):
+        self.start()
+        self.runlua('F:SetOption("dialogAccept","key","ENTER"); F:SetEnabled("dialogAccept",true)')
+        self.runlua('SlashCmdList.FOREVERSUITE("reset dialogAccept")')
+        self.assertFalse(self.g.F.db.enabled.dialogAccept)
+        self.assertEqual(self.g.F.GetOption(self.g.F, "dialogAccept", "key"), "SPACE")
+        self.assertIsNone(self.g.ForeverSuiteDB.options.dialogAccept)
+
+    def test_future_schema_rejects_option_writes(self):
+        self.runlua('ForeverSuiteDB={schema=99,options={dialogAccept={key="ENTER"}},marker="keep"}')
+        self.start()
+        self.assertEqual(self.g.F.GetOption(self.g.F, "dialogAccept", "key"), "SPACE")
+        self.runlua('assert(not F:SetOption("dialogAccept","key","E"))')
+        self.assertEqual(self.g.ForeverSuiteDB.options.dialogAccept.key, "ENTER")
+        self.runlua('SlashCmdList.FOREVERSUITE("set dialogAccept key E")')
+        self.assertEqual(self.g.ForeverSuiteDB.options.dialogAccept.key, "ENTER")
+
+    def test_options_panel_cycles_choices_and_steps_numbers(self):
+        self.start()
+        self.runlua('F:OpenSettings(); F:ShowOptions("dialogAccept")')
+        self.assertTrue(self.g.F.optionsWindow.shown)
+        self.assertEqual(self.g.F.optionsWindow.cache.dialogAccept.controls[1].widget.text, "Space   >")
+        self.runlua('F.optionsWindow.cache.dialogAccept.controls[1].widget:Trigger("OnClick")')
+        self.assertEqual(self.g.F.GetOption(self.g.F, "dialogAccept", "key"), "ENTER")
+        self.assertEqual(self.g.F.optionsWindow.cache.dialogAccept.controls[1].widget.text, "Enter   >")
+        self.runlua('local c=F.optionsWindow.cache.dialogAccept.controls[2].widget; c:SetChecked(false); c:Trigger("OnClick")')
+        self.assertFalse(self.g.F.GetOption(self.g.F, "dialogAccept", "hint"))
+        self.runlua('F:ShowOptions("charItemLevel")')
+        self.runlua('F.optionsWindow.cache.charItemLevel.controls[2].widget:Trigger("OnClick")')
+        self.assertEqual(self.g.F.GetOption(self.g.F, "charItemLevel", "size"), 12)
+        self.runlua('F:ShowOptions("charItemLevel")')
+        self.runlua('F.optionsWindow.cache.charItemLevel.controls[2].widget:Trigger("OnClick")')
+        self.assertEqual(self.g.F.GetOption(self.g.F, "charItemLevel", "size"), 13)
+
+    def test_dialog_key_clicks_visible_button_and_propagates(self):
+        self.start()
+        self.runlua('F:SetEnabled("dialogAccept", true)')
+        self.assertTrue(self.g.ForeverSuiteKeyCatcher.shown)
+        self.runlua('showButton("QuestFrameAcceptButton"); pressKey("SPACE")')
+        self.assertEqual(self.g.QuestFrameAcceptButton.clicks, 1)
+        self.assertFalse(self.g.ForeverSuiteKeyCatcher.propagate)
+        self.runlua('pressKey("SPACE")')
+        self.assertEqual(self.g.QuestFrameAcceptButton.clicks, 2)
+        self.runlua('showButton(nil); pressKey("SPACE")')
+        self.assertEqual(self.g.QuestFrameAcceptButton.clicks, 2)
+        self.assertTrue(self.g.ForeverSuiteKeyCatcher.propagate)
+
+    def test_dialog_key_respects_shift_combat_and_custom_key(self):
+        self.start()
+        self.runlua('F:SetOption("dialogAccept","key","ENTER"); F:SetEnabled("dialogAccept", true)')
+        self.runlua('showButton("QuestFrameAcceptButton"); shift=true; pressKey("ENTER")')
+        self.assertIsNone(self.g.QuestFrameAcceptButton.clicks)
+        self.runlua('shift=false; pressKey("SPACE")')
+        self.assertIsNone(self.g.QuestFrameAcceptButton.clicks)
+        self.runlua('pressKey("ENTER")')
+        self.assertEqual(self.g.QuestFrameAcceptButton.clicks, 1)
+        self.runlua('combat=true; fire("PLAYER_REGEN_DISABLED")')
+        self.assertFalse(self.g.ForeverSuiteKeyCatcher.shown)
+        self.runlua('pressKey("ENTER")')
+        self.assertEqual(self.g.QuestFrameAcceptButton.clicks, 1)
+        self.runlua('combat=false; fire("PLAYER_REGEN_ENABLED")')
+        self.assertTrue(self.g.ForeverSuiteKeyCatcher.shown)
+        self.runlua('pressKey("ENTER")')
+        self.assertEqual(self.g.QuestFrameAcceptButton.clicks, 2)
+
+    def test_dialog_accept_never_completes_with_reward_choices(self):
+        self.start()
+        self.runlua('F:SetEnabled("dialogAccept", true); showButton("QuestFrameCompleteQuestButton"); choices=2; pressKey("SPACE")')
+        self.assertIsNone(self.g.QuestFrameCompleteQuestButton.clicks)
+        self.runlua('choices=0; pressKey("SPACE")')
+        self.assertEqual(self.g.QuestFrameCompleteQuestButton.clicks, 1)
+
+    def test_reward_number_keys_select_without_turning_in(self):
+        self.start()
+        self.runlua('F:SetEnabled("rewardKeys", true); showRewards(3); choices=3')
+        self.assertTrue(self.g.ForeverSuiteKeyCatcher.shown)
+        self.runlua('pressKey("2")')
+        self.assertEqual(self.g.QuestInfoItem2.clicks, 1)
+        self.assertEqual(self.g.calls.reward, 0)
+        self.runlua('shift=true; pressKey("1")')
+        self.assertIsNone(self.g.QuestInfoItem1.clicks)
+        self.runlua('shift=false; combat=true; pressKey("3")')
+        self.assertIsNone(self.g.QuestInfoItem3.clicks)
+        self.runlua('combat=false; fire("PLAYER_REGEN_ENABLED"); pressKey("3")')
+        self.assertEqual(self.g.QuestInfoItem3.clicks, 1)
+        self.assertEqual(self.g.calls.reward, 0)
+
+    def test_dialog_key_hint_option_and_disable(self):
+        self.start()
+        self.runlua('F:SetEnabled("dialogAccept", true); showButton("QuestFrameAcceptButton"); fire("QUEST_DETAIL")')
+        hint = self.g.QuestFrameAcceptButton.fontstrings[1]
+        self.assertEqual(hint.text, "[Space]")
+        self.assertTrue(hint.shown)
+        self.runlua('F:SetOption("dialogAccept","hint",false)')
+        self.assertFalse(hint.shown)
+        self.runlua('F:SetOption("dialogAccept","hint",true); F:SetEnabled("dialogAccept", false)')
+        self.assertFalse(hint.shown)
+
+    def test_character_item_level_overlays_follow_options(self):
+        self.start()
+        self.runlua('F:SetEnabled("charItemLevel", true)')
+        head = self.g.CharacterHeadSlot.fontstrings[1]
+        self.assertEqual(head.text, "82")
+        self.assertEqual(head.fontSize, 11)
+        self.assertEqual(head.points[1], "BOTTOMRIGHT")
+        self.assertEqual(self.g.CharacterMainHandSlot.fontstrings[1].text, "90")
+        self.runlua('F:SetOption("charItemLevel","size",16); F:SetOption("charItemLevel","position","TOPLEFT")')
+        self.assertEqual(head.fontSize, 16)
+        self.assertEqual(head.points[1], "TOPLEFT")
+        self.runlua('inventoryLevels["item:1001"]={secret=true}; fire("PLAYER_EQUIPMENT_CHANGED")')
+        self.assertFalse(head.shown)
+        self.runlua('inventoryLevels["item:1001"]=82; F:SetEnabled("charItemLevel", false)')
+        self.assertFalse(head.shown)
+        self.runlua('F:SetEnabled("charItemLevel", true)')
+        self.assertTrue(head.shown)
+        self.assertEqual(head.text, "82")
+
+    def test_inspect_item_level_overlays_check_guid(self):
+        self.start()
+        self.runlua('F:SetEnabled("inspectItemLevel", true)')
+        head = self.g.InspectHeadSlot.fontstrings[1]
+        self.assertEqual(head.text, "75")
+        self.runlua('inventoryLevels["item:2001"]=80; fire("INSPECT_READY", guids.player)')
+        self.assertEqual(head.text, "75")
+        self.runlua('fire("INSPECT_READY", guids.target)')
+        self.assertEqual(head.text, "80")
+
+    def test_tooltip_spell_npc_and_currency_ids(self):
+        self.start()
+        self.runlua('F:SetEnabled("spellID", true); F:SetEnabled("npcID", true); F:SetEnabled("currencyID", true)')
+        self.assertEqual(self.g.calls.hooks, 3)
+        self.runlua('local f=hoverSpell(133); f:Trigger("OnTooltipCleared"); hoverSpell(133)')
+        self.assertEqual(len(self.g.tips.spell.lines), 1)
+        self.assertEqual(self.g.tips.spell.lines[1], "Spell ID: 133")
+        self.runlua('hoverUnit("target")')
+        self.assertEqual(self.g.tips.unit.lines[1], "NPC ID: 448")
+        self.runlua('guids.target="Player-970-0002FD64"; hoverUnit("target")')
+        self.assertEqual(len(self.g.tips.unit.lines), 0)
+        self.runlua('hoverCurrency({id=3008})')
+        self.assertEqual(self.g.tips.currency.lines[1], "Currency ID: 3008")
+        self.runlua('hoverCurrency({id={secret=true}})')
+        self.assertEqual(len(self.g.tips.currency.lines), 0)
+        self.runlua('F:SetEnabled("spellID", false); hoverSpell(200)')
+        self.assertEqual(len(self.g.tips.spell.lines), 0)
+        self.runlua('F:SetEnabled("spellID", true); local f=hoverSpell(201); f:Trigger("OnTooltipCleared"); hoverSpell(201)')
+        self.assertEqual(len(self.g.tips.spell.lines), 1)
+        self.assertEqual(self.g.calls.hooks, 3)
+
+    def test_tooltip_item_count_and_lazy_hooks(self):
+        self.start()
+        self.runlua('F:SetEnabled("itemCount", true); hover()')
+        self.assertEqual(self.g.calls.hooks, 1)
+        self.assertEqual(self.g.tip.lines[1], "Owned: 5 (bags)")
+        self.runlua('F:SetOption("itemCount","includeBank",true); tip:Trigger("OnTooltipCleared"); tip.lines={}; hover()')
+        self.assertEqual(self.g.tip.lines[1], "Owned: 9 (bags and bank)")
+        self.runlua('F:SetEnabled("spellID", true)')
+        self.assertEqual(self.g.calls.hooks, 2)
+        self.runlua('F:SetEnabled("itemCount", false); tip:Trigger("OnTooltipCleared"); tip.lines={}; hover()')
+        self.assertEqual(len(self.g.tip.lines), 0)
+
+
+    def test_saved_options_apply_when_feature_enables(self):
+        self.runlua('ForeverSuiteDB={schema=1,enabled={charItemLevel=true},options={charItemLevel={size=14}}}')
+        self.start()
+        self.assertEqual(self.g.CharacterHeadSlot.fontstrings[1].fontSize, 14)
+        self.assertEqual(self.g.CharacterHeadSlot.fontstrings[1].text, "82")
+
+    def test_report_lists_changed_options(self):
+        self.start()
+        self.runlua('F:SetOption("dialogAccept","key","E"); SlashCmdList.FOREVERSUITE("report")')
+        self.assertIn("dialogAccept: off  [key=E]", self.g.F.reportWindow.edit.text)
+
+
+    def test_every_feature_uses_a_listed_category(self):
+        self.start()
+        listed = {}
+        for index in range(1, len(self.g.F.categories) + 1):
+            listed[self.g.F.categories[index]] = True
+        for index in range(1, len(self.g.F.order) + 1):
+            ident = self.g.F.order[index]
+            category = self.g.F.features[ident].category
+            self.assertIn(category, listed, ident)
+
+
+    def test_option_type_validation_rejects_bad_values(self):
+        self.start()
+        self.runlua('assert(not F:SetOption("dialogAccept","key",nil))')
+        self.runlua('assert(not F:SetOption("charItemLevel","size",12.5))')
+        self.runlua('assert(not F:SetOption("charItemLevel","size",0/0))')
+        self.runlua('assert(not F:SetOption("charItemLevel","size",math.huge))')
+        self.runlua('assert(not F:SetOption("itemCount","includeBank","true"))')
+        self.runlua('assert(not F:SetOption("nope","key","SPACE"))')
+        self.runlua('assert(F:GetOption("nope","key") == nil)')
+        self.assertIsNone(self.g.ForeverSuiteDB.options.charItemLevel)
+        self.assertIsNone(self.g.ForeverSuiteDB.options.itemCount)
+        self.runlua('assert(F:SetOption("dialogAccept","key","SPACE"))')
+
+
+    def test_option_refresh_is_deferred_out_of_combat(self):
+        self.start()
+        self.runlua('F:SetEnabled("charItemLevel", true)')
+        self.assertEqual(self.g.CharacterHeadSlot.fontstrings[1].fontSize, 11)
+        self.runlua('combat=true; F:SetOption("charItemLevel","size",16)')
+        self.assertEqual(self.g.CharacterHeadSlot.fontstrings[1].fontSize, 11)
+        self.runlua('combat=false; fire("PLAYER_REGEN_ENABLED")')
+        self.assertEqual(self.g.CharacterHeadSlot.fontstrings[1].fontSize, 16)
+
+
+    def test_option_command_feedback(self):
+        self.start()
+        self.runlua('SlashCmdList.FOREVERSUITE("options dialogAccept")')
+        self.assertEqual(len(self.g.prints), 2)
+        self.assertIn("Dialog key", self.g.prints[1])
+        self.assertIn("Show key hint", self.g.prints[2])
+        self.runlua('SlashCmdList.FOREVERSUITE("set charItemLevel size 99")')
+        self.assertIn("Option not changed", self.g.prints[len(self.g.prints)])
+        self.runlua('SlashCmdList.FOREVERSUITE("set dialogAccept key nope")')
+        self.assertIn("choices: Space, Enter, E", self.g.prints[len(self.g.prints)])
+        self.runlua('SlashCmdList.FOREVERSUITE("options repair")')
+        self.assertIn("has no options", self.g.prints[len(self.g.prints)])
 
 
 if __name__ == "__main__":

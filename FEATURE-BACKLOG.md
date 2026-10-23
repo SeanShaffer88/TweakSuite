@@ -2,7 +2,7 @@
 
 This is the initial capability backlog, not a complete parity claim. Distinct behaviors remain in scope; an implemented preview still requires in-game acceptance. Source options are separately indexed to catch omitted parameters and smaller features.
 
-229 tracked capabilities: 36 implemented in the Stage 1 preview and 193 planned. IDs remain stable as work continues.
+229 tracked capabilities: 45 implemented in the Stage 2 preview (44 features plus one option of an existing feature) and 184 planned. IDs remain stable as work continues.
 
 | ID | Capability | Stage | Status |
 |---|---|---|---|
@@ -51,21 +51,21 @@ This is the initial capability backlog, not a complete parity claim. Distinct be
 | FS-043 | Window anchor relationships | 2 | Planned |
 | FS-044 | Keep compatible panels open together | 2 | Planned |
 | FS-045 | Panel exceptions for secure or fragile frames | 2 | Planned |
-| FS-046 | Keyboard accept/continue | 2 | Planned |
+| FS-046 | Keyboard accept/continue | 2 | Preview; game test pending |
 | FS-047 | Keyboard numbered gossip selection | 2 | Planned |
-| FS-048 | Keyboard reward selection | 2 | Planned |
+| FS-048 | Keyboard reward selection | 2 | Preview; game test pending |
 | FS-049 | Custom dialog key bindings | 2 | Planned |
 | FS-050 | Dialog click priority | 2 | Planned |
 | FS-051 | Dialog popup exclusions | 2 | Planned |
 | FS-052 | Custom watched buttons | 2 | Planned |
-| FS-053 | Dialog key hints | 2 | Planned |
+| FS-053 | Dialog key hints | 2 | Preview (option of FS-046); game test pending |
 | FS-054 | Selective beta survey suppression | 2 | Planned |
 | FS-055 | Restore manual beta reporting | 2 | Planned |
 | FS-056 | Hide beta reporter button independently | 2 | Planned |
 | FS-057 | Bag item-level overlays | 2 | Planned |
 | FS-058 | Bank item-level overlays | 2 | Planned |
-| FS-059 | Character item-level overlays | 2 | Planned |
-| FS-060 | Inspect item-level overlays | 2 | Planned |
+| FS-059 | Character item-level overlays | 2 | Preview; game test pending |
+| FS-060 | Inspect item-level overlays | 2 | Preview; game test pending |
 | FS-061 | Loot item-level overlays | 2 | Planned |
 | FS-062 | Equipment flyout item levels | 2 | Planned |
 | FS-063 | Average equipped item level | 2 | Planned |
@@ -81,11 +81,11 @@ This is the initial capability backlog, not a complete parity claim. Distinct be
 | FS-073 | Tooltip borders and colors | 2 | Planned |
 | FS-074 | Tooltip anchor modes | 2 | Planned |
 | FS-075 | Tooltip combat visibility rules | 2 | Planned |
-| FS-076 | Spell IDs in tooltips | 2 | Planned |
-| FS-077 | NPC IDs in tooltips | 2 | Planned |
+| FS-076 | Spell IDs in tooltips | 2 | Preview; game test pending |
+| FS-077 | NPC IDs in tooltips | 2 | Preview; game test pending |
 | FS-078 | Quest IDs in tooltips | 2 | Planned |
-| FS-079 | Currency IDs in tooltips | 2 | Planned |
-| FS-080 | Item counts by storage location | 2 | Planned |
+| FS-079 | Currency IDs in tooltips | 2 | Preview; game test pending |
+| FS-080 | Item counts by storage location | 2 | Preview; game test pending |
 | FS-081 | Reputation token details | 2 | Planned |
 | FS-082 | Quest-starting item details | 2 | Planned |
 | FS-083 | Guild repair funds policy | 3 | Planned |
